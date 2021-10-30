@@ -1,0 +1,37 @@
+from antlr4 import CommonTokenStream
+from antlr4.InputStream import InputStream
+from antlr4.tree.Trees import Trees
+import nltk
+
+try:
+    from treeno.grammar.gen.SqlBaseLexer import SqlBaseLexer
+    from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
+except ImportError:
+    print(
+        "SqlBaseLexer and SqlBaseParser not found. Did you run `python setup.py install` or `python setup.py "
+        "develop` first?"
+    )
+    raise
+
+
+class AST:
+    """Basic building block for SQL parse tree. This is not meant to be used directly, but is rather an intermediate
+    layer to operate on to create a pypika interface."""
+
+    def __init__(self, sql):
+        self._sql = sql
+        self.lexer = SqlBaseLexer(InputStream(data=self._sql))
+        self.stream = CommonTokenStream(self.lexer)
+        self.parser = SqlBaseParser(self.stream)
+        self.root = self.parser.singleStatement()
+
+    @property
+    def text(self):
+        return self._sql
+
+    def __str__(self):
+        return Trees.toStringTree(self.root, None, self.parser)
+
+    def pprint(self):
+        parenthetical_tree = nltk.Tree.fromstring(str(self))
+        return parenthetical_tree.pretty_print()
