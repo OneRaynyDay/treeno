@@ -267,11 +267,10 @@ class Divide(BinaryExpression):
 
 class Not(UnaryExpression):
     def __str__(self):
-        # TODO: If the underlying expression is IsNull(),
-        # then turn this into {value} IS NOT NULL
-        # This also applies to many other expressions like
-        # DistinctFrom, Between, InList, etc. (all under the
-        # grammar rule predicate)
+        # Specializations on Not
+        if isinstance(self.value, (IsNull, Like, InList, Between)):
+            return self.value.to_string(negate=True)
+
         return builtin_unary_str(self, "NOT {value}")
 
 
@@ -326,13 +325,26 @@ class Or(BinaryExpression):
 
 
 class IsNull(UnaryExpression):
+    def to_string(self, negate: bool = False):
+        return builtin_unary_str(
+            self, "{value} IS NOT NULL" if negate else "{value} IS NULL"
+        )
+
     def __str__(self):
-        return builtin_unary_str(self, "{value} IS NULL")
+        return self.to_string(negate=False)
 
 
 class DistinctFrom(BinaryExpression):
+    def to_string(self, negate: bool = False):
+        return builtin_unary_str(
+            self,
+            "{left} IS NOT DISTINCT FROM {right}"
+            if negate
+            else "{left} IS DISTINCT FROM {right}",
+        )
+
     def __str__(self):
-        return builtin_binary_str(self, "{left} IS DISTINCT FROM {right}")
+        return self.to_string(negate=False)
 
 
 @attr.s
@@ -341,8 +353,15 @@ class Between(Expression):
     lower: GenericValue = attr.ib(converter=wrap_literal)
     upper: GenericValue = attr.ib(converter=wrap_literal)
 
+    def to_string(self, negate: bool = False):
+        between_string = pemdas_str(type(self), self.value)
+        if negate:
+            between_string += " NOT"
+        between_string += f" BETWEEN {pemdas_str(type(self), self.lower)} AND {pemdas_str(type(self), self.upper)}"
+        return between_string
+
     def __str__(self):
-        return f"{pemdas_str(type(self), self.value)} BETWEEN {pemdas_str(type(self), self.lower)} AND {pemdas_str(type(self), self.upper)}"
+        return self.to_string(negate=False)
 
 
 @attr.s
@@ -350,9 +369,16 @@ class InList(Expression):
     value: GenericValue = attr.ib(converter=wrap_literal)
     exprs: List[GenericValue] = attr.ib(converter=wrap_literal)
 
-    def __str__(self):
+    def to_string(self, negate: bool = False):
         expr_list = ",".join(str(expr) for expr in self.exprs)
-        return f"{pemdas_str(type(self), self.value)} IN ({expr_list})"
+        in_list_string = pemdas_str(type(self), self.value)
+        if negate:
+            in_list_string += " NOT"
+        in_list_string += f" IN ({expr_list})"
+        return in_list_string
+
+    def __str__(self):
+        return self.to_string(negate=False)
 
 
 @attr.s
@@ -363,12 +389,18 @@ class Like(Expression):
         converter=attr.converters.optional(wrap_literal)
     )
 
-    def __str__(self):
-        like_str = f"{pemdas_str(type(self), self.value)} LIKE {pemdas_str(type(self), self.pattern)}"
+    def to_string(self, negate: bool = False):
+        like_str = pemdas_str(type(self), self.value)
+        if negate:
+            like_str += " NOT"
+        like_str += f" LIKE {pemdas_str(type(self), self.pattern)}"
         if self.escape:
             # TODO: Should we pemdas this? I don't see it in the specs
             like_str += f" ESCAPE {self.escape}"
         return like_str
+
+    def __str__(self):
+        return self.to_string(negate=False)
 
 
 @attr.s
