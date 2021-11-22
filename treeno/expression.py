@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, List, Optional
+from typing import TypeVar, List, Optional, Type, Any
 import attr
-from treeno.util import chain_identifiers, quote_literal, quote_identifier
+from treeno.util import (
+    chain_identifiers,
+    quote_literal,
+    quote_identifier,
+    parenthesize,
+)
 
 GenericValue = TypeVar("GenericValue", bound="Value")
 
@@ -151,7 +156,7 @@ class Star(Field):
         return star_string
 
 
-def wrap_literal(val):
+def wrap_literal(val: Any) -> Value:
     """Convenience method to wrap a literal value into a treeno Value"""
     if isinstance(val, Value):
         return val
@@ -167,9 +172,56 @@ def wrap_literal(val):
     return Literal(val)
 
 
+def pemdas_str(
+    current_type: Type[Value], val: Value, is_left: bool = True
+) -> str:
+    """Apply parenthesization onto the nested expression if required for pemdas.
+
+    Args:
+        current_type: Current value's type.
+        val: One of the direct children of the current value.
+        is_left: Whether this value is the leftmost child. This is used to determine whether the right child should
+            be parenthesized or not. i.e. 1+(2+3) or 1+2+3.
+    """
+    # If the type is not specified, we assume the syntax is well-formed without any parentheses as it's probably a fn
+    # call.
+    val_type = type(val)
+    if (
+        current_type not in OPERATOR_PRECEDENCE
+        or val_type not in OPERATOR_PRECEDENCE
+    ):
+        return str(val)
+    current_precedence = OPERATOR_PRECEDENCE[current_type]
+    val_precedence = OPERATOR_PRECEDENCE[val_type]
+    # The expression's precedence is the same, so we must obey left-to-right ordering.
+    if current_precedence == val_precedence:
+        if is_left:
+            return str(val)
+        else:
+            return parenthesize(val)
+
+    # The underlying value's precedence is lower, BUT it's deeper in the tree, which means we need to parenthesize it.
+    if val_precedence < current_precedence:
+        return parenthesize(val)
+    return str(val)
+
+
+def builtin_binary_str(val: Value, string_format: str) -> str:
+    return string_format.format(
+        left=pemdas_str(type(val), val.left, is_left=True),
+        right=pemdas_str(type(val), val.right, is_left=False),
+    )
+
+
+def builtin_unary_str(val: Value, string_format: str) -> str:
+    return string_format.format(
+        value=pemdas_str(type(val), val.value, is_left=True)
+    )
+
+
 def call_str(function_name, *expressions):
     arg_str = ", ".join([str(expr) for expr in expressions])
-    return f"{function_name}({arg_str})"
+    return f"{function_name}{parenthesize(arg_str)}"
 
 
 @attr.s
@@ -183,36 +235,34 @@ class UnaryExpression(Expression, ABC):
     value: GenericValue = attr.ib(converter=wrap_literal)
 
 
-class Add(BinaryExpression):
-    def __str__(self):
-        # TODO: Just being pedantic right now. We can figure out the
-        # minimal parenthesizing later.
-        return f"({self.left}) + ({self.right})"
-
-
-class Minus(BinaryExpression):
-    def __str__(self):
-        return f"({self.left}) - ({self.right})"
-
-
 class Positive(UnaryExpression):
     def __str__(self):
-        return f"+({self.value})"
+        return builtin_unary_str(self, "+{value}")
 
 
 class Negative(UnaryExpression):
     def __str__(self):
-        return f"-({self.value})"
+        return builtin_unary_str(self, "-{value}")
+
+
+class Add(BinaryExpression):
+    def __str__(self):
+        return builtin_binary_str(self, "{left} + {right}")
+
+
+class Minus(BinaryExpression):
+    def __str__(self):
+        return builtin_binary_str(self, "{left} - {right}")
 
 
 class Multiply(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) * ({self.right})"
+        return builtin_binary_str(self, "{left} * {right}")
 
 
 class Divide(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) / ({self.right})"
+        return builtin_binary_str(self, "{left} / {right}")
 
 
 class Not(UnaryExpression):
@@ -222,7 +272,7 @@ class Not(UnaryExpression):
         # This also applies to many other expressions like
         # DistinctFrom, Between, InList, etc. (all under the
         # grammar rule predicate)
-        return f"NOT ({self.value})"
+        return builtin_unary_str(self, "NOT {value}")
 
 
 class Power(BinaryExpression):
@@ -232,57 +282,57 @@ class Power(BinaryExpression):
 
 class Modulus(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) % ({self.right})"
+        return builtin_binary_str(self, "{left} % {right}")
 
 
 class Equal(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) = ({self.right})"
+        return builtin_binary_str(self, "{left} = {right}")
 
 
 class NotEqual(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) <> ({self.right})"
+        return builtin_binary_str(self, "{left} <> {right}")
 
 
 class GreaterThan(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) > ({self.right})"
+        return builtin_binary_str(self, "{left} > {right}")
 
 
 class GreaterThanOrEqual(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) >= ({self.right})"
+        return builtin_binary_str(self, "{left} >= {right}")
 
 
 class LessThan(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) < ({self.right})"
+        return builtin_binary_str(self, "{left} < {right}")
 
 
 class LessThanOrEqual(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) <= ({self.right})"
+        return builtin_binary_str(self, "{left} <= {right}")
 
 
 class And(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) AND ({self.right})"
+        return builtin_binary_str(self, "{left} AND {right}")
 
 
 class Or(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) OR ({self.right})"
+        return builtin_binary_str(self, "{left} OR {right}")
 
 
 class IsNull(UnaryExpression):
     def __str__(self):
-        return f"({self.value}) IS NULL"
+        return builtin_unary_str(self, "{value} IS NULL")
 
 
 class DistinctFrom(BinaryExpression):
     def __str__(self):
-        return f"({self.left}) IS DISTINCT FROM ({self.right})"
+        return builtin_binary_str(self, "{left} IS DISTINCT FROM {right}")
 
 
 @attr.s
@@ -292,7 +342,7 @@ class Between(Expression):
     upper: GenericValue = attr.ib(converter=wrap_literal)
 
     def __str__(self):
-        return f"{self.value} BETWEEN {self.lower} AND {self.upper}"
+        return f"{pemdas_str(type(self), self.value)} BETWEEN {pemdas_str(type(self), self.lower)} AND {pemdas_str(type(self), self.upper)}"
 
 
 @attr.s
@@ -302,7 +352,7 @@ class InList(Expression):
 
     def __str__(self):
         expr_list = ",".join(str(expr) for expr in self.exprs)
-        return f"{self.value} IN ({expr_list})"
+        return f"{pemdas_str(type(self), self.value)} IN ({expr_list})"
 
 
 @attr.s
@@ -314,8 +364,9 @@ class Like(Expression):
     )
 
     def __str__(self):
-        like_str = f"{self.value} LIKE {self.pattern}"
+        like_str = f"{pemdas_str(type(self), self.value)} LIKE {pemdas_str(type(self), self.pattern)}"
         if self.escape:
+            # TODO: Should we pemdas this? I don't see it in the specs
             like_str += f" ESCAPE {self.escape}"
         return like_str
 
@@ -336,3 +387,32 @@ class TryCast(Expression):
 
     def __str__(self):
         return f"TRY_CAST({self.expr} AS {self.type})"
+
+
+# Operator precedence according to:
+# https://docs.oracle.com/cd/B19306_01/server.102/b14200/operators001.htm
+# https://docs.oracle.com/cd/B19306_01/server.102/b14200/conditions001.htm#i1034834
+# Still waiting to hear back about Trino's custom precedence:
+# https://trinodb.slack.com/archives/CFLB9AMBN/p1637528834018300
+OPERATOR_PRECEDENCE = {
+    Positive: 7,
+    Negative: 7,
+    Multiply: 6,
+    Divide: 6,
+    Modulus: 6,
+    Add: 5,
+    Minus: 5,
+    Equal: 4,
+    NotEqual: 4,
+    GreaterThan: 4,
+    GreaterThanOrEqual: 4,
+    LessThan: 4,
+    LessThanOrEqual: 4,
+    IsNull: 3,
+    Like: 3,
+    Between: 3,
+    InList: 3,
+    Not: 2,
+    And: 1,
+    Or: 0,
+}

@@ -1,9 +1,15 @@
 import itertools
-from typing import Optional
+from typing import Optional, Any, Iterable, TypeVar
+
+T = TypeVar("T")
 
 
 def quote_identifier(identifier: str) -> str:
     return f'"{identifier}"'
+
+
+def parenthesize(val: Any) -> str:
+    return f"({val})"
 
 
 def chain_identifiers(*identifiers: Optional[str], join_string=".") -> str:
@@ -22,6 +28,6 @@ def quote_literal(literal: str) -> str:
     return f"'{literal}"
 
 
-def nth(iterable, n, default=None):
+def nth(iterable: Iterable[T], n: int, default: Optional[T] = None) -> T:
     "Returns the nth item or a default value"
     return next(itertools.islice(iterable, n, None), default)
