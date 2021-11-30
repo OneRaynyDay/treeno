@@ -1,9 +1,7 @@
 """
 Converts from our grammar into a buildable query tree.
 """
-import attr
 from typing import Optional, List, Union
-from enum import Enum, auto
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.expression import (
@@ -17,7 +15,6 @@ from treeno.expression import (
     IsNull,
     DistinctFrom,
     Literal,
-    Expression,
     TryCast,
     Cast,
 )
@@ -33,6 +30,8 @@ from treeno.relation import (
     JoinOnCriteria,
     JoinUsingCriteria,
     JoinCriteria,
+    SelectQuery,
+    SetQuantifier,
 )
 from treeno.types import (
     FIELDS,
@@ -45,78 +44,6 @@ from treeno.types import (
     ARRAY,
 )
 from treeno.util import nth
-
-
-class SetQuantifier(Enum):
-    DISTINCT = auto()
-    ALL = auto()
-
-
-@attr.s
-class QueryBuilder(Relation):
-    """Represents a high level SELECT query.
-    A QueryBuilder can be converted to a SubqueryExpression if we are attempting to reinterpret the query as a set of
-    ROW types.
-    """
-
-    select_values: List[Value] = attr.ib()
-    from_relation: Optional[Relation] = attr.ib(default=None)
-    where_value: Optional[Value] = attr.ib(default=None)
-    groupby_values: Optional[List[Value]] = attr.ib(default=None)
-    orderby_values: Optional[List[Value]] = attr.ib(default=None)
-    having_value: Optional[Value] = attr.ib(default=None)
-    select_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
-    window: Optional[Value] = attr.ib(default=None)
-    offset: Optional[Value] = attr.ib(default=None)
-    limit: Optional[int] = attr.ib(default=None)
-
-    def __attrs_post_init__(self) -> None:
-        assert not self.orderby_values, "Orderby isn't supported"
-        assert not self.offset, "Offset isn't supported"
-        assert not self.window, "Window isn't supported"
-
-    def __str__(self) -> str:
-        str_builder = ["SELECT"]
-        # All is the default, so we don't need to mention it
-        if self.select_quantifier != SetQuantifier.ALL:
-            str_builder.append(self.select_quantifier.name)
-
-        str_builder.append(",".join(str(val) for val in self.select_values))
-        if self.from_relation:
-            str_builder += ["FROM", str(self.from_relation)]
-        if self.where_value:
-            str_builder += ["WHERE", str(self.where_value)]
-        if self.groupby_values:
-            str_builder += [
-                "GROUP BY",
-                ",".join(str(val) for val in self.groupby_values),
-            ]
-        if self.having_value:
-            str_builder += ["HAVING", str(self.having_value)]
-        if self.window:
-            str_builder += ["WINDOW", str(self.window)]
-        if self.orderby_values:
-            str_builder += [
-                "ORDER BY ",
-                ",".join(str(order) for order in self.orderby_values),
-            ]
-        if self.offset:
-            str_builder += ["OFFSET", str(self.offset)]
-        if self.limit:
-            str_builder += ["LIMIT", str(self.limit)]
-        return " ".join(str_builder)
-
-
-@attr.s
-class SubqueryExpression(Expression):
-    """In order to select a subquery expression directly, the query itself must be surrounded in parentheses.
-    This class should be used as a lightweight wrapper over a prebuilt querybuilder.
-    """
-
-    query: QueryBuilder = attr.ib()
-
-    def __str__(self) -> str:
-        return f"({self.query})"
 
 
 def apply_operator(operator: str, *args: Value) -> Value:
@@ -180,7 +107,7 @@ class ConvertVisitor(SqlBaseVisitor):
 
     def visitQueryNoWith(
         self, ctx: SqlBaseParser.QueryNoWithContext
-    ) -> QueryBuilder:
+    ) -> SelectQuery:
         query_term = ctx.queryTerm()
         if not isinstance(query_term, SqlBaseParser.QueryTermDefaultContext):
             raise NotImplementedError("Set operations are not yet implemented")
@@ -205,12 +132,12 @@ class ConvertVisitor(SqlBaseVisitor):
 
     def visitQueryTermDefault(
         self, ctx: SqlBaseParser.QueryTermDefaultContext
-    ) -> QueryBuilder:
+    ) -> SelectQuery:
         return self.visit(ctx.queryPrimary())
 
     def visitQueryPrimaryDefault(
         self, ctx: SqlBaseParser.QueryPrimaryDefaultContext
-    ) -> QueryBuilder:
+    ) -> Relation:
         query_spec = ctx.querySpecification()
         if not isinstance(query_spec, SqlBaseParser.QuerySpecificationContext):
             raise NotImplementedError(
@@ -451,6 +378,14 @@ class ConvertVisitor(SqlBaseVisitor):
     ) -> Literal:
         return Literal(self.visit(ctx.string()))
 
+    def visitDoubleLiteral(
+        self, ctx: SqlBaseParser.DoubleLiteralContext
+    ) -> Literal:
+        value = float(ctx.DOUBLE_VALUE().getText())
+        if ctx.MINUS() is not None:
+            value = -value
+        return Literal(value)
+
     def visitBasicStringLiteral(
         self, ctx: SqlBaseParser.BasicStringLiteralContext
     ) -> str:
@@ -459,7 +394,12 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitUnicodeStringLiteral(
         self, ctx: SqlBaseParser.UnicodeStringLiteralContext
     ) -> str:
-        raise NotImplementedError("Unicode characters currently not supported")
+        if ctx.UESCAPE():
+            assert ctx.STRING(), "Escape string must be supplied for unicode"
+            escape_seq = ctx.STRING().getText()
+        else:
+            escape_seq = "\\"
+        return ctx.getText().strip("U&").strip("'").replace(escape_seq, "\\u")
 
     def visitValueExpressionDefault(
         self, ctx: SqlBaseParser.ValueExpressionDefaultContext
@@ -474,14 +414,6 @@ class ConvertVisitor(SqlBaseVisitor):
             return Field(value_or_field)
         assert isinstance(value_or_field, Value)
         return value_or_field
-
-    def visitDoubleLiteral(
-        self, ctx: SqlBaseParser.DoubleLiteralContext
-    ) -> Literal:
-        value = float(ctx.DOUBLE_VALUE().text)
-        if ctx.MINUS() is not None:
-            value = -value
-        return Literal(value)
 
     def visitSelectSingle(
         self, ctx: SqlBaseParser.SelectSingleContext
@@ -524,8 +456,8 @@ class ConvertVisitor(SqlBaseVisitor):
 
     def visitSubqueryExpression(
         self, ctx: SqlBaseParser.SubqueryExpressionContext
-    ) -> SubqueryExpression:
-        return SubqueryExpression(query=self.visit(ctx.query()))
+    ) -> SelectQuery:
+        return self.visit(ctx.query())
 
     def visitParenthesizedExpression(
         self, ctx: SqlBaseParser.ParenthesizedExpressionContext
@@ -642,7 +574,7 @@ class ConvertVisitor(SqlBaseVisitor):
 
     def visitSubqueryRelation(
         self, ctx: SqlBaseParser.SubqueryRelationContext
-    ) -> QueryBuilder:
+    ) -> SelectQuery:
         return self.visit(ctx.query())
 
     def visitParenthesizedRelation(
@@ -676,10 +608,10 @@ class ConvertVisitor(SqlBaseVisitor):
 
     def visitQuerySpecification(
         self, ctx: SqlBaseParser.QuerySpecificationContext
-    ) -> QueryBuilder:
+    ) -> SelectQuery:
         # Always returns a list of items to select from
         select_terms = ctx.selectItem()
-        query_builder = QueryBuilder(
+        query_builder = SelectQuery(
             select_values=[self.visit(item) for item in select_terms]
         )
 

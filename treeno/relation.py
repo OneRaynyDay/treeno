@@ -1,24 +1,24 @@
 import attr
 from abc import ABC, abstractmethod
 from typing import Optional, List
-from treeno.util import chain_identifiers
+from treeno.util import chain_identifiers, parenthesize
 from treeno.expression import Value
-from enum import Enum
+from enum import Enum, auto
 
 
 class Relation(ABC):
     """A value can be one of the following:
 
     1. (Table, ValuesTable) A table reference or an inline table
-    2. (QueryBuilder, Lateral) A subquery. This subquery may or may not be correlated
+    2. (Query) A subquery. This subquery may or may not be correlated
         (which means the query gets executed once per row fetched from the outer query)
     3. (Unnest) An unnested expression of arrays
     4. (TableSample) A subset sample of any 1-5.
     5. (Join) A join composing of any 1-5.
-    """
 
-    def __init__(self):
-        print("HRLELLO")
+    In the case of 1), they can be reinterpreted as standalone queries, which are also relations
+    but belong to 2). We have SelectQuery, TablesQuery, and ValuesQuery for this purpose.
+    """
 
     @abstractmethod
     def __str__(self):
@@ -28,6 +28,9 @@ class Relation(ABC):
 @attr.s
 class Table(Relation):
     """A table reference uniquely identified by a qualified name
+
+    Tables can be standalone queries by themselves (in the form TABLE {table name}), and thus
+    can be subject to orderby, offset, and limit constraints. Refer to TableQuery for more information.
     """
 
     name: str = attr.ib()
@@ -40,8 +43,19 @@ class Table(Relation):
                 self.schema
             ), "If a catalog is specified, a schema must be specified as well"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return chain_identifiers(self.catalog, self.schema, self.name)
+
+
+@attr.s
+class ValuesTable(Relation):
+    """A literal table constructed by literal ROWs
+
+    Values tables can be standalone queries by themselves, and thus can be subject to
+    orderby, offset, and limit constraints. Refer to ValuesQuery for more information.
+    """
+
+    exprs: List[Value] = attr.ib()
 
 
 @attr.s
@@ -53,7 +67,7 @@ class AliasedRelation(Relation):
     alias: str = attr.ib()
     column_aliases: Optional[List[str]] = attr.ib(default=None)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.relation} "{self.alias}"'
 
 
@@ -166,3 +180,104 @@ class Lateral(Relation):
     def __init__(self):
         super().__init__()
         raise NotImplementedError("Unnest currently not implemented")
+
+
+@attr.s
+class Query(Relation, ABC):
+    """Represents a query with filtered outputs
+    """
+
+    offset: Optional[Value] = attr.ib(default=None, kw_only=True)
+    limit: Optional[int] = attr.ib(default=None, kw_only=True)
+    orderby_values: Optional[List[Value]] = attr.ib(default=None, kw_only=True)
+    with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
+
+    def with_query_string(self) -> List[str]:
+        if not self.with_queries:
+            return []
+        return ["WITH", ",".join(str(query) for query in self.with_queries)]
+
+    def constraint_string(self) -> List[str]:
+        str_builder = []
+        if self.orderby_values:
+            str_builder += [
+                "ORDER BY ",
+                ",".join(str(order) for order in self.orderby_values),
+            ]
+        if self.offset:
+            str_builder += ["OFFSET", str(self.offset)]
+        if self.limit:
+            str_builder += ["LIMIT", str(self.limit)]
+        return str_builder
+
+
+class SetQuantifier(Enum):
+    """Whether to select all rows or only distinct values
+    """
+
+    DISTINCT = auto()
+    ALL = auto()
+
+
+@attr.s
+class SelectQuery(Query):
+    """Represents a high level SELECT query.
+    """
+
+    select_values: List[Value] = attr.ib()
+    from_relation: Optional[Relation] = attr.ib(default=None)
+    where_value: Optional[Value] = attr.ib(default=None)
+    groupby_values: Optional[List[Value]] = attr.ib(default=None)
+    having_value: Optional[Value] = attr.ib(default=None)
+    select_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
+    window: Optional[Value] = attr.ib(default=None, kw_only=True)
+
+    def __attrs_post_init__(self) -> None:
+        assert not self.offset, "Offset isn't supported"
+        assert not self.window, "Window isn't supported"
+
+    def __str__(self) -> str:
+        str_builder = ["SELECT"]
+        # All is the default, so we don't need to mention it
+        if self.select_quantifier != SetQuantifier.ALL:
+            str_builder.append(self.select_quantifier.name)
+
+        str_builder.append(",".join(str(val) for val in self.select_values))
+        if self.from_relation:
+            relation_str = str(self.from_relation)
+            # Queries need to be parenthesized to be considered relations
+            if isinstance(self.from_relation, Query):
+                relation_str = parenthesize(relation_str)
+            str_builder += ["FROM", relation_str]
+        if self.where_value:
+            str_builder += ["WHERE", str(self.where_value)]
+        if self.groupby_values:
+            str_builder += [
+                "GROUP BY",
+                ",".join(str(val) for val in self.groupby_values),
+            ]
+        if self.having_value:
+            str_builder += ["HAVING", str(self.having_value)]
+        if self.window:
+            str_builder += ["WINDOW", str(self.window)]
+        str_builder += f" {self.constraint_string()}"
+        return " ".join(str_builder)
+
+
+@attr.s
+class ValuesQuery(Query):
+    """Represents a literal table query.
+    """
+
+    table: ValuesTable = attr.ib()
+
+    def __str__(self) -> str:
+        return f"{self.table} {self.constraint_string()}"
+
+
+@attr.s
+class TableQuery(Query):
+    table: Table = attr.ib()
+
+    def __str__(self) -> str:
+        return f"{self.table} {self.constraint_string()}"
