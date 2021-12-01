@@ -88,10 +88,8 @@ class Expression(Value, ABC):
     arguments.
     """
 
-    def __init__(self, *expressions):
+    def __init__(self):
         super().__init__()
-        # Note that expressions may contain non-Value elements, like QueryBuilder.
-        self.expressions = expressions
 
 
 class Literal(Value):
@@ -170,6 +168,10 @@ def wrap_literal(val: Any) -> Value:
         # return Tuple(*val)
         raise NotImplementedError("Tuple types not supported yet")
     return Literal(val)
+
+
+def wrap_literal_list(vals: List[Any]) -> List[Value]:
+    return [wrap_literal(val) for val in vals]
 
 
 def pemdas_str(
@@ -353,23 +355,36 @@ class Between(Expression):
     lower: GenericValue = attr.ib(converter=wrap_literal)
     upper: GenericValue = attr.ib(converter=wrap_literal)
 
-    def to_string(self, negate: bool = False):
+    def to_string(self, negate: bool = False) -> str:
         between_string = pemdas_str(type(self), self.value)
         if negate:
             between_string += " NOT"
         between_string += f" BETWEEN {pemdas_str(type(self), self.lower)} AND {pemdas_str(type(self), self.upper)}"
         return between_string
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.to_string(negate=False)
+
+
+@attr.s
+class Array(Expression):
+    values: List[GenericValue] = attr.ib(converter=wrap_literal_list)
+
+    @classmethod
+    def from_values(cls, *vals: Any) -> "Array":
+        return cls(vals)
+
+    def __str__(self) -> str:
+        values_str = ",".join(str(val) for val in self.values)
+        return f"ARRAY[{values_str}]"
 
 
 @attr.s
 class InList(Expression):
     value: GenericValue = attr.ib(converter=wrap_literal)
-    exprs: List[GenericValue] = attr.ib(converter=wrap_literal)
+    exprs: List[GenericValue] = attr.ib(converter=wrap_literal_list)
 
-    def to_string(self, negate: bool = False):
+    def to_string(self, negate: bool = False) -> str:
         expr_list = ",".join(str(expr) for expr in self.exprs)
         in_list_string = pemdas_str(type(self), self.value)
         if negate:
@@ -377,7 +392,7 @@ class InList(Expression):
         in_list_string += f" IN ({expr_list})"
         return in_list_string
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.to_string(negate=False)
 
 
@@ -389,7 +404,7 @@ class Like(Expression):
         converter=attr.converters.optional(wrap_literal)
     )
 
-    def to_string(self, negate: bool = False):
+    def to_string(self, negate: bool = False) -> str:
         like_str = pemdas_str(type(self), self.value)
         if negate:
             like_str += " NOT"
@@ -399,7 +414,7 @@ class Like(Expression):
             like_str += f" ESCAPE {self.escape}"
         return like_str
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.to_string(negate=False)
 
 
@@ -408,7 +423,7 @@ class Cast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
     type: GenericValue = attr.ib(converter=wrap_literal)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"CAST({self.expr} AS {self.type})"
 
 
@@ -417,7 +432,7 @@ class TryCast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
     type: GenericValue = attr.ib(converter=wrap_literal)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"TRY_CAST({self.expr} AS {self.type})"
 
 

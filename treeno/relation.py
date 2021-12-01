@@ -25,6 +25,88 @@ class Relation(ABC):
         raise NotImplementedError("All relations must implement __str__")
 
 
+class SetQuantifier(Enum):
+    """Whether to select all rows or only distinct values
+    """
+
+    DISTINCT = auto()
+    ALL = auto()
+
+
+@attr.s
+class Query(Relation, ABC):
+    """Represents a query with filtered outputs
+    """
+
+    offset: Optional[Value] = attr.ib(default=None, kw_only=True)
+    limit: Optional[int] = attr.ib(default=None, kw_only=True)
+    orderby_values: Optional[List[Value]] = attr.ib(default=None, kw_only=True)
+    with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
+
+    def with_query_string(self) -> List[str]:
+        if not self.with_queries:
+            return []
+        return ["WITH", ",".join(str(query) for query in self.with_queries)]
+
+    def constraint_string(self) -> List[str]:
+        str_builder = []
+        if self.orderby_values:
+            str_builder += [
+                "ORDER BY ",
+                ",".join(str(order) for order in self.orderby_values),
+            ]
+        if self.offset:
+            str_builder += ["OFFSET", str(self.offset)]
+        if self.limit:
+            str_builder += ["LIMIT", str(self.limit)]
+        return str_builder
+
+
+@attr.s
+class SelectQuery(Query):
+    """Represents a high level SELECT query.
+    """
+
+    select_values: List[Value] = attr.ib()
+    from_relation: Optional[Relation] = attr.ib(default=None)
+    where_value: Optional[Value] = attr.ib(default=None)
+    groupby_values: Optional[List[Value]] = attr.ib(default=None)
+    having_value: Optional[Value] = attr.ib(default=None)
+    select_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
+    window: Optional[Value] = attr.ib(default=None, kw_only=True)
+
+    def __attrs_post_init__(self) -> None:
+        assert not self.offset, "Offset isn't supported"
+        assert not self.window, "Window isn't supported"
+
+    def __str__(self) -> str:
+        str_builder = ["SELECT"]
+        # All is the default, so we don't need to mention it
+        if self.select_quantifier != SetQuantifier.ALL:
+            str_builder.append(self.select_quantifier.name)
+
+        str_builder.append(",".join(str(val) for val in self.select_values))
+        if self.from_relation:
+            relation_str = str(self.from_relation)
+            # Queries need to be parenthesized to be considered relations
+            if isinstance(self.from_relation, Query):
+                relation_str = parenthesize(relation_str)
+            str_builder += ["FROM", relation_str]
+        if self.where_value:
+            str_builder += ["WHERE", str(self.where_value)]
+        if self.groupby_values:
+            str_builder += [
+                "GROUP BY",
+                ",".join(str(val) for val in self.groupby_values),
+            ]
+        if self.having_value:
+            str_builder += ["HAVING", str(self.having_value)]
+        if self.window:
+            str_builder += ["WINDOW", str(self.window)]
+        str_builder += f" {self.constraint_string()}"
+        return " ".join(str_builder)
+
+
 @attr.s
 class Table(Relation):
     """A table reference uniquely identified by a qualified name
@@ -48,6 +130,14 @@ class Table(Relation):
 
 
 @attr.s
+class TableQuery(Query):
+    table: Table = attr.ib()
+
+    def __str__(self) -> str:
+        return f"{self.table} {self.constraint_string()}"
+
+
+@attr.s
 class ValuesTable(Relation):
     """A literal table constructed by literal ROWs
 
@@ -56,6 +146,17 @@ class ValuesTable(Relation):
     """
 
     exprs: List[Value] = attr.ib()
+
+
+@attr.s
+class ValuesQuery(Query):
+    """Represents a literal table query.
+    """
+
+    table: ValuesTable = attr.ib()
+
+    def __str__(self) -> str:
+        return f"{self.table} {self.constraint_string()}"
 
 
 @attr.s
@@ -106,7 +207,7 @@ class JoinUsingCriteria(JoinCriteria):
     If the output columns have the same name, then upon referencing the columns Trino will fail.
     """
 
-    # We can't use Field from treeno.expression since they refer to a single relation. These column names refer to
+    # NOTE: We can't use Field from treeno.expression since they refer to a single relation. These column names refer to
     # both the left and right relations of the join.
     column_names: List[str] = attr.ib()
 
@@ -136,14 +237,13 @@ class JoinConfig:
     criteria: Optional[JoinCriteria] = attr.ib(default=None)
 
     def __attrs_post_init__(self):
+        if self.join_type == JoinType.CROSS:
+            assert not self.criteria, "Cross joins cannot specify join criteria"
+
         if self.criteria:
             assert (
                 not self.natural
             ), "If criteria is specified, the join cannot be natural"
-
-    def __str__(self):
-        join_config_string = "NATURAL " if self.natural else ""
-        join_config_string += f"{self.join_type.value} JOIN"
 
 
 @attr.s
@@ -155,129 +255,39 @@ class Join(Relation):
     right_relation: Relation = attr.ib()
     config: JoinConfig = attr.ib()
 
-    def __str__(self):
+    def __str__(self) -> str:
         join_config_string = str(self.left_relation)
         if self.config.natural:
             join_config_string += " NATURAL"
         join_config_string += f" {self.config.join_type.value} JOIN "
         join_config_string += str(self.right_relation)
+        if self.config.criteria is not None:
+            join_config_string += str(self.config.criteria)
         return join_config_string
 
 
+@attr.s
 class Unnest(Relation):
     """Represents an unnested set of arrays representing a table
     """
 
-    def __init__(self):
-        super().__init__()
-        raise NotImplementedError("Unnest currently not implemented")
-
-
-class Lateral(Relation):
-    """Represents a correlated subquery.
-    """
-
-    def __init__(self):
-        super().__init__()
-        raise NotImplementedError("Unnest currently not implemented")
-
-
-@attr.s
-class Query(Relation, ABC):
-    """Represents a query with filtered outputs
-    """
-
-    offset: Optional[Value] = attr.ib(default=None, kw_only=True)
-    limit: Optional[int] = attr.ib(default=None, kw_only=True)
-    orderby_values: Optional[List[Value]] = attr.ib(default=None, kw_only=True)
-    with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
-
-    def with_query_string(self) -> List[str]:
-        if not self.with_queries:
-            return []
-        return ["WITH", ",".join(str(query) for query in self.with_queries)]
-
-    def constraint_string(self) -> List[str]:
-        str_builder = []
-        if self.orderby_values:
-            str_builder += [
-                "ORDER BY ",
-                ",".join(str(order) for order in self.orderby_values),
-            ]
-        if self.offset:
-            str_builder += ["OFFSET", str(self.offset)]
-        if self.limit:
-            str_builder += ["LIMIT", str(self.limit)]
-        return str_builder
-
-
-class SetQuantifier(Enum):
-    """Whether to select all rows or only distinct values
-    """
-
-    DISTINCT = auto()
-    ALL = auto()
-
-
-@attr.s
-class SelectQuery(Query):
-    """Represents a high level SELECT query.
-    """
-
-    select_values: List[Value] = attr.ib()
-    from_relation: Optional[Relation] = attr.ib(default=None)
-    where_value: Optional[Value] = attr.ib(default=None)
-    groupby_values: Optional[List[Value]] = attr.ib(default=None)
-    having_value: Optional[Value] = attr.ib(default=None)
-    select_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
-    window: Optional[Value] = attr.ib(default=None, kw_only=True)
-
-    def __attrs_post_init__(self) -> None:
-        assert not self.offset, "Offset isn't supported"
-        assert not self.window, "Window isn't supported"
+    array_values: List[Value] = attr.ib()
+    with_ordinality: bool = attr.ib(default=False, kw_only=True)
 
     def __str__(self) -> str:
-        str_builder = ["SELECT"]
-        # All is the default, so we don't need to mention it
-        if self.select_quantifier != SetQuantifier.ALL:
-            str_builder.append(self.select_quantifier.name)
-
-        str_builder.append(",".join(str(val) for val in self.select_values))
-        if self.from_relation:
-            relation_str = str(self.from_relation)
-            # Queries need to be parenthesized to be considered relations
-            if isinstance(self.from_relation, Query):
-                relation_str = parenthesize(relation_str)
-            str_builder += ["FROM", relation_str]
-        if self.where_value:
-            str_builder += ["WHERE", str(self.where_value)]
-        if self.groupby_values:
-            str_builder += [
-                "GROUP BY",
-                ",".join(str(val) for val in self.groupby_values),
-            ]
-        if self.having_value:
-            str_builder += ["HAVING", str(self.having_value)]
-        if self.window:
-            str_builder += ["WINDOW", str(self.window)]
-        str_builder += f" {self.constraint_string()}"
+        arrays_str = ",".join(str(arr) for arr in self.array_values)
+        str_builder = [f"UNNEST({arrays_str})"]
+        if self.with_ordinality:
+            str_builder += " WITH ORDINALITY"
         return " ".join(str_builder)
 
 
 @attr.s
-class ValuesQuery(Query):
-    """Represents a literal table query.
+class Lateral(Relation):
+    """Represents a correlated subquery.
     """
 
-    table: ValuesTable = attr.ib()
+    subquery: Query = attr.ib()
 
     def __str__(self) -> str:
-        return f"{self.table} {self.constraint_string()}"
-
-
-@attr.s
-class TableQuery(Query):
-    table: Table = attr.ib()
-
-    def __str__(self) -> str:
-        return f"{self.table} {self.constraint_string()}"
+        return f"LATERAL ({self.subquery})"

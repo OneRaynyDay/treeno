@@ -6,6 +6,7 @@ from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.expression import (
     Value,
+    Array,
     Between,
     Field,
     Star,
@@ -401,6 +402,11 @@ class ConvertVisitor(SqlBaseVisitor):
             escape_seq = "\\"
         return ctx.getText().strip("U&").strip("'").replace(escape_seq, "\\u")
 
+    def visitArrayConstructor(
+        self, ctx: SqlBaseParser.ArrayConstructorContext
+    ) -> Array:
+        return Array([self.visit(expr) for expr in ctx.expression()])
+
     def visitValueExpressionDefault(
         self, ctx: SqlBaseParser.ValueExpressionDefaultContext
     ) -> Value:
@@ -583,10 +589,14 @@ class ConvertVisitor(SqlBaseVisitor):
         return self.visit(ctx.relation())
 
     def visitUnnest(self, ctx: SqlBaseParser.UnnestContext) -> Unnest:
-        raise NotImplementedError("Unnest currently not supported")
+        array_values = [self.visit(expr) for expr in ctx.expression()]
+        with_ordinality = ctx.ORDINALITY() is not None
+        return Unnest(
+            array_values=array_values, with_ordinality=with_ordinality
+        )
 
     def visitLateral(self, ctx: SqlBaseParser.LateralContext) -> Lateral:
-        raise NotImplementedError("Lateral currently not supported")
+        return Lateral(subquery=self.visit(ctx.query()))
 
     def visitAliasedRelation(
         self, ctx: SqlBaseParser.AliasedRelationContext

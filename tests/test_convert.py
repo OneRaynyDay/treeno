@@ -3,7 +3,18 @@ import pytest
 from treeno.builder.convert import ConvertVisitor
 from treeno.grammar.gen.SqlBaseLexer import SqlBaseLexer
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
-from treeno.expression import Literal, Field, AliasedValue
+from treeno.expression import Literal, Field, AliasedValue, Array
+from treeno.relation import (
+    Table,
+    SelectQuery,
+    Unnest,
+    Lateral,
+    Join,
+    JoinType,
+    JoinConfig,
+    JoinOnCriteria,
+    JoinUsingCriteria,
+)
 from antlr4 import CommonTokenStream
 from antlr4.InputStream import InputStream
 
@@ -102,19 +113,109 @@ class TestRelation(VisitorTest):
     """
 
     def test_table(self):
-        pass
+        ast = get_parser("foo.bar.baz").relationPrimary()
+        assert isinstance(ast, SqlBaseParser.TableNameContext)
+        assert self.visitor.visit(ast) == Table(
+            "baz", schema="bar", catalog="foo"
+        )
+
+        ast = get_parser("bar.baz").relationPrimary()
+        assert isinstance(ast, SqlBaseParser.TableNameContext)
+        assert self.visitor.visit(ast) == Table("baz", schema="bar")
+
+        ast = get_parser("baz").relationPrimary()
+        assert isinstance(ast, SqlBaseParser.TableNameContext)
+        assert self.visitor.visit(ast) == Table("baz")
 
     def test_subquery(self):
-        pass
+        ast = get_parser("(SELECT 1)").relationPrimary()
+        assert isinstance(ast, SqlBaseParser.SubqueryRelationContext)
+        assert self.visitor.visit(ast) == SelectQuery(
+            select_values=[Literal(1)]
+        )
 
     def test_unnest(self):
-        pass
+        ast = get_parser(
+            "UNNEST(ARRAY [1,2,3], ARRAY['a','b','c'])"
+        ).relationPrimary()
+        assert isinstance(ast, SqlBaseParser.UnnestContext)
+        assert self.visitor.visit(ast) == Unnest(
+            array_values=[
+                Array.from_values(Literal(1), Literal(2), Literal(3)),
+                Array.from_values(Literal("a"), Literal("b"), Literal("c")),
+            ],
+            with_ordinality=False,
+        )
+
+        ast = get_parser(
+            "UNNEST(some_column) WITH ORDINALITY"
+        ).relationPrimary()
+        assert isinstance(ast, SqlBaseParser.UnnestContext)
+        assert self.visitor.visit(ast) == Unnest(
+            array_values=[Field("some_column")], with_ordinality=True
+        )
 
     def test_lateral(self):
-        pass
+        ast = get_parser("LATERAL (SELECT 1)").relationPrimary()
+        assert isinstance(ast, SqlBaseParser.LateralContext)
+        assert self.visitor.visit(ast) == Lateral(
+            subquery=SelectQuery(select_values=[Literal(1)])
+        )
 
-    def test_join(self):
-        pass
+    def test_cross_join(self):
+        ast = get_parser("a.b.c CROSS JOIN x.y.z").relation()
+        assert isinstance(ast, SqlBaseParser.JoinRelationContext)
+        assert self.visitor.visit(ast) == Join(
+            left_relation=Table("c", "b", "a"),
+            right_relation=Table("z", "y", "x"),
+            config=JoinConfig(join_type=JoinType.CROSS),
+        )
+
+    def test_cross_join(self):
+        ast = get_parser("a.b.c CROSS JOIN x.y.z").relation()
+        assert isinstance(ast, SqlBaseParser.JoinRelationContext)
+        assert self.visitor.visit(ast) == Join(
+            left_relation=Table("c", "b", "a"),
+            right_relation=Table("z", "y", "x"),
+            config=JoinConfig(join_type=JoinType.CROSS),
+        )
+
+    def test_inner_join(self):
+        ast = get_parser("a.b.c INNER JOIN x.y.z ON c.foo = z.bar").relation()
+        assert isinstance(ast, SqlBaseParser.JoinRelationContext)
+        assert self.visitor.visit(ast) == Join(
+            left_relation=Table("c", "b", "a"),
+            right_relation=Table("z", "y", "x"),
+            config=JoinConfig(
+                join_type=JoinType.INNER,
+                criteria=JoinOnCriteria(Field("foo", "c") == Field("bar", "z")),
+                natural=False,
+            ),
+        )
+
+    def test_outer_left_join(self):
+        ast = get_parser(
+            "a.b.c LEFT OUTER JOIN x.y.z USING (foo, bar)"
+        ).relation()
+        assert isinstance(ast, SqlBaseParser.JoinRelationContext)
+        assert self.visitor.visit(ast) == Join(
+            left_relation=Table("c", "b", "a"),
+            right_relation=Table("z", "y", "x"),
+            config=JoinConfig(
+                join_type=JoinType.LEFT,
+                criteria=JoinUsingCriteria(["foo", "bar"]),
+                natural=False,
+            ),
+        )
+
+    def test_outer_full_join(self):
+        ast = get_parser("a.b.c NATURAL FULL JOIN x.y.z").relation()
+        assert isinstance(ast, SqlBaseParser.JoinRelationContext)
+        assert self.visitor.visit(ast) == Join(
+            left_relation=Table("c", "b", "a"),
+            right_relation=Table("z", "y", "x"),
+            config=JoinConfig(join_type=JoinType.OUTER, natural=True),
+        )
 
     def test_alias(self):
         pass
