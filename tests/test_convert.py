@@ -3,8 +3,34 @@ import pytest
 from treeno.builder.convert import ConvertVisitor
 from treeno.grammar.gen.SqlBaseLexer import SqlBaseLexer
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
-from treeno.expression import Literal, Field, AliasedValue, Array
+from treeno.expression import (
+    Literal,
+    Field,
+    AliasedValue,
+    Array,
+    Star,
+    AliasedStar,
+    Add,
+    And,
+    Or,
+    Not,
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual,
+    NotEqual,
+    Equal,
+    Between,
+    Array,
+    InList,
+    Like,
+    Cast,
+    TryCast,
+    IsNull,
+    DistinctFrom,
+)
 from treeno.relation import (
+    AliasedRelation,
     Table,
     SelectQuery,
     Unnest,
@@ -106,6 +132,15 @@ class TestLiterals(VisitorTest):
         assert isinstance(ast, SqlBaseParser.UnicodeStringLiteralContext)
         assert self.visitor.visit(ast) == Literal("chilly snowman \u2603")
 
+    def test_boolean(self):
+        ast = get_parser("TRUE").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.BooleanLiteralContext)
+        assert self.visitor.visit(ast) == Literal(True)
+
+        ast = get_parser("FALSE").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.BooleanLiteralContext)
+        assert self.visitor.visit(ast) == Literal(False)
+
 
 class TestRelation(VisitorTest):
     """Note that we leave select to its own test suite (TestSelect)
@@ -171,16 +206,7 @@ class TestRelation(VisitorTest):
             config=JoinConfig(join_type=JoinType.CROSS),
         )
 
-    def test_cross_join(self):
-        ast = get_parser("a.b.c CROSS JOIN x.y.z").relation()
-        assert isinstance(ast, SqlBaseParser.JoinRelationContext)
-        assert self.visitor.visit(ast) == Join(
-            left_relation=Table("c", "b", "a"),
-            right_relation=Table("z", "y", "x"),
-            config=JoinConfig(join_type=JoinType.CROSS),
-        )
-
-    def test_inner_join(self):
+    def test_inner_on_join(self):
         ast = get_parser("a.b.c INNER JOIN x.y.z ON c.foo = z.bar").relation()
         assert isinstance(ast, SqlBaseParser.JoinRelationContext)
         assert self.visitor.visit(ast) == Join(
@@ -193,7 +219,7 @@ class TestRelation(VisitorTest):
             ),
         )
 
-    def test_outer_left_join(self):
+    def test_outer_left_using_join(self):
         ast = get_parser(
             "a.b.c LEFT OUTER JOIN x.y.z USING (foo, bar)"
         ).relation()
@@ -208,7 +234,7 @@ class TestRelation(VisitorTest):
             ),
         )
 
-    def test_outer_full_join(self):
+    def test_natural_full_join(self):
         ast = get_parser("a.b.c NATURAL FULL JOIN x.y.z").relation()
         assert isinstance(ast, SqlBaseParser.JoinRelationContext)
         assert self.visitor.visit(ast) == Join(
@@ -218,44 +244,173 @@ class TestRelation(VisitorTest):
         )
 
     def test_alias(self):
-        pass
+        ast = get_parser("a.b.c AS foo (x,y,z)").aliasedRelation()
+        assert isinstance(ast, SqlBaseParser.AliasedRelationContext)
+        assert self.visitor.visit(ast) == AliasedRelation(
+            relation=Table("c", "b", "a"),
+            alias="foo",
+            column_aliases=["x", "y", "z"],
+        )
 
 
 class TestSelect(VisitorTest):
     def test_select_star(self):
-        pass
+        ast = get_parser("*").selectItem()
+        assert isinstance(ast, SqlBaseParser.SelectAllContext)
+        assert self.visitor.visit(ast) == Star()
+
+        ast = get_parser("a.*").selectItem()
+        assert isinstance(ast, SqlBaseParser.SelectAllContext)
+        assert self.visitor.visit(ast) == Star(table="a")
+
+        ast = get_parser("a.* AS (x,y,z)").selectItem()
+        assert isinstance(ast, SqlBaseParser.SelectAllContext)
+        assert self.visitor.visit(ast) == AliasedStar(
+            table="a", aliases=["x", "y", "z"]
+        )
 
     def test_select_single(self):
-        pass
+        ast = get_parser("1+2+3").selectItem()
+        assert isinstance(ast, SqlBaseParser.SelectSingleContext)
+        assert self.visitor.visit(ast) == Add(
+            left=Literal(1), right=Add(left=Literal(2), right=Literal(3))
+        )
+
+        ast = get_parser("a").selectItem()
+        assert isinstance(ast, SqlBaseParser.SelectSingleContext)
+        assert self.visitor.visit(ast) == Field(name="a")
+
+        ast = get_parser("a AS foo").selectItem()
+        assert isinstance(ast, SqlBaseParser.SelectSingleContext)
+        assert self.visitor.visit(ast) == AliasedValue(
+            value=Field(name="a"), alias="foo"
+        )
 
     def test_query_specification(self):
+        # TODO: Groupby with the different options like CUBE, orderby and the such
         pass
 
 
-class TestOperators(VisitorTest):
+class TestBooleanExpressions(VisitorTest):
     def test_logical_binary(self):
-        pass
+        ast = get_parser("TRUE AND FALSE").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.LogicalBinaryContext)
+        assert self.visitor.visit(ast) == And(
+            left=Literal(True), right=Literal(False)
+        )
+
+        ast = get_parser("TRUE OR FALSE").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.LogicalBinaryContext)
+        assert self.visitor.visit(ast) == Or(
+            left=Literal(True), right=Literal(False)
+        )
 
     def test_logical_not(self):
-        pass
+        ast = get_parser("NOT TRUE").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.LogicalNotContext)
+        assert self.visitor.visit(ast) == Not(value=Literal(True))
 
     def test_comparison(self):
-        pass
+        ast = get_parser("3 < 1").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == LessThan(
+            left=Literal(3), right=Literal(1)
+        )
+
+        ast = get_parser("3 <= 1").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == LessThanOrEqual(
+            left=Literal(3), right=Literal(1)
+        )
+
+        ast = get_parser("3 > 1").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == GreaterThan(
+            left=Literal(3), right=Literal(1)
+        )
+
+        ast = get_parser("3 >= 1").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == GreaterThanOrEqual(
+            left=Literal(3), right=Literal(1)
+        )
+
+        ast = get_parser("3 = 1").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == Equal(
+            left=Literal(3), right=Literal(1)
+        )
+
+        ast = get_parser("3 <> 1").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == NotEqual(
+            left=Literal(3), right=Literal(1)
+        )
 
     def test_between(self):
-        pass
+        ast = get_parser("3 BETWEEN 1 AND 5").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        between_expr = Between(
+            value=Literal(3), lower=Literal(1), upper=Literal(5)
+        )
+        assert self.visitor.visit(ast) == between_expr
+
+        ast = get_parser("3 NOT BETWEEN 1 AND 5").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == Not(between_expr)
 
     def test_in_list(self):
-        pass
+        ast = get_parser("3 IN (1+2, 5)").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        in_list_expr = InList(
+            value=Literal(3),
+            exprs=[Add(left=Literal(1), right=Literal(2)), Literal(5)],
+        )
+        assert self.visitor.visit(ast) == in_list_expr
+
+        ast = get_parser("3 NOT IN (1+2, 5)").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == Not(in_list_expr)
 
     def test_like(self):
-        pass
+        ast = get_parser("'abc' LIKE '%b%'").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        like_expr = Like(value=Literal("abc"), pattern=Literal("%b%"))
+        assert self.visitor.visit(ast) == like_expr
+
+        ast = get_parser("'abc' NOT LIKE '%b%'").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == Not(like_expr)
+
+        ast = get_parser("'ab%c' LIKE '%b/%%' ESCAPE '/'").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == Like(
+            value=Literal("ab%c"), pattern=Literal("%b/%%"), escape="/"
+        )
 
     def test_isnull(self):
-        pass
+        ast = get_parser("3 IS NULL").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        is_null_expr = IsNull(value=Literal(3))
+        assert self.visitor.visit(ast) == is_null_expr
+
+        ast = get_parser("3 IS NOT NULL").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == Not(is_null_expr)
 
     def test_distinct_from(self):
-        pass
+        ast = get_parser("1 IS DISTINCT FROM 1").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        distinct_expr = DistinctFrom(left=Literal(1), right=Literal(1))
+        assert self.visitor.visit(ast) == distinct_expr
+
+        ast = get_parser("1 IS NOT DISTINCT FROM 1").booleanExpression()
+        assert isinstance(ast, SqlBaseParser.PredicatedContext)
+        assert self.visitor.visit(ast) == Not(distinct_expr)
+
+
+class TestFunctions(VisitorTest):
+    """For now, we classify arithmetic operations as functions"""
 
     def test_arithmetic_binary(self):
         pass

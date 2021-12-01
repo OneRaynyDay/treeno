@@ -10,6 +10,7 @@ from treeno.expression import (
     Between,
     Field,
     Star,
+    AliasedStar,
     AliasedValue,
     InList,
     Like,
@@ -402,6 +403,14 @@ class ConvertVisitor(SqlBaseVisitor):
             escape_seq = "\\"
         return ctx.getText().strip("U&").strip("'").replace(escape_seq, "\\u")
 
+    def visitBooleanLiteral(
+        self, ctx: SqlBaseParser.BooleanLiteralContext
+    ) -> Literal:
+        return Literal(self.visit(ctx.booleanValue()))
+
+    def visitBooleanValue(self, ctx: SqlBaseParser.BooleanValueContext) -> bool:
+        return ctx.TRUE() is not None
+
     def visitArrayConstructor(
         self, ctx: SqlBaseParser.ArrayConstructorContext
     ) -> Array:
@@ -418,14 +427,16 @@ class ConvertVisitor(SqlBaseVisitor):
         if isinstance(primary_expr, SqlBaseParser.ColumnReferenceContext):
             assert isinstance(value_or_field, str)
             return Field(value_or_field)
+        if value_or_field is None:
+            import pdb
+
+            pdb.set_trace()
         assert isinstance(value_or_field, Value)
         return value_or_field
 
     def visitSelectSingle(
         self, ctx: SqlBaseParser.SelectSingleContext
     ) -> Value:
-        """Selects a single column and names it"""
-        # Currently we only support column names in the primary expression
         value = self.visit(ctx.expression())
         identifier = ctx.identifier()
         if identifier:
@@ -470,18 +481,18 @@ class ConvertVisitor(SqlBaseVisitor):
     ) -> Value:
         return self.visit(ctx.expression())
 
-    def visitSelectAll(self, ctx: SqlBaseParser.SelectAllContext) -> Star:
+    def visitSelectAll(self, ctx: SqlBaseParser.SelectAllContext) -> Value:
         """Visits a `*` or `"table".*` statement. Returns a Star field.
         """
-        star = Star()
         if ctx.getText() == "*":
-            return star
+            return Star()
         # This could be a table reference. When we're joining multiple tables together,
         # it makes sense to select all columns from a given input table, in which case
         # this expression is defined.
         # NOTE: The class we're dealing with here says it's a ColumnReference, but in this case
         #       it's wrong and we're dealing with tables here.
         primary_expr = ctx.primaryExpression()
+        table: Optional[str] = None
         if primary_expr:
             if not isinstance(
                 primary_expr, SqlBaseParser.ColumnReferenceContext
@@ -489,9 +500,11 @@ class ConvertVisitor(SqlBaseVisitor):
                 raise NotImplementedError(
                     "Only column references are supported for asterisk references"
                 )
-            star.table = self.visit(primary_expr)
-        assert not ctx.columnAliases(), "* aliases not supported"
-        return star
+            table = self.visit(primary_expr)
+        column_aliases = ctx.columnAliases()
+        if column_aliases:
+            return AliasedStar(table, self.visit(column_aliases))
+        return Star(table)
 
     def visitJoinRelation(self, ctx: SqlBaseParser.JoinRelationContext) -> Join:
         left_relation = self.visit(ctx.left)
@@ -610,9 +623,7 @@ class ConvertVisitor(SqlBaseVisitor):
         alias = AliasedRelation(relation, self.visit(identifier))
         column_aliases = ctx.columnAliases()
         if column_aliases:
-            alias.column_aliases = [
-                self.visit(column_alias) for column_alias in column_aliases
-            ]
+            alias.column_aliases = self.visit(column_aliases)
 
         return alias
 

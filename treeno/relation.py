@@ -43,12 +43,13 @@ class Query(Relation, ABC):
     orderby_values: Optional[List[Value]] = attr.ib(default=None, kw_only=True)
     with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
 
-    def with_query_string(self) -> List[str]:
+    def with_query_string_builder(self) -> List[str]:
+        # TODO: Use this to include with in the output
         if not self.with_queries:
             return []
         return ["WITH", ",".join(str(query) for query in self.with_queries)]
 
-    def constraint_string(self) -> List[str]:
+    def constraint_string_builder(self) -> List[str]:
         str_builder = []
         if self.orderby_values:
             str_builder += [
@@ -103,7 +104,7 @@ class SelectQuery(Query):
             str_builder += ["HAVING", str(self.having_value)]
         if self.window:
             str_builder += ["WINDOW", str(self.window)]
-        str_builder += f" {self.constraint_string()}"
+        str_builder += self.constraint_string_builder()
         return " ".join(str_builder)
 
 
@@ -134,7 +135,9 @@ class TableQuery(Query):
     table: Table = attr.ib()
 
     def __str__(self) -> str:
-        return f"{self.table} {self.constraint_string()}"
+        table_str = [str(self.table)]
+        table_str += self.constraint_string_builder()
+        return " ".join(table_str)
 
 
 @attr.s
@@ -156,7 +159,9 @@ class ValuesQuery(Query):
     table: ValuesTable = attr.ib()
 
     def __str__(self) -> str:
-        return f"{self.table} {self.constraint_string()}"
+        values_str = [str(self.table)]
+        values_str += self.constraint_string_builder()
+        return " ".join(values_str)
 
 
 @attr.s
@@ -169,7 +174,12 @@ class AliasedRelation(Relation):
     column_aliases: Optional[List[str]] = attr.ib(default=None)
 
     def __str__(self) -> str:
-        return f'{self.relation} "{self.alias}"'
+        # TODO: Keep the "AS"?
+        alias_str = f'{self.relation} "{self.alias}"'
+        if self.column_aliases:
+            columns_str = ",".join(self.column_aliases)
+            alias_str += f" ({columns_str})"
+        return alias_str
 
 
 class JoinType(Enum):

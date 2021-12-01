@@ -93,7 +93,7 @@ class Expression(Value, ABC):
 
 
 class Literal(Value):
-    def __init__(self, value) -> None:
+    def __init__(self, value: Any) -> None:
         super().__init__()
         self.value = value
 
@@ -115,7 +115,7 @@ class Literal(Value):
 class Field(Value):
     """Represents a field referenced in the input relations of a SELECT query"""
 
-    def __init__(self, name=None, table=None):
+    def __init__(self, name: str, table: Optional[str] = None):
         super().__init__()
         # None if we're selecting all columns from a source
         self.name = name
@@ -127,31 +127,52 @@ class Field(Value):
 
 
 class AliasedValue(Value):
-    """Represents one or more aliases corresponding to a value
-    An example of where a value can have multiple aliases, consider `*`
-    unpacking into a list of aliases.
-    TODO: Implement multiple aliasing
+    """Represents an alias on a value. For unpacking individual column aliases
+    from a star, see AliasedStar
     """
 
-    def __init__(self, value, alias):
+    def __init__(self, value: Value, alias: str):
         super().__init__()
+        assert not isinstance(
+            value, Star
+        ), "Stars cannot have aliases. Consider using AliasedStar"
         self.value = value
         self.alias = alias
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.value} "{self.alias}"'
 
 
-class Star(Field):
-    """Represents a `*` or a `table.*` statement"""
+class Star(Value):
+    """Represents a `*` or a `table.*` statement
+    NOTE: The reason Star does not inherit from Field is because a star has no name.
+    Fields must have a name, and allow an optional table identifier.
+    """
 
-    def __init__(self, table=None):
-        super().__init__(table=table)
+    def __init__(self, table: Optional[str] = None):
+        super().__init__()
+        self.table = table
 
     def __str__(self):
         star_string = f"{quote_identifier(self.table)}." if self.table else ""
         star_string += "*"
         return star_string
+
+
+class AliasedStar(Star):
+    """Represents one or more aliases corresponding to an unpacked star
+    """
+
+    def __init__(self, table: str, aliases: List[str]):
+        super().__init__(table=table)
+        assert (
+            self.table is not None
+        ), "Stars without a table cannot have column aliases"
+        self.aliases = aliases
+
+    def __str__(self) -> str:
+        alias_str = ",".join(self.aliases)
+        return f"{super().__str__()} ({alias_str})"
 
 
 def wrap_literal(val: Any) -> Value:
@@ -270,7 +291,10 @@ class Divide(BinaryExpression):
 class Not(UnaryExpression):
     def __str__(self):
         # Specializations on Not
-        if isinstance(self.value, (IsNull, Like, InList, Between)):
+        if isinstance(
+            self.value,
+            (DistinctFrom, IsNull, Like, InList, Between, Equal, NotEqual),
+        ):
             return self.value.to_string(negate=True)
 
         return builtin_unary_str(self, "NOT {value}")
@@ -287,13 +311,23 @@ class Modulus(BinaryExpression):
 
 
 class Equal(BinaryExpression):
-    def __str__(self):
+    def to_string(self, negate: bool = False) -> str:
+        if negate:
+            return str(NotEqual(self.left, self.right))
         return builtin_binary_str(self, "{left} = {right}")
+
+    def __str__(self):
+        return self.to_string(negate=False)
 
 
 class NotEqual(BinaryExpression):
-    def __str__(self):
+    def to_string(self, negate: bool = False) -> str:
+        if negate:
+            return str(Equal(self.left, self.right))
         return builtin_binary_str(self, "{left} <> {right}")
+
+    def __str__(self):
+        return self.to_string(negate=False)
 
 
 class GreaterThan(BinaryExpression):
@@ -401,7 +435,7 @@ class Like(Expression):
     value: GenericValue = attr.ib(converter=wrap_literal)
     pattern: GenericValue = attr.ib(converter=wrap_literal)
     escape: Optional[GenericValue] = attr.ib(
-        converter=attr.converters.optional(wrap_literal)
+        default=None, converter=attr.converters.optional(wrap_literal)
     )
 
     def to_string(self, negate: bool = False) -> str:
