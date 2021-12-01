@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, List, Optional, Type, Any
 import attr
+from treeno.types import DataType
 from treeno.util import (
     chain_identifiers,
     quote_literal,
@@ -455,7 +456,7 @@ class Like(Expression):
 @attr.s
 class Cast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
-    type: GenericValue = attr.ib(converter=wrap_literal)
+    type: DataType = attr.ib()
 
     def __str__(self) -> str:
         return f"CAST({self.expr} AS {self.type})"
@@ -464,7 +465,7 @@ class Cast(Expression):
 @attr.s
 class TryCast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
-    type: GenericValue = attr.ib(converter=wrap_literal)
+    type: DataType = attr.ib()
 
     def __str__(self) -> str:
         return f"TRY_CAST({self.expr} AS {self.type})"

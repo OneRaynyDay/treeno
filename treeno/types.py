@@ -177,7 +177,7 @@ FIELDS: Dict[str, List[TypeParameter]] = defaultdict(
             # The response from this thread:
             # https://trinodb.slack.com/archives/CFLB9AMBN/p1637464297012200
             # ... should dictate this behavior.
-            TypeParameter("precision", True, int),
+            TypeParameter("precision", False, int),
             TypeParameter("scale", False, int),
         ],
         VARCHAR: [TypeParameter("max_chars", False, int)],

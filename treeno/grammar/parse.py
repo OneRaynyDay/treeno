@@ -32,6 +32,6 @@ class AST:
     def __str__(self):
         return Trees.toStringTree(self.root, None, self.parser)
 
-    def pprint(self):
+    def tree(self):
         parenthetical_tree = nltk.Tree.fromstring(str(self))
         return parenthetical_tree.pretty_print()

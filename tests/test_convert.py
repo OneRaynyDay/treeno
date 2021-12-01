@@ -11,6 +11,12 @@ from treeno.expression import (
     Star,
     AliasedStar,
     Add,
+    Positive,
+    Minus,
+    Negative,
+    Multiply,
+    Divide,
+    Modulus,
     And,
     Or,
     Not,
@@ -41,6 +47,7 @@ from treeno.relation import (
     JoinOnCriteria,
     JoinUsingCriteria,
 )
+from treeno.types import DataType
 from antlr4 import CommonTokenStream
 from antlr4.InputStream import InputStream
 
@@ -92,6 +99,11 @@ class TestExpression(VisitorTest):
 
 
 class TestLiterals(VisitorTest):
+    def test_null(self):
+        ast = get_parser("NULL").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.NullLiteralContext)
+        assert self.visitor.visit(ast) == Literal(None)
+
     def test_integer(self):
         ast = get_parser("123").number()
         assert isinstance(ast, SqlBaseParser.IntegerLiteralContext)
@@ -413,18 +425,100 @@ class TestFunctions(VisitorTest):
     """For now, we classify arithmetic operations as functions"""
 
     def test_arithmetic_binary(self):
-        pass
+        ast = get_parser("1 + 1").valueExpression()
+        assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
+        add_expr = Add(left=Literal(1), right=Literal(1))
+        assert self.visitor.visit(ast) == add_expr
+
+        ast = get_parser("1 - 1").valueExpression()
+        assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
+        minus_expr = Minus(left=Literal(1), right=Literal(1))
+        assert self.visitor.visit(ast) == minus_expr
+
+        ast = get_parser("1 * 1").valueExpression()
+        assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
+        mult_expr = Multiply(left=Literal(1), right=Literal(1))
+        assert self.visitor.visit(ast) == mult_expr
+
+        ast = get_parser("1 / 1").valueExpression()
+        assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
+        div_expr = Divide(left=Literal(1), right=Literal(1))
+        assert self.visitor.visit(ast) == div_expr
+
+        ast = get_parser("1 % 1").valueExpression()
+        assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
+        mod_expr = Modulus(left=Literal(1), right=Literal(1))
+        assert self.visitor.visit(ast) == mod_expr
 
     def test_arithmetic_unary(self):
-        pass
+        ast = get_parser("+1").valueExpression()
+        assert isinstance(ast, SqlBaseParser.ArithmeticUnaryContext)
+        pos_expr = Positive(value=Literal(1))
+        assert self.visitor.visit(ast) == pos_expr
+
+        # This one's actually interesting - because valueExpression expands into
+        # primaryExpression, we read it as a literal -1 first before it gets evaluated as unary
+        ast = get_parser("-1").valueExpression()
+        assert isinstance(ast, SqlBaseParser.ValueExpressionDefaultContext)
+        literal_expr = Literal(-1)
+        assert self.visitor.visit(ast) == literal_expr
+
+        ast = get_parser("-x").valueExpression()
+        assert isinstance(ast, SqlBaseParser.ArithmeticUnaryContext)
+        neg_expr = Negative(value=Field("x"))
+        assert self.visitor.visit(ast) == neg_expr
 
     def test_cast(self):
-        pass
+        ast = get_parser("CAST(1 AS BIGINT)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.CastContext)
+        cast_expr = Cast(Literal(value=1), DataType("BIGINT"))
+        assert self.visitor.visit(ast) == cast_expr
+
+        ast = get_parser("TRY_CAST(1 AS BIGINT)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.CastContext)
+        try_cast_expr = TryCast(Literal(value=1), DataType("BIGINT"))
+        assert self.visitor.visit(ast) == try_cast_expr
 
 
 class TestDataTypes(VisitorTest):
     def test_generic_type(self):
-        pass
+        for t in [
+            "BIGINT",
+            "BOOLEAN",
+            "TINYINT",
+            "SMALLINT",
+            "INTEGER",
+            "BIGINT",
+            "REAL",
+            "DOUBLE",
+            "VARCHAR",
+            "CHAR",
+            "VARBINARY",
+            "JSON",
+            "DECIMAL",
+        ]:
+            ast = get_parser(t).type_()
+            assert isinstance(ast, SqlBaseParser.Type_Context)
+            type_obj = DataType(t)
+            assert self.visitor.visit(ast) == type_obj
+
+    def test_decimal_type(self):
+        # Decimal is a bit of a special case - DECIMAL is syntactic sugar for DECIMAL(38, 0), which is max precision
+        # and no scale
+        ast = get_parser("DECIMAL").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType("DECIMAL")
+        assert self.visitor.visit(ast) == type_obj
+
+        ast = get_parser("DECIMAL(30)").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType("DECIMAL", {"precision": 30})
+        assert self.visitor.visit(ast) == type_obj
+
+        ast = get_parser("DECIMAL(30, 10)").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType("DECIMAL", {"precision": 30, "scale": 10})
+        assert self.visitor.visit(ast) == type_obj
 
     def test_row_type(self):
         pass

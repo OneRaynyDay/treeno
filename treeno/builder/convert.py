@@ -1,7 +1,7 @@
 """
 Converts from our grammar into a buildable query tree.
 """
-from typing import Optional, List, Union
+from typing import Optional, List, Union, TYPE_CHECKING
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.expression import (
@@ -24,6 +24,7 @@ from treeno.relation import (
     Relation,
     AliasedRelation,
     Table,
+    Query,
     Unnest,
     Lateral,
     Join,
@@ -46,6 +47,22 @@ from treeno.types import (
     ARRAY,
 )
 from treeno.util import nth
+
+
+if TYPE_CHECKING:
+    from treeno.grammar.parse import AST
+
+
+def query_from_ast(ast: "AST") -> Query:
+    return ConvertVisitor().visitSingleStatement(ast.root)
+
+
+def expression_from_ast(ast: "AST") -> Value:
+    return ConvertVisitor().visitStandaloneExpression(ast.root)
+
+
+def type_from_ast(ast: "AST") -> DataType:
+    return ConvertVisitor().visitStandaloneType(ast.root)
 
 
 def apply_operator(operator: str, *args: Value) -> Value:
@@ -91,13 +108,25 @@ class ConvertVisitor(SqlBaseVisitor):
     """Converts the tree into a builder tree in python
     """
 
-    def visitSingleStatement(self, ctx: SqlBaseParser.SingleStatementContext):
+    def visitSingleStatement(
+        self, ctx: SqlBaseParser.SingleStatementContext
+    ) -> Query:
         stmt = ctx.statement()
         if not isinstance(stmt, SqlBaseParser.StatementDefaultContext):
             raise NotImplementedError(
                 "Only standard selects are implemented for now"
             )
         return self.visit(ctx.statement())
+
+    def visitStandaloneExpression(
+        self, ctx: SqlBaseParser.StandaloneExpressionContext
+    ) -> Value:
+        return self.visit(ctx.expression())
+
+    def visitStandaloneType(
+        self, ctx: SqlBaseParser.StandaloneTypeContext
+    ) -> DataType:
+        return self.visit(ctx.type_())
 
     def visitStatementDefault(self, ctx: SqlBaseParser.StatementDefaultContext):
         return self.visit(ctx.query())
@@ -344,6 +373,11 @@ class ConvertVisitor(SqlBaseVisitor):
             primary_expr, SqlBaseParser.ColumnReferenceContext
         ), "We can only dereference `table`.`column` for now."
         return Field(self.visit(ctx.fieldName), self.visit(primary_expr))
+
+    def visitNullLiteral(
+        self, ctx: SqlBaseParser.NullLiteralContext
+    ) -> Literal:
+        return Literal(None)
 
     def visitNumericLiteral(
         self, ctx: SqlBaseParser.NumericLiteralContext
