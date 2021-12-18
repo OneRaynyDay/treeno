@@ -507,12 +507,12 @@ class TestDataTypes(VisitorTest):
         # and no scale
         ast = get_parser("DECIMAL").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
-        type_obj = DataType("DECIMAL")
+        type_obj = DataType("DECIMAL", {"precision": 38, "scale": 0})
         assert self.visitor.visit(ast) == type_obj
 
         ast = get_parser("DECIMAL(30)").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
-        type_obj = DataType("DECIMAL", {"precision": 30})
+        type_obj = DataType("DECIMAL", {"precision": 30, "scale": 0})
         assert self.visitor.visit(ast) == type_obj
 
         ast = get_parser("DECIMAL(30, 10)").type_()
@@ -521,19 +521,84 @@ class TestDataTypes(VisitorTest):
         assert self.visitor.visit(ast) == type_obj
 
     def test_row_type(self):
-        pass
+        ast = get_parser("ROW(BIGINT, DECIMAL(30), VARCHAR)").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType(
+            "ROW",
+            {
+                "dtypes": [
+                    DataType("BIGINT"),
+                    DataType("DECIMAL", {"precision": 30}),
+                    DataType("VARCHAR"),
+                ]
+            },
+        )
+        assert self.visitor.visit(ast) == type_obj
 
     def test_interval_type(self):
-        pass
+        ast = get_parser("INTERVAL YEAR TO MONTH").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType(
+            "INTERVAL", {"from_interval": "YEAR", "to_interval": "MONTH"}
+        )
+        assert self.visitor.visit(ast) == type_obj
+
+        ast = get_parser("INTERVAL DAY TO SECOND").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType(
+            "INTERVAL", {"from_interval": "DAY", "to_interval": "SECOND"}
+        )
+        assert self.visitor.visit(ast) == type_obj
+
+        # some intervals aren't available right now in Trino:
+        ast = get_parser("INTERVAL MONTH TO SECOND").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        with pytest.raises(
+            AssertionError, match="From interval must be YEAR or DAY, got MONTH"
+        ):
+            self.visitor.visit(ast)
 
     def test_array_type(self):
-        pass
+        ast = get_parser("ARRAY(BIGINT)").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType("ARRAY", {"dtype": DataType("BIGINT")})
+        assert self.visitor.visit(ast) == type_obj
+
+    def test_map_type(self):
+        ast = get_parser("MAP(BIGINT, VARCHAR)").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType(
+            "MAP",
+            {"from_dtype": DataType("BIGINT"), "to_dtype": DataType("VARCHAR")},
+        )
+        assert self.visitor.visit(ast) == type_obj
 
     def test_datetime_type(self):
-        pass
+        ast = get_parser("TIMESTAMP").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType("TIMESTAMP", {"timezone": False})
+        assert self.visitor.visit(ast) == type_obj
+
+        ast = get_parser("TIMESTAMP(9)").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType("TIMESTAMP", {"precision": 9, "timezone": False})
+        assert self.visitor.visit(ast) == type_obj
+
+        ast = get_parser("TIMESTAMP WITH TIME ZONE").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType("TIMESTAMP", {"timezone": True})
+        assert self.visitor.visit(ast) == type_obj
+
+        ast = get_parser("TIMESTAMP(9) WITH TIME ZONE").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType("TIMESTAMP", {"precision": 9, "timezone": True})
+        assert self.visitor.visit(ast) == type_obj
 
     def test_double_precision_type(self):
-        pass
+        ast = get_parser("DOUBLE PRECISION").type_()
+        assert isinstance(ast, SqlBaseParser.Type_Context)
+        type_obj = DataType("DOUBLE")
+        assert self.visitor.visit(ast) == type_obj
 
 
 if __name__ == "__main__":

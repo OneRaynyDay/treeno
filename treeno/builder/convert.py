@@ -317,6 +317,11 @@ class ConvertVisitor(SqlBaseVisitor):
         ), "Data types with identifiers currently not supported."
         return self.visit(ctx.type_())
 
+    def visitIntervalField(
+        self, ctx: SqlBaseParser.IntervalFieldContext
+    ) -> str:
+        return ctx.getText()
+
     def visitIntervalType(
         self, ctx: SqlBaseParser.IntervalTypeContext
     ) -> DataType:

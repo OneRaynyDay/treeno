@@ -72,12 +72,13 @@ class DataType:
         ), f"Type {self.type_name} is not a recognized Trino type."
         for field in FIELDS[self.type_name]:
             if not field.required and field.name not in self.parameters:
-                # TODO: We can either fill in the default values or leave them undefined.
                 # Unfortunately, because default values can be overridden on the session level,
                 # we want to be hesitant in imputing missing values with a fixed default value.
                 # For example, see hive.timestamp-precision in https://trino.io/docs/current/connector/hive.html
-                # Let's see if this will prove to be a problem later.
-                continue
+                # Thus, we only do it when there's a default value
+                if field.default is None:
+                    continue
+                self.parameters[field.name] = field.default
 
             assert (
                 field.name in self.parameters
@@ -119,6 +120,8 @@ class TypeParameter:
     required: bool = attr.ib()
     type: type = attr.ib()
     validator: Optional[Callable[..., None]] = attr.ib(default=None)
+    # NOTE: None is not a valid default value, it represents the absence of a default.
+    default: Optional[Any] = attr.ib(default=None)
 
 
 def emit_interval(interval: DataType) -> str:
@@ -153,7 +156,7 @@ def validate_row_dtypes(row: DataType) -> None:
 
 def validate_interval(interval: DataType) -> None:
     from_interval = interval.parameters["from_interval"]
-    to_interval = interval.parameter.get("to_interval", from_interval)
+    to_interval = interval.parameters.get("to_interval", from_interval)
     assert from_interval in {
         "YEAR",
         "DAY",
@@ -177,28 +180,33 @@ FIELDS: Dict[str, List[TypeParameter]] = defaultdict(
             # The response from this thread:
             # https://trinodb.slack.com/archives/CFLB9AMBN/p1637464297012200
             # ... should dictate this behavior.
-            TypeParameter("precision", False, int),
-            TypeParameter("scale", False, int),
+            TypeParameter("precision", required=False, type=int, default=38),
+            TypeParameter("scale", required=False, type=int, default=0),
         ],
-        VARCHAR: [TypeParameter("max_chars", False, int)],
-        CHAR: [TypeParameter("max_chars", False, int)],
+        # VARCHAR's max_chars is not required because it can be unbounded, but we can't supply a default for it
+        # because there is no inf representable in integer space. The absence of the parameter shall denote inf.
+        VARCHAR: [TypeParameter("max_chars", required=False, type=int)],
+        CHAR: [TypeParameter("max_chars", required=False, type=int, default=1)],
         TIME: [
-            TypeParameter("precision", False, int),
-            TypeParameter("timezone", False, bool),
+            # Read TIMESTAMP's explanation for why precision is not required but also doesn't have a default.
+            TypeParameter("precision", required=False, type=int),
+            TypeParameter("timezone", required=False, type=bool, default=False),
         ],
         TIMESTAMP: [
-            TypeParameter("precision", False, int),
-            TypeParameter("timezone", False, bool),
+            # Precision is not required, but we also can't supply a reasonable default because
+            # you can use connector session settings to tune the default precision of your queries.
+            TypeParameter("precision", required=False, type=int),
+            TypeParameter("timezone", required=False, type=bool, default=False),
         ],
-        ARRAY: [TypeParameter("dtype", True, DataType)],
+        ARRAY: [TypeParameter("dtype", required=True, type=DataType)],
         MAP: [
-            TypeParameter("from_dtype", True, DataType),
-            TypeParameter("to_dtype", True, DataType),
+            TypeParameter("from_dtype", required=True, type=DataType),
+            TypeParameter("to_dtype", required=True, type=DataType),
         ],
-        ROW: [TypeParameter("dtypes", True, list)],
+        ROW: [TypeParameter("dtypes", required=True, type=list)],
         INTERVAL: [
-            TypeParameter("from_interval", True, str),
-            TypeParameter("to_interval", True, str),
+            TypeParameter("from_interval", required=True, type=str),
+            TypeParameter("to_interval", required=True, type=str),
         ],
     },
 )
