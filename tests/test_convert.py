@@ -47,7 +47,8 @@ from treeno.relation import (
     JoinOnCriteria,
     JoinUsingCriteria,
 )
-from treeno.types import DataType
+from treeno.datatypes import common
+from treeno.datatypes.types import DataType
 from antlr4 import CommonTokenStream
 from antlr4.InputStream import InputStream
 
@@ -102,56 +103,75 @@ class TestLiterals(VisitorTest):
     def test_null(self):
         ast = get_parser("NULL").primaryExpression()
         assert isinstance(ast, SqlBaseParser.NullLiteralContext)
-        assert self.visitor.visit(ast) == Literal(None)
+        assert self.visitor.visit(ast) == Literal(None, common.UNKNOWN)
 
     def test_integer(self):
         ast = get_parser("123").number()
         assert isinstance(ast, SqlBaseParser.IntegerLiteralContext)
-        assert self.visitor.visit(ast) == Literal(123)
+        assert self.visitor.visit(ast) == Literal(123, common.INTEGER)
 
         ast = get_parser("-123").number()
         assert isinstance(ast, SqlBaseParser.IntegerLiteralContext)
-        assert self.visitor.visit(ast) == Literal(123)
+        assert self.visitor.visit(ast) == Literal(123, common.INTEGER)
 
     def test_decimal(self):
         ast = get_parser("123.45").number()
         assert isinstance(ast, SqlBaseParser.DecimalLiteralContext)
-        assert self.visitor.visit(ast) == Literal(123.45)
+        assert self.visitor.visit(ast) == Literal(
+            123.45, DataType("DECIMAL", parameters={"precision": 5, "scale": 2})
+        )
 
         ast = get_parser("-123.45").number()
         assert isinstance(ast, SqlBaseParser.DecimalLiteralContext)
-        assert self.visitor.visit(ast) == Literal(-123.45)
+        assert self.visitor.visit(ast) == Literal(
+            -123.45,
+            DataType("DECIMAL", parameters={"precision": 5, "scale": 2}),
+        )
 
     def test_double(self):
         ast = get_parser("-1.23E+2").number()
         assert isinstance(ast, SqlBaseParser.DoubleLiteralContext)
-        assert self.visitor.visit(ast) == Literal(pytest.approx(-1.23e2))
+        assert self.visitor.visit(ast) == Literal(
+            pytest.approx(-1.23e2), common.DOUBLE
+        )
 
         ast = get_parser(".45E-2").number()
         assert isinstance(ast, SqlBaseParser.DoubleLiteralContext)
-        assert self.visitor.visit(ast) == Literal(pytest.approx(-0.45e-2))
+        assert self.visitor.visit(ast) == Literal(
+            pytest.approx(-0.45e-2), common.DOUBLE
+        )
 
     def test_string(self):
-        ast = get_parser("'abc'").string()
-        assert isinstance(ast, SqlBaseParser.BasicStringLiteralContext)
-        assert self.visitor.visit(ast) == Literal(pytest.approx(-1.23e2))
+        ast = get_parser("'abc'").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.StringLiteralContext)
+        assert self.visitor.visit(ast) == Literal(
+            "abc", DataType("VARCHAR", parameters={"max_chars": 3})
+        )
 
-        ast = get_parser("U&'chilly snowman \2603'").string()
-        assert isinstance(ast, SqlBaseParser.UnicodeStringLiteralContext)
-        assert self.visitor.visit(ast) == Literal("chilly snowman \u2603")
+        ast = get_parser("U&'chilly snowman \2603'").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.StringLiteralContext)
+        assert self.visitor.visit(ast) == Literal(
+            "chilly snowman \u2603",
+            DataType("VARCHAR", parameters={"max_chars": 16}),
+        )
 
-        ast = get_parser("U&'chilly snowman #2603' UESCAPE '#'").string()
-        assert isinstance(ast, SqlBaseParser.UnicodeStringLiteralContext)
-        assert self.visitor.visit(ast) == Literal("chilly snowman \u2603")
+        ast = get_parser(
+            "U&'chilly snowman #2603' UESCAPE '#'"
+        ).primaryExpression()
+        assert isinstance(ast, SqlBaseParser.StringLiteralContext)
+        assert self.visitor.visit(ast) == Literal(
+            "chilly snowman \u2603",
+            DataType("VARCHAR", parameters={"max_chars": 16}),
+        )
 
     def test_boolean(self):
         ast = get_parser("TRUE").primaryExpression()
         assert isinstance(ast, SqlBaseParser.BooleanLiteralContext)
-        assert self.visitor.visit(ast) == Literal(True)
+        assert self.visitor.visit(ast) == Literal(True, common.BOOLEAN)
 
         ast = get_parser("FALSE").primaryExpression()
         assert isinstance(ast, SqlBaseParser.BooleanLiteralContext)
-        assert self.visitor.visit(ast) == Literal(False)
+        assert self.visitor.visit(ast) == Literal(False, common.BOOLEAN)
 
 
 class TestRelation(VisitorTest):
@@ -178,7 +198,7 @@ class TestRelation(VisitorTest):
         ast = get_parser("(SELECT 1)").relationPrimary()
         assert isinstance(ast, SqlBaseParser.SubqueryRelationContext)
         assert self.visitor.visit(ast) == SelectQuery(
-            select_values=[Literal(1)]
+            select_values=[Literal(1, common.INTEGER)]
         )
 
     def test_unnest(self):
@@ -188,8 +208,22 @@ class TestRelation(VisitorTest):
         assert isinstance(ast, SqlBaseParser.UnnestContext)
         assert self.visitor.visit(ast) == Unnest(
             array_values=[
-                Array.from_values(Literal(1), Literal(2), Literal(3)),
-                Array.from_values(Literal("a"), Literal("b"), Literal("c")),
+                Array.from_values(
+                    Literal(1, common.INTEGER),
+                    Literal(2, common.INTEGER),
+                    Literal(3, common.INTEGER),
+                ),
+                Array.from_values(
+                    Literal(
+                        "a", DataType("VARCHAR", parameters={"max_chars": 1})
+                    ),
+                    Literal(
+                        "b", DataType("VARCHAR", parameters={"max_chars": 1})
+                    ),
+                    Literal(
+                        "c", DataType("VARCHAR", parameters={"max_chars": 1})
+                    ),
+                ),
             ],
             with_ordinality=False,
         )
@@ -206,7 +240,7 @@ class TestRelation(VisitorTest):
         ast = get_parser("LATERAL (SELECT 1)").relationPrimary()
         assert isinstance(ast, SqlBaseParser.LateralContext)
         assert self.visitor.visit(ast) == Lateral(
-            subquery=SelectQuery(select_values=[Literal(1)])
+            subquery=SelectQuery(select_values=[Literal(1, common.INTEGER)])
         )
 
     def test_cross_join(self):
@@ -285,7 +319,11 @@ class TestSelect(VisitorTest):
         ast = get_parser("1+2+3").selectItem()
         assert isinstance(ast, SqlBaseParser.SelectSingleContext)
         assert self.visitor.visit(ast) == Add(
-            left=Literal(1), right=Add(left=Literal(2), right=Literal(3))
+            left=Literal(1, common.INTEGER),
+            right=Add(
+                left=Literal(2, common.INTEGER),
+                right=Literal(3, common.INTEGER),
+            ),
         )
 
         ast = get_parser("a").selectItem()
@@ -308,62 +346,68 @@ class TestBooleanExpressions(VisitorTest):
         ast = get_parser("TRUE AND FALSE").booleanExpression()
         assert isinstance(ast, SqlBaseParser.LogicalBinaryContext)
         assert self.visitor.visit(ast) == And(
-            left=Literal(True), right=Literal(False)
+            left=Literal(True, common.BOOLEAN),
+            right=Literal(False, common.BOOLEAN),
         )
 
         ast = get_parser("TRUE OR FALSE").booleanExpression()
         assert isinstance(ast, SqlBaseParser.LogicalBinaryContext)
         assert self.visitor.visit(ast) == Or(
-            left=Literal(True), right=Literal(False)
+            left=Literal(True, common.BOOLEAN),
+            right=Literal(False, common.BOOLEAN),
         )
 
     def test_logical_not(self):
         ast = get_parser("NOT TRUE").booleanExpression()
         assert isinstance(ast, SqlBaseParser.LogicalNotContext)
-        assert self.visitor.visit(ast) == Not(value=Literal(True))
+        assert self.visitor.visit(ast) == Not(
+            value=Literal(True, common.BOOLEAN)
+        )
 
     def test_comparison(self):
         ast = get_parser("3 < 1").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
         assert self.visitor.visit(ast) == LessThan(
-            left=Literal(3), right=Literal(1)
+            left=Literal(3, common.INTEGER), right=Literal(1, common.INTEGER)
         )
 
         ast = get_parser("3 <= 1").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
         assert self.visitor.visit(ast) == LessThanOrEqual(
-            left=Literal(3), right=Literal(1)
+            left=Literal(3, common.INTEGER), right=Literal(1, common.INTEGER)
         )
 
         ast = get_parser("3 > 1").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
         assert self.visitor.visit(ast) == GreaterThan(
-            left=Literal(3), right=Literal(1)
+            left=Literal(3, common.INTEGER), right=Literal(1, common.INTEGER)
         )
 
         ast = get_parser("3 >= 1").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
         assert self.visitor.visit(ast) == GreaterThanOrEqual(
-            left=Literal(3), right=Literal(1)
+            left=Literal(3, common.INTEGER), right=Literal(1, common.INTEGER)
         )
 
         ast = get_parser("3 = 1").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
         assert self.visitor.visit(ast) == Equal(
-            left=Literal(3), right=Literal(1)
+            left=Literal(3, common.INTEGER), right=Literal(1, common.INTEGER)
         )
 
         ast = get_parser("3 <> 1").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
         assert self.visitor.visit(ast) == NotEqual(
-            left=Literal(3), right=Literal(1)
+            left=Literal(3, common.INTEGER), right=Literal(1, common.INTEGER)
         )
 
     def test_between(self):
         ast = get_parser("3 BETWEEN 1 AND 5").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
         between_expr = Between(
-            value=Literal(3), lower=Literal(1), upper=Literal(5)
+            value=Literal(3, common.INTEGER),
+            lower=Literal(1, common.INTEGER),
+            upper=Literal(5, common.INTEGER),
         )
         assert self.visitor.visit(ast) == between_expr
 
@@ -375,8 +419,14 @@ class TestBooleanExpressions(VisitorTest):
         ast = get_parser("3 IN (1+2, 5)").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
         in_list_expr = InList(
-            value=Literal(3),
-            exprs=[Add(left=Literal(1), right=Literal(2)), Literal(5)],
+            value=Literal(3, common.INTEGER),
+            exprs=[
+                Add(
+                    left=Literal(1, common.INTEGER),
+                    right=Literal(2, common.INTEGER),
+                ),
+                Literal(5, common.INTEGER),
+            ],
         )
         assert self.visitor.visit(ast) == in_list_expr
 
@@ -387,7 +437,14 @@ class TestBooleanExpressions(VisitorTest):
     def test_like(self):
         ast = get_parser("'abc' LIKE '%b%'").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
-        like_expr = Like(value=Literal("abc"), pattern=Literal("%b%"))
+        like_expr = Like(
+            value=Literal(
+                "abc", DataType("VARCHAR", parameters={"max_chars": 3})
+            ),
+            pattern=Literal(
+                "%b%", DataType("VARCHAR", parameters={"max_chars": 3})
+            ),
+        )
         assert self.visitor.visit(ast) == like_expr
 
         ast = get_parser("'abc' NOT LIKE '%b%'").booleanExpression()
@@ -397,13 +454,21 @@ class TestBooleanExpressions(VisitorTest):
         ast = get_parser("'ab%c' LIKE '%b/%%' ESCAPE '/'").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
         assert self.visitor.visit(ast) == Like(
-            value=Literal("ab%c"), pattern=Literal("%b/%%"), escape="/"
+            value=Literal(
+                "ab%c", DataType("VARCHAR", parameters={"max_chars": 3})
+            ),
+            pattern=Literal(
+                "%b/%%", DataType("VARCHAR", parameters={"max_chars": 5})
+            ),
+            escape=Literal(
+                "/", DataType("VARCHAR", parameters={"max_chars": 1})
+            ),
         )
 
     def test_isnull(self):
         ast = get_parser("3 IS NULL").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
-        is_null_expr = IsNull(value=Literal(3))
+        is_null_expr = IsNull(value=Literal(3, common.INTEGER))
         assert self.visitor.visit(ast) == is_null_expr
 
         ast = get_parser("3 IS NOT NULL").booleanExpression()
@@ -413,7 +478,9 @@ class TestBooleanExpressions(VisitorTest):
     def test_distinct_from(self):
         ast = get_parser("1 IS DISTINCT FROM 1").booleanExpression()
         assert isinstance(ast, SqlBaseParser.PredicatedContext)
-        distinct_expr = DistinctFrom(left=Literal(1), right=Literal(1))
+        distinct_expr = DistinctFrom(
+            left=Literal(1, common.INTEGER), right=Literal(1, common.INTEGER)
+        )
         assert self.visitor.visit(ast) == distinct_expr
 
         ast = get_parser("1 IS NOT DISTINCT FROM 1").booleanExpression()
@@ -427,40 +494,50 @@ class TestFunctions(VisitorTest):
     def test_arithmetic_binary(self):
         ast = get_parser("1 + 1").valueExpression()
         assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
-        add_expr = Add(left=Literal(1), right=Literal(1))
+        add_expr = Add(
+            left=Literal(1, common.INTEGER), right=Literal(1, common.INTEGER)
+        )
         assert self.visitor.visit(ast) == add_expr
 
         ast = get_parser("1 - 1").valueExpression()
         assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
-        minus_expr = Minus(left=Literal(1), right=Literal(1))
+        minus_expr = Minus(
+            left=Literal(1, common.INTEGER), right=Literal(1, common.INTEGER)
+        )
         assert self.visitor.visit(ast) == minus_expr
 
         ast = get_parser("1 * 1").valueExpression()
         assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
-        mult_expr = Multiply(left=Literal(1), right=Literal(1))
+        mult_expr = Multiply(
+            left=Literal(1, common.INTEGER), right=Literal(1, common.INTEGER)
+        )
         assert self.visitor.visit(ast) == mult_expr
 
         ast = get_parser("1 / 1").valueExpression()
         assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
-        div_expr = Divide(left=Literal(1), right=Literal(1))
+        div_expr = Divide(
+            left=Literal(1, common.INTEGER), right=Literal(1, common.INTEGER)
+        )
         assert self.visitor.visit(ast) == div_expr
 
         ast = get_parser("1 % 1").valueExpression()
         assert isinstance(ast, SqlBaseParser.ArithmeticBinaryContext)
-        mod_expr = Modulus(left=Literal(1), right=Literal(1))
+        mod_expr = Modulus(
+            left=Literal(1, common.INTEGER), right=Literal(1, common.INTEGER)
+        )
         assert self.visitor.visit(ast) == mod_expr
 
     def test_arithmetic_unary(self):
         ast = get_parser("+1").valueExpression()
         assert isinstance(ast, SqlBaseParser.ArithmeticUnaryContext)
-        pos_expr = Positive(value=Literal(1))
+        pos_expr = Positive(value=Literal(1, common.INTEGER))
         assert self.visitor.visit(ast) == pos_expr
 
         # This one's actually interesting - because valueExpression expands into
         # primaryExpression, we read it as a literal -1 first before it gets evaluated as unary
         ast = get_parser("-1").valueExpression()
         assert isinstance(ast, SqlBaseParser.ValueExpressionDefaultContext)
-        literal_expr = Literal(-1)
+        literal_expr = Literal(-1, common.INTEGER)
         assert self.visitor.visit(ast) == literal_expr
 
         ast = get_parser("-x").valueExpression()
@@ -471,12 +548,12 @@ class TestFunctions(VisitorTest):
     def test_cast(self):
         ast = get_parser("CAST(1 AS BIGINT)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.CastContext)
-        cast_expr = Cast(Literal(value=1), DataType("BIGINT"))
+        cast_expr = Cast(Literal(1, common.INTEGER), DataType("BIGINT"))
         assert self.visitor.visit(ast) == cast_expr
 
         ast = get_parser("TRY_CAST(1 AS BIGINT)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.CastContext)
-        try_cast_expr = TryCast(Literal(value=1), DataType("BIGINT"))
+        try_cast_expr = TryCast(Literal(1, common.INTEGER), DataType("BIGINT"))
         assert self.visitor.visit(ast) == try_cast_expr
 
 

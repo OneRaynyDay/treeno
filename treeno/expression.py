@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, List, Optional, Type, Any
 import attr
-from treeno.types import DataType
+from treeno.datatypes.types import DataType
 from treeno.util import (
     chain_identifiers,
     quote_literal,
@@ -24,9 +24,9 @@ class Value(ABC):
     as syntactic sugar for Expression(<op>, operands...).
     """
 
-    def __init__(self):
-        # TODO: We don't have data type inference support yet
-        self.data_type = None
+    def __init__(self, data_type: Optional[DataType] = None):
+        # TODO: We don't have full data type inference support yet
+        self.data_type = data_type
 
     @abstractmethod
     def __str__(self):
@@ -94,8 +94,8 @@ class Expression(Value, ABC):
 
 
 class Literal(Value):
-    def __init__(self, value: Any) -> None:
-        super().__init__()
+    def __init__(self, value: Any, data_type: DataType) -> None:
+        super().__init__(data_type)
         self.value = value
 
     def __str__(self) -> str:

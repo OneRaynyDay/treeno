@@ -36,16 +36,19 @@ from treeno.relation import (
     SelectQuery,
     SetQuantifier,
 )
-from treeno.types import (
+from treeno.datatypes.types import (
     FIELDS,
     DataType,
     TIMESTAMP,
     INTERVAL,
     TIME,
-    DOUBLE,
     ROW,
     ARRAY,
+    VARCHAR,
+    infer_integral,
+    infer_decimal_from_str,
 )
+from treeno.datatypes import common
 from treeno.util import nth
 
 
@@ -360,7 +363,7 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitDoublePrecisionType(
         self, ctx: SqlBaseParser.DoublePrecisionTypeContext
     ) -> DataType:
-        return DataType(DOUBLE)
+        return common.DOUBLE
 
     def visitLegacyArrayType(
         self, ctx: SqlBaseParser.LegacyArrayTypeContext
@@ -382,11 +385,15 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitNullLiteral(
         self, ctx: SqlBaseParser.NullLiteralContext
     ) -> Literal:
-        return Literal(None)
+        return Literal(None, common.UNKNOWN)
 
     def visitNumericLiteral(
         self, ctx: SqlBaseParser.NumericLiteralContext
     ) -> Literal:
+        # IMPORTANT: Note that number is only used in primary expression, so it's okay
+        # that we get a literal from here. However, if number changes to support other
+        # semantic meaning that requires something other than a Literal value to be
+        # evaluated, then we need to change this.
         return self.visit(ctx.number())
 
     def visitIntegerLiteral(
@@ -395,8 +402,7 @@ class ConvertVisitor(SqlBaseVisitor):
         value = int(ctx.INTEGER_VALUE().getText())
         if ctx.MINUS() is not None:
             value = -value
-
-        return Literal(value)
+        return Literal(value, infer_integral(value))
 
     def visitDecimalLiteral(
         self, ctx: SqlBaseParser.DecimalLiteralContext
@@ -404,28 +410,34 @@ class ConvertVisitor(SqlBaseVisitor):
         text = ctx.DECIMAL_VALUE().getText()
         negative = ctx.MINUS() is not None
 
+        dtype: DataType
         if "." in text:
             value = float(text)
+            dtype = infer_decimal_from_str(text)
         else:
             value = int(text)
+            dtype = common.INTEGER
 
         if negative:
             value = -value
 
-        return Literal(value)
+        return Literal(value, dtype)
 
     def visitStringLiteral(
         self, ctx: SqlBaseParser.StringLiteralContext
     ) -> Literal:
-        return Literal(self.visit(ctx.string()))
+        string = self.visit(ctx.string())
+        return Literal(
+            string, DataType(VARCHAR, parameters={"max_chars": len(string)})
+        )
 
     def visitDoubleLiteral(
         self, ctx: SqlBaseParser.DoubleLiteralContext
     ) -> Literal:
-        value = float(ctx.DOUBLE_VALUE().getText())
+        number_string = ctx.DOUBLE_VALUE().getText()
         if ctx.MINUS() is not None:
-            value = -value
-        return Literal(value)
+            number_string = ctx.MINUS().getText() + number_string
+        return Literal(float(number_string), common.DOUBLE)
 
     def visitBasicStringLiteral(
         self, ctx: SqlBaseParser.BasicStringLiteralContext
@@ -445,10 +457,20 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitBooleanLiteral(
         self, ctx: SqlBaseParser.BooleanLiteralContext
     ) -> Literal:
-        return Literal(self.visit(ctx.booleanValue()))
+        return Literal(self.visit(ctx.booleanValue()), common.BOOLEAN)
 
     def visitBooleanValue(self, ctx: SqlBaseParser.BooleanValueContext) -> bool:
         return ctx.TRUE() is not None
+
+    def visitTypeConstructor(self, ctx: SqlBaseParser.TypeConstructorContext):
+        if ctx.DOUBLE() and ctx.PRECISION():
+            return float(ctx.string())
+        # It appears the type constructor is fairly primitive in that it doesn't allow parametrized types, like
+        # SELECT DECIMAL(30) '3'
+        # which means we can assume it's a generic nonparametrized data type.
+        raise NotImplementedError(
+            "Currently working on adding types to literal values"
+        )
 
     def visitArrayConstructor(
         self, ctx: SqlBaseParser.ArrayConstructorContext

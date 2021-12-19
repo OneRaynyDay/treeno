@@ -28,6 +28,8 @@ import attr
     ARRAY,
     MAP,
     ROW,
+    # NULL's currently are unknown types
+    UNKNOWN,
 ) = ALLOWED_TYPES = [
     "BOOLEAN",
     "INTEGER",
@@ -54,6 +56,7 @@ import attr
     "ARRAY",
     "MAP",
     "ROW",
+    "UNKNOWN",
 ]
 
 
@@ -169,6 +172,31 @@ def validate_interval(interval: DataType) -> None:
         assert (
             to_interval == "SECOND"
         ), f"Currently only DAY TO SECOND is allowed, not DAY TO {to_interval}"
+
+
+def infer_integral(value: int) -> DataType:
+    return (
+        DataType(INTEGER)
+        if -(0x7FFFFFFF + 1) <= value <= 0x7FFFFFFF
+        else DataType(BIGINT)
+    )
+
+
+def infer_decimal_from_str(value: str) -> DataType:
+    if "." not in value:
+        return DataType(
+            DECIMAL, parameters={"precision": len(value), "scale": 0}
+        )
+    else:
+        assert value.count(".") == 1, f"Malformed decimal value {value}"
+        decimal_point_pos = value.index(".")
+        return DataType(
+            DECIMAL,
+            parameters={
+                "precision": decimal_point_pos,
+                "scale": len(value) - decimal_point_pos - 1,
+            },
+        )
 
 
 FIELDS: Dict[str, List[TypeParameter]] = defaultdict(
