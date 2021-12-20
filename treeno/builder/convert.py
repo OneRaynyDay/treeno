@@ -36,19 +36,18 @@ from treeno.relation import (
     SelectQuery,
     SetQuantifier,
 )
-from treeno.datatypes.types import (
-    FIELDS,
-    DataType,
-    TIMESTAMP,
-    INTERVAL,
-    TIME,
-    ROW,
-    ARRAY,
-    VARCHAR,
-    infer_integral,
-    infer_decimal_from_str,
+from treeno.datatypes.types import FIELDS, DataType, TIMESTAMP, TIME
+from treeno.datatypes.inference import infer_integral, infer_decimal_from_str
+from treeno.datatypes.builder import (
+    double,
+    unknown,
+    boolean,
+    row,
+    varchar,
+    interval,
+    array,
+    integer,
 )
-from treeno.datatypes import common
 from treeno.util import nth
 
 
@@ -312,7 +311,7 @@ class ConvertVisitor(SqlBaseVisitor):
 
     def visitRowType(self, ctx: SqlBaseParser.RowTypeContext) -> DataType:
         types = [self.visit(row) for row in ctx.rowField()]
-        return DataType(ROW, parameters={"dtypes": types})
+        return row(dtypes=types)
 
     def visitRowField(self, ctx: SqlBaseParser.RowFieldContext) -> DataType:
         assert (
@@ -331,11 +330,11 @@ class ConvertVisitor(SqlBaseVisitor):
         parameters = {"from_interval": self.visit(ctx.from_)}
         if ctx.to:
             parameters["to_interval"] = self.visit(ctx.to)
-        return DataType(INTERVAL, parameters=parameters)
+        return interval(**parameters)
 
     def visitArrayType(self, ctx: SqlBaseParser.ArrayTypeContext) -> DataType:
         assert not ctx.INTEGER_VALUE(), "Explicit array size not supported"
-        return DataType(ARRAY, parameters={"dtype": self.visit(ctx.type_())})
+        return array(dtype=self.visit(ctx.type_()))
 
     def visitTypeParameter(
         self, ctx: SqlBaseParser.TypeParameterContext
@@ -363,7 +362,7 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitDoublePrecisionType(
         self, ctx: SqlBaseParser.DoublePrecisionTypeContext
     ) -> DataType:
-        return common.DOUBLE
+        return double()
 
     def visitLegacyArrayType(
         self, ctx: SqlBaseParser.LegacyArrayTypeContext
@@ -385,15 +384,16 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitNullLiteral(
         self, ctx: SqlBaseParser.NullLiteralContext
     ) -> Literal:
-        return Literal(None, common.UNKNOWN)
+        # A null literal doesn't have a well-defined type, since it can be any type
+        # due to all types in Trino being optional.
+        return Literal(None, unknown())
 
     def visitNumericLiteral(
         self, ctx: SqlBaseParser.NumericLiteralContext
     ) -> Literal:
         # IMPORTANT: Note that number is only used in primary expression, so it's okay
         # that we get a literal from here. However, if number changes to support other
-        # semantic meaning that requires something other than a Literal value to be
-        # evaluated, then we need to change this.
+        # semantic meaning that's not a Literal value, then we need to change this.
         return self.visit(ctx.number())
 
     def visitIntegerLiteral(
@@ -416,7 +416,7 @@ class ConvertVisitor(SqlBaseVisitor):
             dtype = infer_decimal_from_str(text)
         else:
             value = int(text)
-            dtype = common.INTEGER
+            dtype = integer()
 
         if negative:
             value = -value
@@ -427,9 +427,7 @@ class ConvertVisitor(SqlBaseVisitor):
         self, ctx: SqlBaseParser.StringLiteralContext
     ) -> Literal:
         string = self.visit(ctx.string())
-        return Literal(
-            string, DataType(VARCHAR, parameters={"max_chars": len(string)})
-        )
+        return Literal(string, varchar(max_chars=len(string)))
 
     def visitDoubleLiteral(
         self, ctx: SqlBaseParser.DoubleLiteralContext
@@ -437,7 +435,7 @@ class ConvertVisitor(SqlBaseVisitor):
         number_string = ctx.DOUBLE_VALUE().getText()
         if ctx.MINUS() is not None:
             number_string = ctx.MINUS().getText() + number_string
-        return Literal(float(number_string), common.DOUBLE)
+        return Literal(float(number_string), double())
 
     def visitBasicStringLiteral(
         self, ctx: SqlBaseParser.BasicStringLiteralContext
@@ -457,7 +455,7 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitBooleanLiteral(
         self, ctx: SqlBaseParser.BooleanLiteralContext
     ) -> Literal:
-        return Literal(self.visit(ctx.booleanValue()), common.BOOLEAN)
+        return Literal(self.visit(ctx.booleanValue()), boolean())
 
     def visitBooleanValue(self, ctx: SqlBaseParser.BooleanValueContext) -> bool:
         return ctx.TRUE() is not None

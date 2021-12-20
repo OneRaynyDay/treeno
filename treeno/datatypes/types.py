@@ -28,7 +28,8 @@ import attr
     ARRAY,
     MAP,
     ROW,
-    # NULL's currently are unknown types
+    # NULL's are unknown types because they can be reinterpreted as any type
+    # since all types in Trino are optional
     UNKNOWN,
 ) = ALLOWED_TYPES = [
     "BOOLEAN",
@@ -150,11 +151,38 @@ def emit_timestamp(timestamp: DataType) -> str:
     return type_string
 
 
-def validate_row_dtypes(row: DataType) -> None:
+def validate_array(row: DataType) -> None:
+    data_type = row.parameters["dtype"]
+    assert isinstance(data_type, DataType)
+
+
+def validate_map(row: DataType) -> None:
+    from_type = row.parameters["from_dtype"]
+    to_type = row.parameters["to_dtype"]
+    assert isinstance(from_type, DataType)
+    assert isinstance(to_type, DataType)
+
+
+def validate_row(row: DataType) -> None:
     data_types = row.parameters["dtypes"]
     assert all(
         isinstance(t, DataType) for t in data_types
     ), "dtypes argument must be a list of DataTypes"
+
+
+def validate_decimal(decimal: DataType) -> None:
+    # TODO: Should we validate the scale as well?
+    precision = decimal.parameters["precision"]
+    assert (
+        0 <= precision <= 38
+    ), f"Precision {precision} is not supported in Trino."
+
+
+def validate_nonparametric(nonparametric: DataType) -> None:
+    parameters = nonparametric.parameters
+    assert not len(
+        parameters
+    ), f"Nonparametric data type {nonparametric} does not accept parameters, got {parameters}"
 
 
 def validate_interval(interval: DataType) -> None:
@@ -172,31 +200,6 @@ def validate_interval(interval: DataType) -> None:
         assert (
             to_interval == "SECOND"
         ), f"Currently only DAY TO SECOND is allowed, not DAY TO {to_interval}"
-
-
-def infer_integral(value: int) -> DataType:
-    return (
-        DataType(INTEGER)
-        if -(0x7FFFFFFF + 1) <= value <= 0x7FFFFFFF
-        else DataType(BIGINT)
-    )
-
-
-def infer_decimal_from_str(value: str) -> DataType:
-    if "." not in value:
-        return DataType(
-            DECIMAL, parameters={"precision": len(value), "scale": 0}
-        )
-    else:
-        assert value.count(".") == 1, f"Malformed decimal value {value}"
-        decimal_point_pos = value.index(".")
-        return DataType(
-            DECIMAL,
-            parameters={
-                "precision": decimal_point_pos,
-                "scale": len(value) - decimal_point_pos - 1,
-            },
-        )
 
 
 FIELDS: Dict[str, List[TypeParameter]] = defaultdict(
@@ -239,7 +242,27 @@ FIELDS: Dict[str, List[TypeParameter]] = defaultdict(
     },
 )
 
-VALIDATORS: Dict[str, Optional[Callable[[DataType], None]]] = {
-    ROW: validate_row_dtypes,
+VALIDATORS: Dict[str, Callable[[DataType], None]] = {
+    BOOLEAN: validate_nonparametric,
+    INTEGER: validate_nonparametric,
+    TINYINT: validate_nonparametric,
+    SMALLINT: validate_nonparametric,
+    BIGINT: validate_nonparametric,
+    REAL: validate_nonparametric,
+    DOUBLE: validate_nonparametric,
+    VARBINARY: validate_nonparametric,
+    JSON: validate_nonparametric,
+    DATE: validate_nonparametric,
+    IP: validate_nonparametric,
+    UUID: validate_nonparametric,
+    HLL: validate_nonparametric,
+    P4HLL: validate_nonparametric,
+    QDIGEST: validate_nonparametric,
+    TDIGEST: validate_nonparametric,
+    UNKNOWN: validate_nonparametric,
+    ARRAY: validate_array,
+    MAP: validate_map,
+    ROW: validate_row,
     INTERVAL: validate_interval,
+    DECIMAL: validate_decimal,
 }
