@@ -61,7 +61,7 @@ class TestNonparametricTypes(unittest.TestCase):
         ):
             decimal(precision=3000)
 
-    def test_timestamp(self):
+    def test_time_and_timestamp(self):
         assert str(timestamp()) == "TIMESTAMP"
         assert str(timestamp(timezone=True)) == "TIMESTAMP WITH TIME ZONE"
         assert str(timestamp(precision=9)) == "TIMESTAMP(9)"
@@ -69,6 +69,11 @@ class TestNonparametricTypes(unittest.TestCase):
             str(timestamp(timezone=True, precision=6))
             == "TIMESTAMP(6) WITH TIME ZONE"
         )
+
+        assert str(time()) == "TIME"
+        assert str(time(timezone=True)) == "TIME WITH TIME ZONE"
+        assert str(time(precision=9)) == "TIME(9)"
+        assert str(time(timezone=True, precision=6)) == "TIME(6) WITH TIME ZONE"
 
         with pytest.raises(
             AssertionError, match="Precision of 2000 is not supported"

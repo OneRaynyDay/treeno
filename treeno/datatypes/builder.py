@@ -5,6 +5,8 @@ circular dependencies.
 
 Note that we explicitly disallow arguments for types that can't be parametrized. We also strictly only allow keyword
 only arguments.
+
+TODO: We should replace the kwargs with actual argument names
 """
 from treeno.datatypes import types
 

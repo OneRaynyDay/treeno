@@ -107,8 +107,8 @@ class DataType:
             validator(self)
 
     def __str__(self):
-        if self.type_name == TIMESTAMP:
-            return emit_timestamp(self)
+        if self.type_name in (TIMESTAMP, TIME):
+            return emit_timelike(self)
         elif self.type_name == INTERVAL:
             return emit_interval(self)
 
@@ -150,8 +150,8 @@ def emit_interval(interval: DataType) -> str:
     return type_string
 
 
-def emit_timestamp(timestamp: DataType) -> str:
-    assert timestamp.type_name == TIMESTAMP
+def emit_timelike(timestamp: DataType) -> str:
+    assert timestamp.type_name in (TIMESTAMP, TIME)
     type_string = timestamp.type_name
     precision = timestamp.parameters.get("precision", None)
     if precision is not None:
