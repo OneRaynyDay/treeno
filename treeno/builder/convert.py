@@ -38,6 +38,7 @@ from treeno.relation import (
 )
 from treeno.datatypes.types import FIELDS, DataType, TIMESTAMP, TIME
 from treeno.datatypes.inference import infer_integral, infer_decimal_from_str
+from treeno.groupby import GroupBy, GroupingSet, GroupingSetList, Cube, Rollup
 from treeno.datatypes.builder import (
     double,
     unknown,
@@ -663,9 +664,7 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitUnnest(self, ctx: SqlBaseParser.UnnestContext) -> Unnest:
         array_values = [self.visit(expr) for expr in ctx.expression()]
         with_ordinality = ctx.ORDINALITY() is not None
-        return Unnest(
-            array_values=array_values, with_ordinality=with_ordinality
-        )
+        return Unnest(array=array_values, with_ordinality=with_ordinality)
 
     def visitLateral(self, ctx: SqlBaseParser.LateralContext) -> Lateral:
         return Lateral(subquery=self.visit(ctx.query()))
@@ -686,13 +685,43 @@ class ConvertVisitor(SqlBaseVisitor):
 
         return alias
 
+    def visitGroupBy(self, ctx: SqlBaseParser.GroupByContext) -> GroupBy:
+        set_quantifier = ctx.setQuantifier()
+        groups = [self.visit(group) for group in ctx.groupingElement()]
+        return GroupBy(grouping_sets=groups, groupby_quantifier=set_quantifier)
+
+    def visitSingleGroupingSet(
+        self, ctx: SqlBaseParser.SingleGroupingSetContext
+    ) -> GroupingSet:
+        return self.visit(ctx.groupingSet())
+
+    def visitGroupingSet(
+        self, ctx: SqlBaseParser.GroupingSetContext
+    ) -> GroupingSet:
+        return GroupingSet([self.visit(expr) for expr in ctx.expression()])
+
+    def visitRollup(self, ctx: SqlBaseParser.RollupContext) -> Rollup:
+        return Rollup([self.visit(expr) for expr in ctx.expression()])
+
+    def visitCube(self, ctx: SqlBaseParser.CubeContext) -> Cube:
+        return Cube([self.visit(expr) for expr in ctx.expression()])
+
+    def visitMultipleGroupingSets(
+        self, ctx: SqlBaseParser.MultipleGroupingSetsContext
+    ) -> GroupingSetList:
+        return GroupingSetList(
+            groups=[
+                self.visit(grouping_set) for grouping_set in ctx.groupingSet()
+            ]
+        )
+
     def visitQuerySpecification(
         self, ctx: SqlBaseParser.QuerySpecificationContext
     ) -> SelectQuery:
         # Always returns a list of items to select from
         select_terms = ctx.selectItem()
         query_builder = SelectQuery(
-            select_values=[self.visit(item) for item in select_terms]
+            select=[self.visit(item) for item in select_terms]
         )
 
         relations = ctx.relation()
@@ -711,7 +740,10 @@ class ConvertVisitor(SqlBaseVisitor):
             query_builder.select_quantifier = self.visit(set_qualifier)
 
         if ctx.where:
-            query_builder.where_value = self.visit(ctx.where)
+            query_builder.where = self.visit(ctx.where)
         if ctx.having:
             query_builder.having = self.visit(ctx.having)
+        groupby = ctx.groupBy()
+        if groupby:
+            query_builder.groupby = self.visit(groupby)
         return query_builder

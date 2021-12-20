@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import TypeVar, List, Optional, Type, Any
 import attr
 from treeno.datatypes.types import DataType
+from treeno.base import Sql
 from treeno.util import (
     chain_identifiers,
     quote_literal,
@@ -12,7 +13,7 @@ from treeno.util import (
 GenericValue = TypeVar("GenericValue", bound="Value")
 
 
-class Value(ABC):
+class Value(Sql, ABC):
     """A value can be one of the following:
 
     1. (Literal) A literal value with well-defined type
@@ -27,10 +28,6 @@ class Value(ABC):
     def __init__(self, data_type: Optional[DataType] = None):
         # TODO: We don't have full data type inference support yet
         self.data_type = data_type
-
-    @abstractmethod
-    def __str__(self):
-        raise NotImplementedError("All values must implement __str__")
 
     def __invert__(self):
         return Not(self)
@@ -98,7 +95,7 @@ class Literal(Value):
         super().__init__(data_type)
         self.value = value
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         """
         TODO: The stringification is actively under development as we add more literal types
         """
@@ -123,7 +120,7 @@ class Field(Value):
         # None if we're not referencing any underlying tables
         self.table = table
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         return chain_identifiers(self.table, self.name)
 
 
@@ -140,7 +137,7 @@ class AliasedValue(Value):
         self.value = value
         self.alias = alias
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         return f'{self.value} "{self.alias}"'
 
 
@@ -154,7 +151,7 @@ class Star(Value):
         super().__init__()
         self.table = table
 
-    def __str__(self):
+    def sql(self, pretty=False):
         star_string = f"{quote_identifier(self.table)}." if self.table else ""
         star_string += "*"
         return star_string
@@ -171,7 +168,7 @@ class AliasedStar(Star):
         ), "Stars without a table cannot have column aliases"
         self.aliases = aliases
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         alias_str = ",".join(self.aliases)
         return f"{super().__str__()} ({alias_str})"
 
@@ -260,37 +257,37 @@ class UnaryExpression(Expression, ABC):
 
 
 class Positive(UnaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_unary_str(self, "+{value}")
 
 
 class Negative(UnaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_unary_str(self, "-{value}")
 
 
 class Add(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} + {right}")
 
 
 class Minus(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} - {right}")
 
 
 class Multiply(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} * {right}")
 
 
 class Divide(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} / {right}")
 
 
 class Not(UnaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         # Specializations on Not
         if isinstance(
             self.value,
@@ -302,12 +299,12 @@ class Not(UnaryExpression):
 
 
 class Power(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return call_str("POWER", self.left, self.right)
 
 
 class Modulus(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} % {right}")
 
 
@@ -317,7 +314,7 @@ class Equal(BinaryExpression):
             return str(NotEqual(self.left, self.right))
         return builtin_binary_str(self, "{left} = {right}")
 
-    def __str__(self):
+    def sql(self, pretty=False):
         return self.to_string(negate=False)
 
 
@@ -327,37 +324,37 @@ class NotEqual(BinaryExpression):
             return str(Equal(self.left, self.right))
         return builtin_binary_str(self, "{left} <> {right}")
 
-    def __str__(self):
+    def sql(self, pretty=False):
         return self.to_string(negate=False)
 
 
 class GreaterThan(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} > {right}")
 
 
 class GreaterThanOrEqual(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} >= {right}")
 
 
 class LessThan(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} < {right}")
 
 
 class LessThanOrEqual(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} <= {right}")
 
 
 class And(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} AND {right}")
 
 
 class Or(BinaryExpression):
-    def __str__(self):
+    def sql(self, pretty=False):
         return builtin_binary_str(self, "{left} OR {right}")
 
 
@@ -367,7 +364,7 @@ class IsNull(UnaryExpression):
             self, "{value} IS NOT NULL" if negate else "{value} IS NULL"
         )
 
-    def __str__(self):
+    def sql(self, pretty=False):
         return self.to_string(negate=False)
 
 
@@ -380,7 +377,7 @@ class DistinctFrom(BinaryExpression):
             else "{left} IS DISTINCT FROM {right}",
         )
 
-    def __str__(self):
+    def sql(self, pretty=False):
         return self.to_string(negate=False)
 
 
@@ -397,7 +394,7 @@ class Between(Expression):
         between_string += f" BETWEEN {pemdas_str(type(self), self.lower)} AND {pemdas_str(type(self), self.upper)}"
         return between_string
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         return self.to_string(negate=False)
 
 
@@ -409,7 +406,7 @@ class Array(Expression):
     def from_values(cls, *vals: Any) -> "Array":
         return cls(vals)
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         values_str = ",".join(str(val) for val in self.values)
         return f"ARRAY[{values_str}]"
 
@@ -427,7 +424,7 @@ class InList(Expression):
         in_list_string += f" IN ({expr_list})"
         return in_list_string
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         return self.to_string(negate=False)
 
 
@@ -449,7 +446,7 @@ class Like(Expression):
             like_str += f" ESCAPE {self.escape}"
         return like_str
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         return self.to_string(negate=False)
 
 
@@ -458,7 +455,7 @@ class Cast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
     type: DataType = attr.ib()
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         return f"CAST({self.expr} AS {self.type})"
 
 
@@ -467,7 +464,7 @@ class TryCast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
     type: DataType = attr.ib()
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         return f"TRY_CAST({self.expr} AS {self.type})"
 
 

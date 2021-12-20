@@ -1,12 +1,14 @@
 import attr
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Optional, List
 from treeno.util import chain_identifiers, parenthesize
 from treeno.expression import Value
-from enum import Enum, auto
+from treeno.base import Sql, SetQuantifier
+from treeno.groupby import GroupBy
+from enum import Enum
 
 
-class Relation(ABC):
+class Relation(Sql, ABC):
     """A value can be one of the following:
 
     1. (Table, ValuesTable) A table reference or an inline table
@@ -20,18 +22,6 @@ class Relation(ABC):
     but belong to 2). We have SelectQuery, TablesQuery, and ValuesQuery for this purpose.
     """
 
-    @abstractmethod
-    def __str__(self):
-        raise NotImplementedError("All relations must implement __str__")
-
-
-class SetQuantifier(Enum):
-    """Whether to select all rows or only distinct values
-    """
-
-    DISTINCT = auto()
-    ALL = auto()
-
 
 @attr.s
 class Query(Relation, ABC):
@@ -40,7 +30,7 @@ class Query(Relation, ABC):
 
     offset: Optional[Value] = attr.ib(default=None, kw_only=True)
     limit: Optional[int] = attr.ib(default=None, kw_only=True)
-    orderby_values: Optional[List[Value]] = attr.ib(default=None, kw_only=True)
+    orderby: Optional[List[Value]] = attr.ib(default=None, kw_only=True)
     with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
 
     def with_query_string_builder(self) -> List[str]:
@@ -51,10 +41,10 @@ class Query(Relation, ABC):
 
     def constraint_string_builder(self) -> List[str]:
         str_builder = []
-        if self.orderby_values:
+        if self.orderby:
             str_builder += [
                 "ORDER BY ",
-                ",".join(str(order) for order in self.orderby_values),
+                ",".join(str(order) for order in self.orderby),
             ]
         if self.offset:
             str_builder += ["OFFSET", str(self.offset)]
@@ -68,11 +58,11 @@ class SelectQuery(Query):
     """Represents a high level SELECT query.
     """
 
-    select_values: List[Value] = attr.ib()
+    select: List[Value] = attr.ib()
     from_relation: Optional[Relation] = attr.ib(default=None)
-    where_value: Optional[Value] = attr.ib(default=None)
-    groupby_values: Optional[List[Value]] = attr.ib(default=None)
-    having_value: Optional[Value] = attr.ib(default=None)
+    where: Optional[Value] = attr.ib(default=None)
+    groupby: Optional[GroupBy] = attr.ib(default=None)
+    having: Optional[Value] = attr.ib(default=None)
     select_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
     window: Optional[Value] = attr.ib(default=None, kw_only=True)
 
@@ -80,28 +70,25 @@ class SelectQuery(Query):
         assert not self.offset, "Offset isn't supported"
         assert not self.window, "Window isn't supported"
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         str_builder = ["SELECT"]
         # All is the default, so we don't need to mention it
         if self.select_quantifier != SetQuantifier.ALL:
             str_builder.append(self.select_quantifier.name)
 
-        str_builder.append(",".join(str(val) for val in self.select_values))
+        str_builder.append(",".join(str(val) for val in self.select))
         if self.from_relation:
             relation_str = str(self.from_relation)
             # Queries need to be parenthesized to be considered relations
             if isinstance(self.from_relation, Query):
                 relation_str = parenthesize(relation_str)
             str_builder += ["FROM", relation_str]
-        if self.where_value:
-            str_builder += ["WHERE", str(self.where_value)]
-        if self.groupby_values:
-            str_builder += [
-                "GROUP BY",
-                ",".join(str(val) for val in self.groupby_values),
-            ]
-        if self.having_value:
-            str_builder += ["HAVING", str(self.having_value)]
+        if self.where:
+            str_builder += ["WHERE", str(self.where)]
+        if self.groupby:
+            str_builder += ["GROUP BY", str(self.groupby)]
+        if self.having:
+            str_builder += ["HAVING", str(self.having)]
         if self.window:
             str_builder += ["WINDOW", str(self.window)]
         str_builder += self.constraint_string_builder()
@@ -126,7 +113,7 @@ class Table(Relation):
                 self.schema
             ), "If a catalog is specified, a schema must be specified as well"
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         return chain_identifiers(self.catalog, self.schema, self.name)
 
 
@@ -134,7 +121,7 @@ class Table(Relation):
 class TableQuery(Query):
     table: Table = attr.ib()
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         table_str = [str(self.table)]
         table_str += self.constraint_string_builder()
         return " ".join(table_str)
@@ -158,7 +145,7 @@ class ValuesQuery(Query):
 
     table: ValuesTable = attr.ib()
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         values_str = [str(self.table)]
         values_str += self.constraint_string_builder()
         return " ".join(values_str)
@@ -173,7 +160,7 @@ class AliasedRelation(Relation):
     alias: str = attr.ib()
     column_aliases: Optional[List[str]] = attr.ib(default=None)
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         # TODO: Keep the "AS"?
         alias_str = f'{self.relation} "{self.alias}"'
         if self.column_aliases:
@@ -190,10 +177,8 @@ class JoinType(Enum):
     CROSS = "CROSS"
 
 
-class JoinCriteria(ABC):
-    @abstractmethod
-    def __str__(self):
-        raise NotImplementedError("Join criteria must implement __str__")
+class JoinCriteria(Sql, ABC):
+    """Join criterias are complex expressions that describe exactly how a JOIN is done."""
 
 
 @attr.s
@@ -221,7 +206,7 @@ class JoinUsingCriteria(JoinCriteria):
     # both the left and right relations of the join.
     column_names: List[str] = attr.ib()
 
-    def __str__(self):
+    def sql(self, pretty=False):
         return (
             f"USING({chain_identifiers(*self.column_names, join_string=',')})"
         )
@@ -234,7 +219,7 @@ class JoinOnCriteria(JoinCriteria):
 
     relation: Value = attr.ib()
 
-    def __str__(self):
+    def sql(self, pretty=False):
         return f"ON {self.relation}"
 
 
@@ -265,7 +250,7 @@ class Join(Relation):
     right_relation: Relation = attr.ib()
     config: JoinConfig = attr.ib()
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         join_config_string = str(self.left_relation)
         if self.config.natural:
             join_config_string += " NATURAL"
@@ -281,11 +266,11 @@ class Unnest(Relation):
     """Represents an unnested set of arrays representing a table
     """
 
-    array_values: List[Value] = attr.ib()
+    array: List[Value] = attr.ib()
     with_ordinality: bool = attr.ib(default=False, kw_only=True)
 
-    def __str__(self) -> str:
-        arrays_str = ",".join(str(arr) for arr in self.array_values)
+    def sql(self, pretty=False) -> str:
+        arrays_str = ",".join(str(arr) for arr in self.array)
         str_builder = [f"UNNEST({arrays_str})"]
         if self.with_ordinality:
             str_builder += " WITH ORDINALITY"
@@ -299,5 +284,5 @@ class Lateral(Relation):
 
     subquery: Query = attr.ib()
 
-    def __str__(self) -> str:
+    def sql(self, pretty=False) -> str:
         return f"LATERAL ({self.subquery})"

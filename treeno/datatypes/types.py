@@ -1,5 +1,6 @@
 from typing import List, Any, Optional, Callable, Dict
 from collections import defaultdict
+from treeno.base import Sql
 import attr
 
 (
@@ -62,7 +63,7 @@ import attr
 
 
 @attr.s
-class DataType:
+class DataType(Sql):
     """Trino data types are used in cast functions and in type verification in the AST.
 
     This class should almost never be used by the client. Please refer to builder for the available
@@ -106,7 +107,7 @@ class DataType:
         if validator is not None:
             validator(self)
 
-    def __str__(self):
+    def sql(self, pretty=False):
         if self.type_name in (TIMESTAMP, TIME):
             return emit_timelike(self)
         elif self.type_name == INTERVAL:
@@ -132,6 +133,9 @@ class DataType:
 
         param_string = ",".join(values)
         return f"{self.type_name}({param_string})"
+
+    def __str__(self):
+        return self.sql()
 
 
 @attr.s

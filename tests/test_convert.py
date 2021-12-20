@@ -206,7 +206,7 @@ class TestRelation(VisitorTest):
         ast = get_parser("(SELECT 1)").relationPrimary()
         assert isinstance(ast, SqlBaseParser.SubqueryRelationContext)
         assert self.visitor.visit(ast) == SelectQuery(
-            select_values=[Literal(1, integer())]
+            select=[Literal(1, integer())]
         )
 
     def test_unnest(self):
@@ -215,7 +215,7 @@ class TestRelation(VisitorTest):
         ).relationPrimary()
         assert isinstance(ast, SqlBaseParser.UnnestContext)
         assert self.visitor.visit(ast) == Unnest(
-            array_values=[
+            array=[
                 Array.from_values(
                     Literal(1, integer()),
                     Literal(2, integer()),
@@ -235,14 +235,14 @@ class TestRelation(VisitorTest):
         ).relationPrimary()
         assert isinstance(ast, SqlBaseParser.UnnestContext)
         assert self.visitor.visit(ast) == Unnest(
-            array_values=[Field("some_column")], with_ordinality=True
+            array=[Field("some_column")], with_ordinality=True
         )
 
     def test_lateral(self):
         ast = get_parser("LATERAL (SELECT 1)").relationPrimary()
         assert isinstance(ast, SqlBaseParser.LateralContext)
         assert self.visitor.visit(ast) == Lateral(
-            subquery=SelectQuery(select_values=[Literal(1, integer())])
+            subquery=SelectQuery(select=[Literal(1, integer())])
         )
 
     def test_cross_join(self):
