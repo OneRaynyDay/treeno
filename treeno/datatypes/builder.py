@@ -87,3 +87,27 @@ def row(**kwargs) -> types.DataType:
 
 def unknown() -> types.DataType:
     return types.DataType(types.UNKNOWN)
+
+
+def ip() -> types.DataType:
+    return types.DataType(types.IP)
+
+
+def uuid() -> types.DataType:
+    return types.DataType(types.UUID)
+
+
+def hll() -> types.DataType:
+    return types.DataType(types.HLL)
+
+
+def p4hll() -> types.DataType:
+    return types.DataType(types.P4HLL)
+
+
+def qdigest() -> types.DataType:
+    return types.DataType(types.QDIGEST)
+
+
+def tdigest() -> types.DataType:
+    return types.DataType(types.TDIGEST)

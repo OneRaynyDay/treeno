@@ -64,6 +64,9 @@ import attr
 @attr.s
 class DataType:
     """Trino data types are used in cast functions and in type verification in the AST.
+
+    This class should almost never be used by the client. Please refer to builder for the available
+    builder functions.
     """
 
     type_name: str = attr.ib()
@@ -112,9 +115,20 @@ class DataType:
         if not self.parameters:
             return self.type_name
 
-        param_string = ",".join(
-            str(param) for param in self.parameters.values()
-        )
+        type_params = FIELDS[self.type_name]
+        values = []
+        # We do this to ensure the order of parameters is outputted correctly.
+        # Consider the following situation:
+        # We pass in parameters={"scale":10} for decimal, and then we add the default precision after during post init.
+        # If we were to iterate on the dict's values we'd end up switching precision and scale if we use the order to
+        # print the type.
+        for param in type_params:
+            assert (
+                param.name in self.parameters
+            ), f"Missing parameter {param.name} for type {self.type_name}"
+            values.append(str(self.parameters[param.name]))
+
+        param_string = ",".join(values)
         return f"{self.type_name}({param_string})"
 
 
@@ -131,10 +145,8 @@ class TypeParameter:
 def emit_interval(interval: DataType) -> str:
     assert interval.type_name == INTERVAL
     from_interval = interval.parameters["from_interval"]
-    type_string = f"{interval.type_name} {from_interval}"
-    to_interval = interval.parameters.get("to_interval", None)
-    if to_interval is not None:
-        type_string += f" {to_interval}"
+    to_interval = interval.parameters["to_interval"]
+    type_string = f"{interval.type_name} {from_interval} TO {to_interval}"
     return type_string
 
 
@@ -149,6 +161,14 @@ def emit_timestamp(timestamp: DataType) -> str:
     if timezone:
         type_string += " WITH TIME ZONE"
     return type_string
+
+
+def validate_timelike(timelike: DataType) -> None:
+    precision = timelike.parameters.get("precision", None)
+    if precision is not None:
+        assert (
+            0 <= precision <= 12
+        ), f"Precision of {precision} is not supported"
 
 
 def validate_array(row: DataType) -> None:
@@ -173,9 +193,7 @@ def validate_row(row: DataType) -> None:
 def validate_decimal(decimal: DataType) -> None:
     # TODO: Should we validate the scale as well?
     precision = decimal.parameters["precision"]
-    assert (
-        0 <= precision <= 38
-    ), f"Precision {precision} is not supported in Trino."
+    assert 0 <= precision <= 38, f"Precision {precision} is not supported"
 
 
 def validate_nonparametric(nonparametric: DataType) -> None:
@@ -187,7 +205,7 @@ def validate_nonparametric(nonparametric: DataType) -> None:
 
 def validate_interval(interval: DataType) -> None:
     from_interval = interval.parameters["from_interval"]
-    to_interval = interval.parameters.get("to_interval", from_interval)
+    to_interval = interval.parameters["to_interval"]
     assert from_interval in {
         "YEAR",
         "DAY",
@@ -260,6 +278,8 @@ VALIDATORS: Dict[str, Callable[[DataType], None]] = {
     QDIGEST: validate_nonparametric,
     TDIGEST: validate_nonparametric,
     UNKNOWN: validate_nonparametric,
+    TIME: validate_timelike,
+    TIMESTAMP: validate_timelike,
     ARRAY: validate_array,
     MAP: validate_map,
     ROW: validate_row,
