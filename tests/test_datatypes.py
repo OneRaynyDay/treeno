@@ -114,6 +114,45 @@ class TestNonparametricTypes(unittest.TestCase):
         ):
             interval(from_interval="DAY", to_interval="HOUR")
 
+    def test_array(self):
+        assert str(array(dtype=integer())) == "ARRAY(INTEGER)"
+        with pytest.raises(
+            AssertionError,
+            match="Field dtype for type ARRAY must be of type DataType. Got type instead with value",
+        ):
+            array(dtype=int)
+
+    def test_map(self):
+        assert (
+            str(map_(from_dtype=integer(), to_dtype=varchar(max_chars=3)))
+            == "MAP(INTEGER,VARCHAR(3))"
+        )
+        with pytest.raises(
+            AssertionError,
+            match="Field from_dtype for type MAP must be of type DataType. Got type instead with value",
+        ):
+            map_(from_dtype=bool, to_dtype=boolean())
+
+    def test_row(self):
+        assert (
+            str(
+                row(
+                    dtypes=[
+                        integer(),
+                        map_(
+                            from_dtype=array(dtype=boolean()),
+                            to_dtype=decimal(scale=1),
+                        ),
+                    ]
+                )
+            )
+            == "ROW(INTEGER,MAP(ARRAY(BOOLEAN),DECIMAL(38,1)))"
+        )
+        with pytest.raises(
+            AssertionError, match="dtypes argument must be a list of DataTypes"
+        ):
+            row(dtypes=[boolean(), 3])
+
 
 if __name__ == "__main__":
     unittest.main()

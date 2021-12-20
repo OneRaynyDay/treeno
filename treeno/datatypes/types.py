@@ -111,6 +111,8 @@ class DataType:
             return emit_timelike(self)
         elif self.type_name == INTERVAL:
             return emit_interval(self)
+        elif self.type_name == ROW:
+            return emit_row(self)
 
         if not self.parameters:
             return self.type_name
@@ -161,6 +163,12 @@ def emit_timelike(timestamp: DataType) -> str:
     if timezone:
         type_string += " WITH TIME ZONE"
     return type_string
+
+
+def emit_row(row: DataType) -> str:
+    assert row.type_name == ROW
+    subtype_str = ",".join(str(dtype) for dtype in row.parameters["dtypes"])
+    return f"{ROW}({subtype_str})"
 
 
 def validate_timelike(timelike: DataType) -> None:
