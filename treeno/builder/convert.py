@@ -1,7 +1,8 @@
 """
 Converts from our grammar into a buildable query tree.
 """
-from typing import Optional, List, Union, TYPE_CHECKING
+from decimal import Decimal
+from typing import Optional, List, Union, Tuple, TYPE_CHECKING
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.expression import (
@@ -37,8 +38,17 @@ from treeno.relation import (
     SetQuantifier,
 )
 from treeno.datatypes.types import FIELDS, DataType, TIMESTAMP, TIME
-from treeno.datatypes.inference import infer_integral, infer_decimal_from_str
+from treeno.datatypes.inference import infer_integral, infer_decimal
 from treeno.groupby import GroupBy, GroupingSet, GroupingSetList, Cube, Rollup
+from treeno.orderby import OrderTerm, OrderType, NullOrder
+from treeno.window import (
+    Window,
+    BoundType,
+    UnboundedFrameBound,
+    BoundedFrameBound,
+    CurrentFrameBound,
+    FrameType,
+)
 from treeno.datatypes.builder import (
     double,
     unknown,
@@ -139,18 +149,32 @@ class ConvertVisitor(SqlBaseVisitor):
             raise NotImplementedError("With statements are not yet implemented")
         return self.visit(ctx.queryNoWith())
 
-    def visitQueryNoWith(
-        self, ctx: SqlBaseParser.QueryNoWithContext
-    ) -> SelectQuery:
+    def visitQueryNoWith(self, ctx: SqlBaseParser.QueryNoWithContext) -> Query:
         query_term = ctx.queryTerm()
         if not isinstance(query_term, SqlBaseParser.QueryTermDefaultContext):
             raise NotImplementedError("Set operations are not yet implemented")
         query = self.visit(query_term)
+        if ctx.ORDER() and ctx.BY():
+            query.orderby = [self.visit(item) for item in ctx.sortItem()]
         limit_clause = ctx.limitRowCount()
         if limit_clause:
             # TODO: Assign this to the query object
             query.limit = self.visit(limit_clause)
         return query
+
+    def visitSortItem(self, ctx: SqlBaseParser.SortItemContext) -> OrderTerm:
+        value = self.visit(ctx.expression())
+        order_type = (
+            OrderType.ASC
+            if not ctx.ordering or ctx.ordering.text == "ASC"
+            else OrderType.DESC
+        )
+        null_order = (
+            NullOrder.LAST
+            if not ctx.nullOrdering or ctx.nullOrdering.text == "LAST"
+            else NullOrder.FIRST
+        )
+        return OrderTerm(value, order_type, null_order)
 
     def visitLimitRowCount(
         self, ctx: SqlBaseParser.LimitRowCountContext
@@ -412,9 +436,10 @@ class ConvertVisitor(SqlBaseVisitor):
         negative = ctx.MINUS() is not None
 
         dtype: DataType
+        value: Union[int, Decimal]
         if "." in text:
-            value = float(text)
-            dtype = infer_decimal_from_str(text)
+            value = Decimal(text)
+            dtype = infer_decimal(value)
         else:
             value = int(text)
             dtype = integer()
@@ -461,7 +486,9 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitBooleanValue(self, ctx: SqlBaseParser.BooleanValueContext) -> bool:
         return ctx.TRUE() is not None
 
-    def visitTypeConstructor(self, ctx: SqlBaseParser.TypeConstructorContext):
+    def visitTypeConstructor(
+        self, ctx: SqlBaseParser.TypeConstructorContext
+    ) -> Literal:
         if ctx.DOUBLE() and ctx.PRECISION():
             return float(ctx.string())
         # It appears the type constructor is fairly primitive in that it doesn't allow parametrized types, like
@@ -715,6 +742,56 @@ class ConvertVisitor(SqlBaseVisitor):
             ]
         )
 
+    def visitWindowDefinition(
+        self, ctx: SqlBaseParser.WindowDefinitionContext
+    ) -> Tuple[str, Window]:
+        return (self.visit(ctx.name), self.visit(ctx.windowSpecification()))
+
+    def visitWindowSpecification(
+        self, ctx: SqlBaseParser.WindowSpecificationContext
+    ) -> Window:
+        window_frame = ctx.windowFrame()
+        # Set to default Window type if not specified
+        window = self.visit(window_frame) if window_frame else Window()
+        if ctx.ORDER() and ctx.BY():
+            window.orderby = [
+                self.visit(sort_item) for sort_item in ctx.sortItem()
+            ]
+        if ctx.partition:
+            window.partitions = [
+                self.visit(partition) for partition in ctx.partition
+            ]
+        if ctx.existingWindowName:
+            window.parent_window = self.visit(ctx.existingWindowName)
+        return window
+
+    def visitWindowFrame(self, ctx: SqlBaseParser.WindowFrameContext) -> Window:
+        params = {
+            "frame_type": FrameType[ctx.frameType.text],
+            "start_bound": self.visit(ctx.start),
+        }
+        if ctx.end:
+            params["end_bound"] = self.visit(ctx.end)
+        return Window(**params)
+
+    def visitBoundedFrame(
+        self, ctx: SqlBaseParser.BoundedFrameContext
+    ) -> BoundedFrameBound:
+        return BoundedFrameBound(
+            bound_type=BoundType[ctx.boundType.text],
+            offset=self.visit(ctx.expression()),
+        )
+
+    def visitUnboundedFrame(
+        self, ctx: SqlBaseParser.UnboundedFrameContext
+    ) -> UnboundedFrameBound:
+        return UnboundedFrameBound(bound_type=BoundType[ctx.boundType.text])
+
+    def visitCurrentRowBound(
+        self, ctx: SqlBaseParser.CurrentRowBoundContext
+    ) -> CurrentFrameBound:
+        return CurrentFrameBound()
+
     def visitQuerySpecification(
         self, ctx: SqlBaseParser.QuerySpecificationContext
     ) -> SelectQuery:
@@ -746,4 +823,8 @@ class ConvertVisitor(SqlBaseVisitor):
         groupby = ctx.groupBy()
         if groupby:
             query_builder.groupby = self.visit(groupby)
+        if ctx.WINDOW():
+            query_builder.window = dict(
+                self.visit(window_def) for window_def in ctx.windowDefinition()
+            )
         return query_builder

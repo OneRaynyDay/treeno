@@ -2,6 +2,7 @@ from abc import ABC
 from typing import TypeVar, List, Optional, Type, Any
 import attr
 from treeno.datatypes.types import DataType
+from treeno.datatypes.inference import infer_type
 from treeno.base import Sql, PrintOptions
 from treeno.util import (
     chain_identifiers,
@@ -94,6 +95,7 @@ class Literal(Value):
     def __init__(self, value: Any, data_type: DataType) -> None:
         super().__init__(data_type)
         self.value = value
+        # Literals can't be NaN or Infinity by definition.
 
     def sql(self, opts: Optional[PrintOptions] = None) -> str:
         """
@@ -186,7 +188,7 @@ def wrap_literal(val: Any) -> Value:
     if isinstance(val, tuple):
         # return Tuple(*val)
         raise NotImplementedError("Tuple types not supported yet")
-    return Literal(val)
+    return Literal(val, infer_type(val))
 
 
 def wrap_literal_list(vals: List[Any]) -> List[Value]:

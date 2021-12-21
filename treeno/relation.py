@@ -1,10 +1,12 @@
 import attr
 from abc import ABC
-from typing import Optional, List
+from typing import Optional, List, Dict
 from treeno.util import chain_identifiers, parenthesize
 from treeno.expression import Value
 from treeno.base import Sql, SetQuantifier, PrintOptions
 from treeno.groupby import GroupBy
+from treeno.orderby import OrderTerm
+from treeno.window import Window
 from enum import Enum
 
 
@@ -30,11 +32,12 @@ class Query(Relation, ABC):
 
     offset: Optional[Value] = attr.ib(default=None, kw_only=True)
     limit: Optional[int] = attr.ib(default=None, kw_only=True)
-    orderby: Optional[List[Value]] = attr.ib(default=None, kw_only=True)
+    orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
     with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
 
     def with_query_string_builder(self) -> List[str]:
         # TODO: Use this to include with in the output
+        # TODO: Support print options
         if not self.with_queries:
             return []
         return ["WITH", ",".join(str(query) for query in self.with_queries)]
@@ -44,6 +47,7 @@ class Query(Relation, ABC):
         if self.orderby:
             str_builder += [
                 "ORDER BY ",
+                # TODO: Support print options
                 ",".join(str(order) for order in self.orderby),
             ]
         if self.offset:
@@ -64,7 +68,7 @@ class SelectQuery(Query):
     groupby: Optional[GroupBy] = attr.ib(default=None)
     having: Optional[Value] = attr.ib(default=None)
     select_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
-    window: Optional[Value] = attr.ib(default=None, kw_only=True)
+    window: Optional[Dict[str, Window]] = attr.ib(default=None, kw_only=True)
 
     def __attrs_post_init__(self) -> None:
         assert not self.offset, "Offset isn't supported"
@@ -76,21 +80,21 @@ class SelectQuery(Query):
         if self.select_quantifier != SetQuantifier.ALL:
             str_builder.append(self.select_quantifier.name)
 
-        str_builder.append(",".join(str(val) for val in self.select))
+        str_builder.append(",".join(val.sql(opts) for val in self.select))
         if self.from_relation:
-            relation_str = str(self.from_relation)
+            relation_str = self.from_relation.sql(opts)
             # Queries need to be parenthesized to be considered relations
             if isinstance(self.from_relation, Query):
                 relation_str = parenthesize(relation_str)
             str_builder += ["FROM", relation_str]
         if self.where:
-            str_builder += ["WHERE", str(self.where)]
+            str_builder += ["WHERE", self.where.sql(opts)]
         if self.groupby:
-            str_builder += ["GROUP BY", str(self.groupby)]
+            str_builder += ["GROUP BY", self.groupby.sql(opts)]
         if self.having:
-            str_builder += ["HAVING", str(self.having)]
+            str_builder += ["HAVING", self.having.sql(opts)]
         if self.window:
-            str_builder += ["WINDOW", str(self.window)]
+            str_builder += ["WINDOW", self.window.sql(opts)]
         str_builder += self.constraint_string_builder()
         return " ".join(str_builder)
 
