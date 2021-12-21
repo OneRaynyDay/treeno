@@ -47,6 +47,7 @@ from treeno.relation import (
     JoinOnCriteria,
     JoinUsingCriteria,
 )
+from treeno.groupby import GroupBy, GroupingSet, GroupingSetList, Cube, Rollup
 from treeno.datatypes.builder import (
     boolean,
     integer,
@@ -100,16 +101,6 @@ class TestIdentifier(VisitorTest):
         assert isinstance(ast, SqlBaseParser.DigitIdentifierContext)
         with pytest.raises(NotImplementedError):
             self.visitor.visit(ast)
-
-
-class TestExpression(VisitorTest):
-    """This is to test nested expressions, which is more of
-    an integration test for chaining literals, identifiers, and functions
-    together.
-    """
-
-    def test_compound_expressions(self):
-        pass
 
 
 class TestLiterals(VisitorTest):
@@ -535,6 +526,36 @@ class TestFunctions(VisitorTest):
         assert isinstance(ast, SqlBaseParser.CastContext)
         try_cast_expr = TryCast(Literal(1, integer()), bigint())
         assert self.visitor.visit(ast) == try_cast_expr
+
+
+class TestGroupBy(VisitorTest):
+    def test_grouping_set(self):
+        ast = get_parser("(a+b,c)").groupingSet()
+        assert isinstance(ast, SqlBaseParser.GroupingSetContext)
+        group_expr = GroupingSet(
+            [Add(left=Field("a"), right=Field("b")), Field("c")]
+        )
+        assert self.visitor.visit(ast) == group_expr
+
+    def test_multiple_grouping_sets(self):
+        ast = get_parser("GROUPING SETS ((a,b), c)").groupingElement()
+        assert isinstance(ast, SqlBaseParser.MultipleGroupingSetsContext)
+        groups_expr = GroupingSetList(
+            [GroupingSet([Field("a"), Field("b")]), GroupingSet([Field("c")])]
+        )
+        assert self.visitor.visit(ast) == groups_expr
+
+    def test_cube(self):
+        ast = get_parser("CUBE (a,b)").groupingElement()
+        assert isinstance(ast, SqlBaseParser.CubeContext)
+        cube_expr = Cube([Field("a"), Field("b")])
+        assert self.visitor.visit(ast) == cube_expr
+
+    def test_rollup(self):
+        ast = get_parser("ROLLUP (a,b)").groupingElement()
+        assert isinstance(ast, SqlBaseParser.RollupContext)
+        rollup_expr = Rollup([Field("a"), Field("b")])
+        assert self.visitor.visit(ast) == rollup_expr
 
 
 class TestDataTypes(VisitorTest):

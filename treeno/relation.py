@@ -3,7 +3,7 @@ from abc import ABC
 from typing import Optional, List
 from treeno.util import chain_identifiers, parenthesize
 from treeno.expression import Value
-from treeno.base import Sql, SetQuantifier
+from treeno.base import Sql, SetQuantifier, PrintOptions
 from treeno.groupby import GroupBy
 from enum import Enum
 
@@ -70,7 +70,7 @@ class SelectQuery(Query):
         assert not self.offset, "Offset isn't supported"
         assert not self.window, "Window isn't supported"
 
-    def sql(self, pretty=False) -> str:
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         str_builder = ["SELECT"]
         # All is the default, so we don't need to mention it
         if self.select_quantifier != SetQuantifier.ALL:
@@ -113,7 +113,7 @@ class Table(Relation):
                 self.schema
             ), "If a catalog is specified, a schema must be specified as well"
 
-    def sql(self, pretty=False) -> str:
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return chain_identifiers(self.catalog, self.schema, self.name)
 
 
@@ -121,7 +121,7 @@ class Table(Relation):
 class TableQuery(Query):
     table: Table = attr.ib()
 
-    def sql(self, pretty=False) -> str:
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         table_str = [str(self.table)]
         table_str += self.constraint_string_builder()
         return " ".join(table_str)
@@ -145,7 +145,7 @@ class ValuesQuery(Query):
 
     table: ValuesTable = attr.ib()
 
-    def sql(self, pretty=False) -> str:
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         values_str = [str(self.table)]
         values_str += self.constraint_string_builder()
         return " ".join(values_str)
@@ -160,7 +160,7 @@ class AliasedRelation(Relation):
     alias: str = attr.ib()
     column_aliases: Optional[List[str]] = attr.ib(default=None)
 
-    def sql(self, pretty=False) -> str:
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         # TODO: Keep the "AS"?
         alias_str = f'{self.relation} "{self.alias}"'
         if self.column_aliases:
@@ -206,7 +206,7 @@ class JoinUsingCriteria(JoinCriteria):
     # both the left and right relations of the join.
     column_names: List[str] = attr.ib()
 
-    def sql(self, pretty=False):
+    def sql(self, opts: Optional[PrintOptions] = None):
         return (
             f"USING({chain_identifiers(*self.column_names, join_string=',')})"
         )
@@ -219,7 +219,7 @@ class JoinOnCriteria(JoinCriteria):
 
     relation: Value = attr.ib()
 
-    def sql(self, pretty=False):
+    def sql(self, opts: Optional[PrintOptions] = None):
         return f"ON {self.relation}"
 
 
@@ -250,7 +250,7 @@ class Join(Relation):
     right_relation: Relation = attr.ib()
     config: JoinConfig = attr.ib()
 
-    def sql(self, pretty=False) -> str:
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         join_config_string = str(self.left_relation)
         if self.config.natural:
             join_config_string += " NATURAL"
@@ -269,7 +269,7 @@ class Unnest(Relation):
     array: List[Value] = attr.ib()
     with_ordinality: bool = attr.ib(default=False, kw_only=True)
 
-    def sql(self, pretty=False) -> str:
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         arrays_str = ",".join(str(arr) for arr in self.array)
         str_builder = [f"UNNEST({arrays_str})"]
         if self.with_ordinality:
@@ -284,5 +284,5 @@ class Lateral(Relation):
 
     subquery: Query = attr.ib()
 
-    def sql(self, pretty=False) -> str:
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return f"LATERAL ({self.subquery})"
