@@ -2,7 +2,7 @@
 Converts from our grammar into a buildable query tree.
 """
 from decimal import Decimal
-from typing import Optional, List, Union, Tuple, TYPE_CHECKING
+from typing import Optional, List, Union, Tuple
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.expression import (
@@ -18,6 +18,7 @@ from treeno.expression import (
     IsNull,
     DistinctFrom,
     Literal,
+    TypeConstructor,
     TryCast,
     Cast,
 )
@@ -60,22 +61,19 @@ from treeno.datatypes.builder import (
     integer,
 )
 from treeno.util import nth
+from treeno.grammar.parse import AST
 
 
-if TYPE_CHECKING:
-    from treeno.grammar.parse import AST
+def query_from_sql(sql: str) -> Query:
+    return ConvertVisitor().visitSingleStatement(AST(sql).root)
 
 
-def query_from_ast(ast: "AST") -> Query:
-    return ConvertVisitor().visitSingleStatement(ast.root)
+def expression_from_sql(sql: str) -> Value:
+    return ConvertVisitor().visitStandaloneExpression(AST(sql).root)
 
 
-def expression_from_ast(ast: "AST") -> Value:
-    return ConvertVisitor().visitStandaloneExpression(ast.root)
-
-
-def type_from_ast(ast: "AST") -> DataType:
-    return ConvertVisitor().visitStandaloneType(ast.root)
+def type_from_sql(sql: str) -> DataType:
+    return ConvertVisitor().visitStandaloneType(AST(sql).root)
 
 
 def apply_operator(operator: str, *args: Value) -> Value:
@@ -490,12 +488,13 @@ class ConvertVisitor(SqlBaseVisitor):
         self, ctx: SqlBaseParser.TypeConstructorContext
     ) -> Literal:
         if ctx.DOUBLE() and ctx.PRECISION():
-            return float(ctx.string())
+            return TypeConstructor(self.visit(ctx.string(), type=double()))
         # It appears the type constructor is fairly primitive in that it doesn't allow parametrized types, like
         # SELECT DECIMAL(30) '3'
         # which means we can assume it's a generic nonparametrized data type.
-        raise NotImplementedError(
-            "Currently working on adding types to literal values"
+        return TypeConstructor(
+            self.visit(ctx.string()),
+            type=DataType(self.visit(ctx.identifier())),
         )
 
     def visitArrayConstructor(
@@ -713,9 +712,9 @@ class ConvertVisitor(SqlBaseVisitor):
         return alias
 
     def visitGroupBy(self, ctx: SqlBaseParser.GroupByContext) -> GroupBy:
-        set_quantifier = ctx.setQuantifier()
+        set_quantifier = self.visit(ctx.setQuantifier())
         groups = [self.visit(group) for group in ctx.groupingElement()]
-        return GroupBy(grouping_sets=groups, groupby_quantifier=set_quantifier)
+        return GroupBy(groups=groups, groupby_quantifier=set_quantifier)
 
     def visitSingleGroupingSet(
         self, ctx: SqlBaseParser.SingleGroupingSetContext

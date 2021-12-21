@@ -25,7 +25,7 @@ def chain_identifiers(*identifiers: Optional[str], join_string=".") -> str:
 
 
 def quote_literal(literal: str) -> str:
-    return f"'{literal}"
+    return f"'{literal}'"
 
 
 def nth(iterable: Iterable[T], n: int, default: Optional[T] = None) -> T:

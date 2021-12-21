@@ -19,7 +19,9 @@ class GroupBy(Sql):
     groupby_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
 
     def sql(self, opts: Optional[PrintOptions] = None) -> str:
-        multi_groupby_string = ",".join()
+        multi_groupby_string = ",".join(
+            group.sql(opts) for group in self.groups
+        )
         return f"{self.groupby_quantifier.name} {multi_groupby_string}"
 
 
@@ -27,14 +29,11 @@ class GroupBy(Sql):
 class GroupingSet(Group):
     """Simple group involving input expr(s). Note that this doesn't accept aliased values, since group bys directly
     reference the input column.
+
+    Note that the grouping set can be empty - it would correspond to interpreting the entire table as one group.
     """
 
     values: List[Value] = attr.ib()
-
-    def __attrs_post_init__(self) -> None:
-        assert (
-            len(self.values) > 0
-        ), "GroupingSets must have at least one value to group by"
 
     def sql(self, opts: Optional[PrintOptions] = None) -> str:
         if len(self.values) == 1:

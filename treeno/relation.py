@@ -35,14 +35,16 @@ class Query(Relation, ABC):
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
     with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
 
-    def with_query_string_builder(self) -> List[str]:
-        # TODO: Use this to include with in the output
-        # TODO: Support print options
+    def with_query_string_builder(
+        self, opts: Optional[PrintOptions]
+    ) -> List[str]:
         if not self.with_queries:
             return []
         return ["WITH", ",".join(str(query) for query in self.with_queries)]
 
-    def constraint_string_builder(self) -> List[str]:
+    def constraint_string_builder(
+        self, opts: Optional[PrintOptions]
+    ) -> List[str]:
         str_builder = []
         if self.orderby:
             str_builder += [
@@ -75,7 +77,7 @@ class SelectQuery(Query):
         assert not self.window, "Window isn't supported"
 
     def sql(self, opts: Optional[PrintOptions] = None) -> str:
-        str_builder = ["SELECT"]
+        str_builder = self.with_query_string_builder(opts) + ["SELECT"]
         # All is the default, so we don't need to mention it
         if self.select_quantifier != SetQuantifier.ALL:
             str_builder.append(self.select_quantifier.name)
@@ -95,7 +97,7 @@ class SelectQuery(Query):
             str_builder += ["HAVING", self.having.sql(opts)]
         if self.window:
             str_builder += ["WINDOW", self.window.sql(opts)]
-        str_builder += self.constraint_string_builder()
+        str_builder += self.constraint_string_builder(opts)
         return " ".join(str_builder)
 
 
@@ -126,8 +128,9 @@ class TableQuery(Query):
     table: Table = attr.ib()
 
     def sql(self, opts: Optional[PrintOptions] = None) -> str:
-        table_str = [str(self.table)]
-        table_str += self.constraint_string_builder()
+        table_str = self.with_query_string_builder(opts)
+        table_str += [str(self.table)]
+        table_str += self.constraint_string_builder(opts)
         return " ".join(table_str)
 
 
@@ -150,7 +153,8 @@ class ValuesQuery(Query):
     table: ValuesTable = attr.ib()
 
     def sql(self, opts: Optional[PrintOptions] = None) -> str:
-        values_str = [str(self.table)]
+        values_str = self.with_query_string_builder(opts)
+        values_str += [str(self.table)]
         values_str += self.constraint_string_builder()
         return " ".join(values_str)
 

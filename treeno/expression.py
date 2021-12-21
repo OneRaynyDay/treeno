@@ -1,4 +1,5 @@
 from abc import ABC
+from decimal import Decimal
 from typing import TypeVar, List, Optional, Type, Any
 import attr
 from treeno.datatypes.types import DataType
@@ -109,6 +110,9 @@ class Literal(Value):
         if isinstance(self.value, str):
             # Single quotes to mean literal string
             s = quote_literal(self.value)
+        if isinstance(self.value, Decimal):
+            # Literal decimals can only be directly convertible through cast via string representation
+            s = Cast(s, self.data_type).sql(opts)
         return s
 
 
@@ -450,6 +454,19 @@ class Like(Expression):
 
     def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return self.to_string(negate=False)
+
+
+@attr.s
+class TypeConstructor(Expression):
+    value: str = attr.ib()
+    type: DataType = attr.ib()
+
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
+        # We aren't allowed to parametrize the types here.
+        # There's an edge case where parametrizing timestamp with timezone=True is not in the parens notation
+        # but that also fails for this(since the parser recognizes a single string as the type) which means we
+        # can just take the type name.
+        return f"{self.type.type_name} {quote_literal(self.value)}"
 
 
 @attr.s
