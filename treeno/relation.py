@@ -48,9 +48,9 @@ class Query(Relation, ABC):
         str_builder = []
         if self.orderby:
             str_builder += [
-                "ORDER BY ",
+                "ORDER BY",
                 # TODO: Support print options
-                ",".join(str(order) for order in self.orderby),
+                ",".join(order.sql(opts) for order in self.orderby),
             ]
         if self.offset:
             str_builder += ["OFFSET", str(self.offset)]

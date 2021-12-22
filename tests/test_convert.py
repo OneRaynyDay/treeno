@@ -47,6 +47,7 @@ from treeno.relation import (
     JoinOnCriteria,
     JoinUsingCriteria,
 )
+from treeno.functions import Sum
 from treeno.groupby import GroupBy, GroupingSet, GroupingSetList, Cube, Rollup
 from treeno.datatypes.builder import (
     boolean,
@@ -664,6 +665,13 @@ class TestWindow(VisitorTest):
             ),
             end_bound=UnboundedFrameBound(bound_type=BoundType.FOLLOWING),
         )
+
+
+class TestFunction(VisitorTest):
+    def test_aggregate_functions(self):
+        ast = get_parser("SUM(a)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        assert self.visitor.visit(ast) == Sum(Field("a"))
 
 
 class TestDataTypes(VisitorTest):

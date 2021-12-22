@@ -157,7 +157,7 @@ class Star(Value):
         super().__init__()
         self.table = table
 
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         star_string = f"{quote_identifier(self.table)}." if self.table else ""
         star_string += "*"
         return star_string
@@ -263,37 +263,37 @@ class UnaryExpression(Expression, ABC):
 
 
 class Positive(UnaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_unary_str(self, "+{value}")
 
 
 class Negative(UnaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_unary_str(self, "-{value}")
 
 
 class Add(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} + {right}")
 
 
 class Minus(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} - {right}")
 
 
 class Multiply(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} * {right}")
 
 
 class Divide(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} / {right}")
 
 
 class Not(UnaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         # Specializations on Not
         if isinstance(
             self.value,
@@ -305,12 +305,12 @@ class Not(UnaryExpression):
 
 
 class Power(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return call_str("POWER", self.left, self.right)
 
 
 class Modulus(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} % {right}")
 
 
@@ -320,7 +320,7 @@ class Equal(BinaryExpression):
             return str(NotEqual(self.left, self.right))
         return builtin_binary_str(self, "{left} = {right}")
 
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return self.to_string(negate=False)
 
 
@@ -330,37 +330,37 @@ class NotEqual(BinaryExpression):
             return str(Equal(self.left, self.right))
         return builtin_binary_str(self, "{left} <> {right}")
 
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return self.to_string(negate=False)
 
 
 class GreaterThan(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} > {right}")
 
 
 class GreaterThanOrEqual(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} >= {right}")
 
 
 class LessThan(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} < {right}")
 
 
 class LessThanOrEqual(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} <= {right}")
 
 
 class And(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} AND {right}")
 
 
 class Or(BinaryExpression):
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return builtin_binary_str(self, "{left} OR {right}")
 
 
@@ -370,7 +370,7 @@ class IsNull(UnaryExpression):
             self, "{value} IS NOT NULL" if negate else "{value} IS NULL"
         )
 
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return self.to_string(negate=False)
 
 
@@ -383,7 +383,7 @@ class DistinctFrom(BinaryExpression):
             else "{left} IS DISTINCT FROM {right}",
         )
 
-    def sql(self, opts: Optional[PrintOptions] = None):
+    def sql(self, opts: Optional[PrintOptions] = None) -> str:
         return self.to_string(negate=False)
 
 

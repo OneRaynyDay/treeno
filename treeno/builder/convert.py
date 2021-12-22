@@ -38,6 +38,7 @@ from treeno.relation import (
     SelectQuery,
     SetQuantifier,
 )
+from treeno.functions import Function, NAMES_TO_FUNCTIONS
 from treeno.datatypes.types import FIELDS, DataType, TIMESTAMP, TIME
 from treeno.datatypes.inference import infer_integral, infer_decimal
 from treeno.groupby import GroupBy, GroupingSet, GroupingSetList, Cube, Rollup
@@ -496,6 +497,38 @@ class ConvertVisitor(SqlBaseVisitor):
             self.visit(ctx.string()),
             type=DataType(self.visit(ctx.identifier())),
         )
+
+    def visitFunctionCall(
+        self, ctx: SqlBaseParser.FunctionCallContext
+    ) -> Function:
+        assert (
+            not ctx.processingMode()
+        ), "Pattern recognition is currently not supported"
+        assert not ctx.filter_(), "Filter is currently not supported"
+        assert (
+            not ctx.nullTreatment()
+        ), "Null treatment is currently not supported"
+        assert (
+            not ctx.sortItem()
+        ), "ORDER BY in expression is currently not supported"
+        # Qualified names usually have multiple parts, but afaik functions aren't namespaced so there should only
+        # be one part
+        qual_name = self.visit(ctx.qualifiedName())
+        assert (
+            len(qual_name) == 1
+        ), f"Invalid function name {'.'.join(qual_name)}"
+        fn_name = qual_name[0]
+        assert (
+            fn_name in NAMES_TO_FUNCTIONS
+        ), f"Function name {fn_name} not registered in treeno.functions"
+        fn = NAMES_TO_FUNCTIONS[fn_name]
+        expressions: List[Value]
+        if ctx.ASTERISK():
+            expressions = [Star()]
+        else:
+            # TODO: Are we missing the empty args case?
+            expressions = [self.visit(expr) for expr in ctx.expression()]
+        return fn(*expressions)
 
     def visitArrayConstructor(
         self, ctx: SqlBaseParser.ArrayConstructorContext

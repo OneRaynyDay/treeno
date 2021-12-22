@@ -26,5 +26,5 @@ class OrderTerm(Sql):
         if self.order_type != OrderType.ASC:
             order_string += f" {self.order_type.name}"
         if self.null_order != NullOrder.LAST:
-            order_string += f" {self.null_order.name}"
+            order_string += f" NULLS {self.null_order.name}"
         return order_string
