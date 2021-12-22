@@ -2,7 +2,6 @@ import os
 import subprocess
 from setuptools import setup
 from setuptools.command.develop import develop
-from setuptools.command.install import install
 
 
 class AntlrDevelopCommand(develop):
@@ -10,13 +9,6 @@ class AntlrDevelopCommand(develop):
         output_dir = compile_grammar()
         print(f"Compiled ANTLRv4 grammar in {output_dir}")
         develop.run(self)
-
-
-class AntlrInstallCommand(install):
-    def run(self):
-        output_dir = compile_grammar()
-        print(f"Compiled ANTLRv4 grammar in {output_dir}")
-        install.run(self)
 
 
 def compile_grammar():
@@ -42,7 +34,7 @@ setup(
         "nltk==3.6.5",
         "attrs==21.2.0",
     ],
-    cmdclass={"install": AntlrInstallCommand, "develop": AntlrDevelopCommand},
+    cmdclass={"develop": AntlrDevelopCommand},
     license="MIT",
     python_requires=">=3.6",
 )

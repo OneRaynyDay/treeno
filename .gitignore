@@ -129,9 +129,6 @@ dmypy.json
 .pyre/
 .idea/
 
-# Generated python files
-treeno/grammar/gen
-
 # Mac OS X related files
 .DS_Store
 
