@@ -517,7 +517,7 @@ class ConvertVisitor(SqlBaseVisitor):
         assert (
             len(qual_name) == 1
         ), f"Invalid function name {'.'.join(qual_name)}"
-        fn_name = qual_name[0]
+        fn_name = qual_name[0].upper()
         assert (
             fn_name in NAMES_TO_FUNCTIONS
         ), f"Function name {fn_name} not registered in treeno.functions"

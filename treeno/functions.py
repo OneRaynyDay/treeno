@@ -52,7 +52,7 @@ class Sum(UnaryFunctionMixin, AggregateFunction):
 
 
 class Arbitrary(UnaryFunctionMixin, AggregateFunction):
-    FN_NAME: ClassVar[str] = "MAX"
+    FN_NAME: ClassVar[str] = "ARBITRARY"
 
 
 class ArrayAgg(UnaryFunctionMixin, AggregateFunction):

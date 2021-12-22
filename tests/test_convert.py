@@ -47,7 +47,17 @@ from treeno.relation import (
     JoinOnCriteria,
     JoinUsingCriteria,
 )
-from treeno.functions import Sum
+from treeno.functions import (
+    Sum,
+    Arbitrary,
+    ArrayAgg,
+    Avg,
+    BoolAnd,
+    BoolOr,
+    Checksum,
+    Every,
+    GeometricMean,
+)
 from treeno.groupby import GroupBy, GroupingSet, GroupingSetList, Cube, Rollup
 from treeno.datatypes.builder import (
     boolean,
@@ -669,9 +679,42 @@ class TestWindow(VisitorTest):
 
 class TestFunction(VisitorTest):
     def test_aggregate_functions(self):
-        ast = get_parser("SUM(a)").primaryExpression()
+        # Check lowercase as an example
+        ast = get_parser("Sum(a)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
         assert self.visitor.visit(ast) == Sum(Field("a"))
+
+        ast = get_parser("ARBITRARY(a)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        assert self.visitor.visit(ast) == Arbitrary(Field("a"))
+
+        ast = get_parser("ARRAY_AGG(a)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        assert self.visitor.visit(ast) == ArrayAgg(Field("a"))
+
+        ast = get_parser("AVG(a)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        assert self.visitor.visit(ast) == Avg(Field("a"))
+
+        ast = get_parser("BOOL_AND(a)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        assert self.visitor.visit(ast) == BoolAnd(Field("a"))
+
+        ast = get_parser("BOOL_OR(a)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        assert self.visitor.visit(ast) == BoolOr(Field("a"))
+
+        ast = get_parser("CHECKSUM(a)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        assert self.visitor.visit(ast) == Checksum(Field("a"))
+
+        ast = get_parser("EVERY(a)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        assert self.visitor.visit(ast) == Every(Field("a"))
+
+        ast = get_parser("GEOMETRIC_MEAN(a)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        assert self.visitor.visit(ast) == GeometricMean(Field("a"))
 
 
 class TestDataTypes(VisitorTest):
