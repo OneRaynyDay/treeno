@@ -44,5 +44,5 @@ setup(
     ],
     cmdclass={"install": AntlrInstallCommand, "develop": AntlrDevelopCommand},
     license="MIT",
-    python_requires=">=3.9",
+    python_requires=">=3.6",
 )

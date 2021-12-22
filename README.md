@@ -1,11 +1,24 @@
 # Treeno
 
-A user friendly query tree building library for Trino.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+
+
+A user friendly query tree building library for Trino, a distributed SQL engine.
+It supports Python>=3.9.
 
 Crafting SQL commands is often a duplicated art.
 A standard library of common SQL functions is necessary to reduce common boilerplate.
 Treeno is a way for standard library authors to build on top of arbitrary queries to
 aggregate, filter, join, etc on top of Trino SQL.
+
+# Install
+
+```
+$ pip install trino
+```
+
+# Quick Start
 
 Treeno is interoperable with raw SQL, so users don't need to be aware of `treeno.relation.Query` objects (`SelectQuery`, `TableQuery`, etc):
 

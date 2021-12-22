@@ -19,3 +19,4 @@ SELECT "a" + "b" FROM "t" WHERE "a" > 5;
 SELECT "a" + "b" IS NULL FROM "t";
 SELECT "a" "foo","b" "bar" FROM "t";
 SELECT "a","b" FROM "t" ORDER BY "a" DESC NULLS FIRST,"b";
+SELECT "a","b" FROM "t" GROUP BY DISTINCT GROUPING SETS (("a","b"),"a",()),ROLLUP ("a"),CUBE ("a","b","c");
