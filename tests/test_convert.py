@@ -349,10 +349,6 @@ class TestSelect(VisitorTest):
             value=Field(name="a"), alias="foo"
         )
 
-    def test_query_specification(self):
-        # TODO: Groupby with the different options like CUBE, orderby and the such
-        pass
-
 
 class TestQueryPrimary(VisitorTest):
     def test_table(self):

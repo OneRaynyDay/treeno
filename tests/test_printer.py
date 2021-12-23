@@ -1,6 +1,6 @@
 import unittest
 from treeno.printer import StatementPrinter
-from treeno.base import PrintOptions
+from treeno.base import PrintOptions, PrintMode
 
 
 class TestPrinter(unittest.TestCase):
@@ -9,7 +9,7 @@ class TestPrinter(unittest.TestCase):
         printer.add_entry("SELECT", "1,2,3")
         printer.add_entry("FROM", "t")
         printer.update({"WHERE": "x>y", "ORDER": "BY x", "LIMIT": "5"})
-        assert printer.to_string(PrintOptions(pretty=True)) == (
+        assert printer.to_string(PrintOptions(mode=PrintMode.PRETTY)) == (
             "SELECT 1,2,3\n"
             "  FROM t\n"
             " WHERE x>y\n"
@@ -17,7 +17,7 @@ class TestPrinter(unittest.TestCase):
             " LIMIT 5"
         )
         assert (
-            printer.to_string(PrintOptions(pretty=False))
+            printer.to_string(PrintOptions(mode=PrintMode.DEFAULT))
             == "SELECT 1,2,3 FROM t WHERE x>y ORDER BY x LIMIT 5"
         )
 

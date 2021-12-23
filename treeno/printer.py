@@ -5,7 +5,7 @@ Note that none of these printers are explicitly responsible for calling sql(). T
 primitive str representation.
 """
 import attr
-from treeno.base import PrintOptions
+from treeno.base import PrintOptions, PrintMode
 from typing import Dict
 
 
@@ -48,11 +48,16 @@ class StatementPrinter:
         rpad = max(len(line) for line in self.stmt_mapping)
         lines = []
         for keyword, sql_str in self.stmt_mapping.items():
-            if opts.pretty:
+            if opts.mode == PrintMode.PRETTY:
                 padded_str = pad(sql_str, rpad + 1)
                 lines.append(keyword.rjust(rpad) + " " + padded_str)
-            else:
+            elif opts.mode == PrintMode.DEFAULT:
                 lines.append(keyword + " " + sql_str)
+            else:
+                raise NotImplementedError(
+                    f"to_string not implemented for mode {opts.mode}"
+                )
 
-        join_char = "\n" if opts.pretty else " "
+        # TODO: Consider appropriate join_char for other print modes
+        join_char = "\n" if opts.mode == PrintMode.PRETTY else " "
         return join_char.join(lines)

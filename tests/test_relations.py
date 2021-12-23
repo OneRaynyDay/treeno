@@ -1,5 +1,5 @@
 import unittest
-from treeno.base import PrintOptions
+from treeno.base import PrintOptions, PrintMode
 from treeno.relation import Table, TableQuery, ValuesQuery
 from treeno.orderby import OrderTerm, OrderType
 from treeno.expression import Field, wrap_literal
@@ -12,8 +12,8 @@ class TestRelations(unittest.TestCase):
 
         tq = TableQuery(t)
         assert (
-            tq.sql(PrintOptions(pretty=False))
-            == tq.sql(PrintOptions(pretty=True))
+            tq.sql(PrintOptions(mode=PrintMode.DEFAULT))
+            == tq.sql(PrintOptions(mode=PrintMode.PRETTY))
             == 'TABLE "catalog"."schema"."table"'
         )
 
@@ -25,10 +25,10 @@ class TestRelations(unittest.TestCase):
             orderby=[OrderTerm(value=Field("x"), order_type=OrderType.DESC)],
         )
         assert (
-            tq.sql(PrintOptions(pretty=False))
+            tq.sql(PrintOptions(mode=PrintMode.DEFAULT))
             == 'TABLE "catalog"."schema"."table" ORDER BY "x" DESC OFFSET 2 LIMIT 5'
         )
-        assert tq.sql(PrintOptions(pretty=True)) == (
+        assert tq.sql(PrintOptions(mode=PrintMode.PRETTY)) == (
             ' TABLE "catalog"."schema"."table"\n'
             ' ORDER BY "x" DESC\n'
             "OFFSET 2\n"
@@ -38,8 +38,8 @@ class TestRelations(unittest.TestCase):
     def test_values(self):
         v = ValuesQuery([wrap_literal(1), wrap_literal(2), wrap_literal(3)])
         assert (
-            v.sql(PrintOptions(pretty=False))
-            == v.sql(PrintOptions(pretty=True))
+            v.sql(PrintOptions(mode=PrintMode.DEFAULT))
+            == v.sql(PrintOptions(mode=PrintMode.PRETTY))
             == "VALUES 1,2,3"
         )
 
@@ -49,10 +49,10 @@ class TestRelations(unittest.TestCase):
             with_queries=[TableQuery(Table(name="foo"))],
         )
         assert (
-            v.sql(PrintOptions(pretty=False))
+            v.sql(PrintOptions(mode=PrintMode.DEFAULT))
             == 'WITH TABLE "foo" VALUES 1,2,3 OFFSET 3'
         )
-        assert v.sql(PrintOptions(pretty=True)) == (
+        assert v.sql(PrintOptions(mode=PrintMode.PRETTY)) == (
             '  WITH TABLE "foo"\n' "VALUES 1,2,3\n" "OFFSET 3"
         )
 

@@ -3,10 +3,19 @@ from abc import ABC, abstractmethod
 from enum import Enum, auto
 
 
+class PrintMode(Enum):
+    DEFAULT = auto()
+    PRETTY = auto()
+    TREE = auto()
+
+
 @attr.s
 class PrintOptions:
-    pretty: bool = attr.ib(default=False)
+    mode: PrintMode = attr.ib(default=PrintMode.DEFAULT)
     spaces: int = attr.ib(default=0)
+
+    def __attrs_post_init__(self):
+        assert self.mode != PrintMode.TREE, "Tree mode currently not available"
 
     def indent(self) -> "PrintOptions":
         """Create a copy of print options with deeper nested level.
