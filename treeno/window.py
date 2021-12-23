@@ -4,6 +4,7 @@ from treeno.expression import Value, GenericValue, wrap_literal
 from treeno.base import Sql, PrintOptions
 from typing import Optional, List
 from treeno.orderby import OrderTerm
+from treeno.printer import StatementPrinter, JoinPrinter
 from enum import Enum
 
 
@@ -27,7 +28,7 @@ class BoundedFrameBound(FrameBound):
     bound_type: BoundType = attr.ib()
     offset: GenericValue = attr.ib(converter=wrap_literal)
 
-    def sql(self, opts: Optional[PrintOptions] = None) -> str:
+    def sql(self, opts: PrintOptions) -> str:
         return f"{self.offset.sql(opts)} {self.bound_type.value}"
 
 
@@ -35,13 +36,13 @@ class BoundedFrameBound(FrameBound):
 class UnboundedFrameBound(FrameBound):
     bound_type: BoundType = attr.ib()
 
-    def sql(self, opts: Optional[PrintOptions] = None) -> str:
+    def sql(self, opts: PrintOptions) -> str:
         return f"UNBOUNDED {self.bound_type.value}"
 
 
 @attr.s
 class CurrentFrameBound(FrameBound):
-    def sql(self, opts: Optional[PrintOptions] = None) -> str:
+    def sql(self, opts: PrintOptions) -> str:
         return "CURRENT ROW"
 
 
@@ -65,25 +66,34 @@ class Window(Sql):
     start_bound: FrameBound = attr.ib(factory=default_start_bound)
     end_bound: FrameBound = attr.ib(factory=default_end_bound)
 
-    def sql(self, opts: Optional[PrintOptions] = None) -> str:
-        window_string_builder = []
+    def sql(self, opts: PrintOptions) -> str:
+        builder = StatementPrinter()
         if self.parent_window:
-            window_string_builder.append(self.parent_window)
+            # Empty string for no value on the right side of the river
+            builder.add_entry(self.parent_window, "")
         if self.partitions:
-            window_string_builder += [
-                "PARTITION BY",
-                ",".join(partition.sql(opts) for partition in self.partitions),
-            ]
+            partition_value = JoinPrinter(
+                delimiter=",",
+                stmt_list=[
+                    partition.sql(opts) for partition in self.partitions
+                ],
+            )
+            builder.add_entry("PARTITION", "BY " + partition_value)
         if self.orderby:
-            window_string_builder += [
-                "ORDER BY",
-                ",".join(order_term.sql(opts) for order_term in self.orderby),
-            ]
-        window_string_builder += [
+            order_value = JoinPrinter(
+                delimiter=",",
+                stmt_list=[order_term.sql(opts) for order_term in self.orderby],
+            )
+            builder.add_entry("ORDER", "BY " + order_value)
+        builder.add_entry(
             self.frame_type.value,
-            "BETWEEN",
-            self.start_bound.sql(opts),
-            "AND",
-            self.end_bound.sql(opts),
-        ]
-        return " ".join(window_string_builder)
+            " ".join(
+                [
+                    "BETWEEN",
+                    self.start_bound.sql(opts),
+                    "AND",
+                    self.end_bound.sql(opts),
+                ]
+            ),
+        )
+        return builder.to_string(opts)

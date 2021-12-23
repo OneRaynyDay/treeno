@@ -4,7 +4,7 @@ from typing import Optional, List, Dict
 from treeno.util import chain_identifiers, parenthesize
 from treeno.expression import Value
 from treeno.base import Sql, SetQuantifier, PrintOptions
-from treeno.printer import StatementPrinter, pad
+from treeno.printer import StatementPrinter, pad, JoinPrinter
 from treeno.groupby import GroupBy
 from treeno.orderby import OrderTerm
 from treeno.window import Window
@@ -80,7 +80,9 @@ class SelectQuery(Query):
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter()
         builder.update(self.with_query_string_builder(opts))
-        select_value = ",".join(val.sql(opts) for val in self.select)
+        select_value = JoinPrinter(
+            delimiter=",", stmt_list=[val.sql(opts) for val in self.select]
+        ).to_string(opts)
         # All is the default, so we don't need to mention it
         if self.select_quantifier != SetQuantifier.ALL:
             select_value = self.select_quantifier.name + " " + select_value
