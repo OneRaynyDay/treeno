@@ -33,18 +33,21 @@ from treeno.expression import (
     Positive,
     Star,
     TryCast,
+    wrap_literal,
 )
 from treeno.relation import (
     AliasedRelation,
-    Table,
-    SelectQuery,
-    Unnest,
-    Lateral,
     Join,
-    JoinType,
     JoinConfig,
     JoinOnCriteria,
+    JoinType,
     JoinUsingCriteria,
+    Lateral,
+    SelectQuery,
+    Table,
+    TableQuery,
+    Unnest,
+    ValuesQuery,
 )
 from treeno.functions import (
     Sum,
@@ -351,12 +354,12 @@ class TestSelect(VisitorTest):
         pass
 
 
-def TestQueryPrimary(VisitorTest):
+class TestQueryPrimary(VisitorTest):
     def test_table(self):
         ast = get_parser("TABLE foo.bar").queryPrimary()
         assert isinstance(ast, SqlBaseParser.TableContext)
         assert self.visitor.visit(ast) == TableQuery(
-            Table(name="bar", catalog="foo")
+            Table(name="bar", schema="foo")
         )
 
     def test_values(self):
