@@ -89,8 +89,8 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SqlBaseParser#renameTable.
-    def visitRenameTable(self, ctx:SqlBaseParser.RenameTableContext):
+    # Visit a parse tree produced by SqlBaseParser#truncateTable.
+    def visitTruncateTable(self, ctx:SqlBaseParser.TruncateTableContext):
         return self.visitChildren(ctx)
 
 
@@ -104,6 +104,16 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#renameTable.
+    def visitRenameTable(self, ctx:SqlBaseParser.RenameTableContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#addColumn.
+    def visitAddColumn(self, ctx:SqlBaseParser.AddColumnContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#renameColumn.
     def visitRenameColumn(self, ctx:SqlBaseParser.RenameColumnContext):
         return self.visitChildren(ctx)
@@ -114,13 +124,18 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SqlBaseParser#addColumn.
-    def visitAddColumn(self, ctx:SqlBaseParser.AddColumnContext):
+    # Visit a parse tree produced by SqlBaseParser#setTableAuthorization.
+    def visitSetTableAuthorization(self, ctx:SqlBaseParser.SetTableAuthorizationContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SqlBaseParser#setTableAuthorization.
-    def visitSetTableAuthorization(self, ctx:SqlBaseParser.SetTableAuthorizationContext):
+    # Visit a parse tree produced by SqlBaseParser#setTableProperties.
+    def visitSetTableProperties(self, ctx:SqlBaseParser.SetTablePropertiesContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#tableExecute.
+    def visitTableExecute(self, ctx:SqlBaseParser.TableExecuteContext):
         return self.visitChildren(ctx)
 
 
@@ -146,6 +161,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#dropMaterializedView.
     def visitDropMaterializedView(self, ctx:SqlBaseParser.DropMaterializedViewContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#renameMaterializedView.
+    def visitRenameMaterializedView(self, ctx:SqlBaseParser.RenameMaterializedViewContext):
         return self.visitChildren(ctx)
 
 
@@ -199,6 +219,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#deny.
+    def visitDeny(self, ctx:SqlBaseParser.DenyContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#revoke.
     def visitRevoke(self, ctx:SqlBaseParser.RevokeContext):
         return self.visitChildren(ctx)
@@ -211,6 +236,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#explain.
     def visitExplain(self, ctx:SqlBaseParser.ExplainContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#explainAnalyze.
+    def visitExplainAnalyze(self, ctx:SqlBaseParser.ExplainAnalyzeContext):
         return self.visitChildren(ctx)
 
 
@@ -339,6 +369,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#setTimeZone.
+    def visitSetTimeZone(self, ctx:SqlBaseParser.SetTimeZoneContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#update.
     def visitUpdate(self, ctx:SqlBaseParser.UpdateContext):
         return self.visitChildren(ctx)
@@ -376,6 +411,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#properties.
     def visitProperties(self, ctx:SqlBaseParser.PropertiesContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#propertyAssignments.
+    def visitPropertyAssignments(self, ctx:SqlBaseParser.PropertyAssignmentsContext):
         return self.visitChildren(ctx)
 
 
@@ -529,6 +569,16 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#listAggOverflowBehavior.
+    def visitListAggOverflowBehavior(self, ctx:SqlBaseParser.ListAggOverflowBehaviorContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#listaggCountIndication.
+    def visitListaggCountIndication(self, ctx:SqlBaseParser.ListaggCountIndicationContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#patternRecognition.
     def visitPatternRecognition(self, ctx:SqlBaseParser.PatternRecognitionContext):
         return self.visitChildren(ctx)
@@ -614,8 +664,13 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SqlBaseParser#logicalBinary.
-    def visitLogicalBinary(self, ctx:SqlBaseParser.LogicalBinaryContext):
+    # Visit a parse tree produced by SqlBaseParser#and_.
+    def visitAnd_(self, ctx:SqlBaseParser.And_Context):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#or_.
+    def visitOr_(self, ctx:SqlBaseParser.Or_Context):
         return self.visitChildren(ctx)
 
 
@@ -789,6 +844,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#measure.
+    def visitMeasure(self, ctx:SqlBaseParser.MeasureContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#extract.
     def visitExtract(self, ctx:SqlBaseParser.ExtractContext):
         return self.visitChildren(ctx)
@@ -809,6 +869,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#currentSchema.
+    def visitCurrentSchema(self, ctx:SqlBaseParser.CurrentSchemaContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#exists.
     def visitExists(self, ctx:SqlBaseParser.ExistsContext):
         return self.visitChildren(ctx)
@@ -819,8 +884,18 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#listagg.
+    def visitListagg(self, ctx:SqlBaseParser.ListaggContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#searchedCase.
     def visitSearchedCase(self, ctx:SqlBaseParser.SearchedCaseContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#currentCatalog.
+    def visitCurrentCatalog(self, ctx:SqlBaseParser.CurrentCatalogContext):
         return self.visitChildren(ctx)
 
 
@@ -971,6 +1046,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#windowFrame.
     def visitWindowFrame(self, ctx:SqlBaseParser.WindowFrameContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#frameExtent.
+    def visitFrameExtent(self, ctx:SqlBaseParser.FrameExtentContext):
         return self.visitChildren(ctx)
 
 
@@ -1136,6 +1216,16 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#qualifiedName.
     def visitQualifiedName(self, ctx:SqlBaseParser.QualifiedNameContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#queryPeriod.
+    def visitQueryPeriod(self, ctx:SqlBaseParser.QueryPeriodContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#rangeType.
+    def visitRangeType(self, ctx:SqlBaseParser.RangeTypeContext):
         return self.visitChildren(ctx)
 
 

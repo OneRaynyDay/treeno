@@ -152,12 +152,12 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SqlBaseParser#renameTable.
-    def enterRenameTable(self, ctx:SqlBaseParser.RenameTableContext):
+    # Enter a parse tree produced by SqlBaseParser#truncateTable.
+    def enterTruncateTable(self, ctx:SqlBaseParser.TruncateTableContext):
         pass
 
-    # Exit a parse tree produced by SqlBaseParser#renameTable.
-    def exitRenameTable(self, ctx:SqlBaseParser.RenameTableContext):
+    # Exit a parse tree produced by SqlBaseParser#truncateTable.
+    def exitTruncateTable(self, ctx:SqlBaseParser.TruncateTableContext):
         pass
 
 
@@ -179,6 +179,24 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#renameTable.
+    def enterRenameTable(self, ctx:SqlBaseParser.RenameTableContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#renameTable.
+    def exitRenameTable(self, ctx:SqlBaseParser.RenameTableContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#addColumn.
+    def enterAddColumn(self, ctx:SqlBaseParser.AddColumnContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#addColumn.
+    def exitAddColumn(self, ctx:SqlBaseParser.AddColumnContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#renameColumn.
     def enterRenameColumn(self, ctx:SqlBaseParser.RenameColumnContext):
         pass
@@ -197,21 +215,30 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SqlBaseParser#addColumn.
-    def enterAddColumn(self, ctx:SqlBaseParser.AddColumnContext):
-        pass
-
-    # Exit a parse tree produced by SqlBaseParser#addColumn.
-    def exitAddColumn(self, ctx:SqlBaseParser.AddColumnContext):
-        pass
-
-
     # Enter a parse tree produced by SqlBaseParser#setTableAuthorization.
     def enterSetTableAuthorization(self, ctx:SqlBaseParser.SetTableAuthorizationContext):
         pass
 
     # Exit a parse tree produced by SqlBaseParser#setTableAuthorization.
     def exitSetTableAuthorization(self, ctx:SqlBaseParser.SetTableAuthorizationContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#setTableProperties.
+    def enterSetTableProperties(self, ctx:SqlBaseParser.SetTablePropertiesContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#setTableProperties.
+    def exitSetTableProperties(self, ctx:SqlBaseParser.SetTablePropertiesContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#tableExecute.
+    def enterTableExecute(self, ctx:SqlBaseParser.TableExecuteContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#tableExecute.
+    def exitTableExecute(self, ctx:SqlBaseParser.TableExecuteContext):
         pass
 
 
@@ -257,6 +284,15 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#dropMaterializedView.
     def exitDropMaterializedView(self, ctx:SqlBaseParser.DropMaterializedViewContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#renameMaterializedView.
+    def enterRenameMaterializedView(self, ctx:SqlBaseParser.RenameMaterializedViewContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#renameMaterializedView.
+    def exitRenameMaterializedView(self, ctx:SqlBaseParser.RenameMaterializedViewContext):
         pass
 
 
@@ -350,6 +386,15 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#deny.
+    def enterDeny(self, ctx:SqlBaseParser.DenyContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#deny.
+    def exitDeny(self, ctx:SqlBaseParser.DenyContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#revoke.
     def enterRevoke(self, ctx:SqlBaseParser.RevokeContext):
         pass
@@ -374,6 +419,15 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#explain.
     def exitExplain(self, ctx:SqlBaseParser.ExplainContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#explainAnalyze.
+    def enterExplainAnalyze(self, ctx:SqlBaseParser.ExplainAnalyzeContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#explainAnalyze.
+    def exitExplainAnalyze(self, ctx:SqlBaseParser.ExplainAnalyzeContext):
         pass
 
 
@@ -602,6 +656,15 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#setTimeZone.
+    def enterSetTimeZone(self, ctx:SqlBaseParser.SetTimeZoneContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#setTimeZone.
+    def exitSetTimeZone(self, ctx:SqlBaseParser.SetTimeZoneContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#update.
     def enterUpdate(self, ctx:SqlBaseParser.UpdateContext):
         pass
@@ -671,6 +734,15 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#properties.
     def exitProperties(self, ctx:SqlBaseParser.PropertiesContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#propertyAssignments.
+    def enterPropertyAssignments(self, ctx:SqlBaseParser.PropertyAssignmentsContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#propertyAssignments.
+    def exitPropertyAssignments(self, ctx:SqlBaseParser.PropertyAssignmentsContext):
         pass
 
 
@@ -944,6 +1016,24 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#listAggOverflowBehavior.
+    def enterListAggOverflowBehavior(self, ctx:SqlBaseParser.ListAggOverflowBehaviorContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#listAggOverflowBehavior.
+    def exitListAggOverflowBehavior(self, ctx:SqlBaseParser.ListAggOverflowBehaviorContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#listaggCountIndication.
+    def enterListaggCountIndication(self, ctx:SqlBaseParser.ListaggCountIndicationContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#listaggCountIndication.
+    def exitListaggCountIndication(self, ctx:SqlBaseParser.ListaggCountIndicationContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#patternRecognition.
     def enterPatternRecognition(self, ctx:SqlBaseParser.PatternRecognitionContext):
         pass
@@ -1097,12 +1187,21 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SqlBaseParser#logicalBinary.
-    def enterLogicalBinary(self, ctx:SqlBaseParser.LogicalBinaryContext):
+    # Enter a parse tree produced by SqlBaseParser#and_.
+    def enterAnd_(self, ctx:SqlBaseParser.And_Context):
         pass
 
-    # Exit a parse tree produced by SqlBaseParser#logicalBinary.
-    def exitLogicalBinary(self, ctx:SqlBaseParser.LogicalBinaryContext):
+    # Exit a parse tree produced by SqlBaseParser#and_.
+    def exitAnd_(self, ctx:SqlBaseParser.And_Context):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#or_.
+    def enterOr_(self, ctx:SqlBaseParser.Or_Context):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#or_.
+    def exitOr_(self, ctx:SqlBaseParser.Or_Context):
         pass
 
 
@@ -1412,6 +1511,15 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#measure.
+    def enterMeasure(self, ctx:SqlBaseParser.MeasureContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#measure.
+    def exitMeasure(self, ctx:SqlBaseParser.MeasureContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#extract.
     def enterExtract(self, ctx:SqlBaseParser.ExtractContext):
         pass
@@ -1448,6 +1556,15 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#currentSchema.
+    def enterCurrentSchema(self, ctx:SqlBaseParser.CurrentSchemaContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#currentSchema.
+    def exitCurrentSchema(self, ctx:SqlBaseParser.CurrentSchemaContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#exists.
     def enterExists(self, ctx:SqlBaseParser.ExistsContext):
         pass
@@ -1466,12 +1583,30 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#listagg.
+    def enterListagg(self, ctx:SqlBaseParser.ListaggContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#listagg.
+    def exitListagg(self, ctx:SqlBaseParser.ListaggContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#searchedCase.
     def enterSearchedCase(self, ctx:SqlBaseParser.SearchedCaseContext):
         pass
 
     # Exit a parse tree produced by SqlBaseParser#searchedCase.
     def exitSearchedCase(self, ctx:SqlBaseParser.SearchedCaseContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#currentCatalog.
+    def enterCurrentCatalog(self, ctx:SqlBaseParser.CurrentCatalogContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#currentCatalog.
+    def exitCurrentCatalog(self, ctx:SqlBaseParser.CurrentCatalogContext):
         pass
 
 
@@ -1742,6 +1877,15 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#windowFrame.
     def exitWindowFrame(self, ctx:SqlBaseParser.WindowFrameContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#frameExtent.
+    def enterFrameExtent(self, ctx:SqlBaseParser.FrameExtentContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#frameExtent.
+    def exitFrameExtent(self, ctx:SqlBaseParser.FrameExtentContext):
         pass
 
 
@@ -2039,6 +2183,24 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#qualifiedName.
     def exitQualifiedName(self, ctx:SqlBaseParser.QualifiedNameContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#queryPeriod.
+    def enterQueryPeriod(self, ctx:SqlBaseParser.QueryPeriodContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#queryPeriod.
+    def exitQueryPeriod(self, ctx:SqlBaseParser.QueryPeriodContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#rangeType.
+    def enterRangeType(self, ctx:SqlBaseParser.RangeTypeContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#rangeType.
+    def exitRangeType(self, ctx:SqlBaseParser.RangeTypeContext):
         pass
 
 

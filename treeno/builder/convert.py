@@ -9,6 +9,8 @@ from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.expression import (
     Value,
     Array,
+    And,
+    Or,
     Between,
     Field,
     Star,
@@ -220,13 +222,18 @@ class ConvertVisitor(SqlBaseVisitor):
         return SetQuantifier[ctx.getText()]
 
     @overrides
-    def visitLogicalBinary(
-        self, ctx: SqlBaseParser.LogicalBinaryContext
-    ) -> Value:
-        left = self.visit(ctx.left)
-        right = self.visit(ctx.right)
-        operator = ctx.operator.text
-        return apply_operator(operator, left, right)
+    def visitAnd_(self, ctx: SqlBaseParser.And_Context) -> And:
+        return And(
+            self.visit(ctx.booleanExpression(0)),
+            self.visit(ctx.booleanExpression(1)),
+        )
+
+    @overrides
+    def visitOr_(self, ctx: SqlBaseParser.Or_Context) -> Or:
+        return Or(
+            self.visit(ctx.booleanExpression(0)),
+            self.visit(ctx.booleanExpression(1)),
+        )
 
     @overrides
     def visitLogicalNot(self, ctx: SqlBaseParser.LogicalNotContext) -> Value:
@@ -882,6 +889,21 @@ class ConvertVisitor(SqlBaseVisitor):
 
     @overrides
     def visitWindowFrame(self, ctx: SqlBaseParser.WindowFrameContext) -> Window:
+        assert not ctx.measureDefinition(), "MEASURES currently not supported"
+        assert not ctx.skipTo(), "AFTER MATCH currently not supported"
+        assert (
+            not ctx.INITIAL() and not ctx.SEEK()
+        ), "INITIAL/SEEK currently not supported"
+        assert not ctx.rowPattern(), "Pattern matching currently not supported"
+        assert not ctx.subsetDefinition(), "SUBSET currently not supported"
+        assert (
+            not ctx.variableDefinition()
+        ), "Variable definition in window currently not supported"
+        window = self.visit(ctx.frameExtent())
+        return window
+
+    @overrides
+    def visitFrameExtent(self, ctx: SqlBaseParser.FrameExtentContext) -> Window:
         params = {
             "frame_type": FrameType[ctx.frameType.text],
             "start_bound": self.visit(ctx.start),

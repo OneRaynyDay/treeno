@@ -354,13 +354,13 @@ class TestSelect(VisitorTest):
 class TestBooleanExpressions(VisitorTest):
     def test_logical_binary(self):
         ast = get_parser("TRUE AND FALSE").booleanExpression()
-        assert isinstance(ast, SqlBaseParser.LogicalBinaryContext)
+        assert isinstance(ast, SqlBaseParser.And_Context)
         assert self.visitor.visit(ast) == And(
             left=Literal(True, boolean()), right=Literal(False, boolean())
         )
 
         ast = get_parser("TRUE OR FALSE").booleanExpression()
-        assert isinstance(ast, SqlBaseParser.LogicalBinaryContext)
+        assert isinstance(ast, SqlBaseParser.Or_Context)
         assert self.visitor.visit(ast) == Or(
             left=Literal(True, boolean()), right=Literal(False, boolean())
         )
