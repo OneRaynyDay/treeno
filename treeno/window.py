@@ -4,7 +4,7 @@ from treeno.expression import Value, GenericValue, wrap_literal
 from treeno.base import Sql, PrintOptions
 from typing import Optional, List
 from treeno.orderby import OrderTerm
-from treeno.printer import StatementPrinter, JoinPrinter
+from treeno.printer import StatementPrinter, join_stmts
 from enum import Enum
 
 
@@ -72,17 +72,13 @@ class Window(Sql):
             # Empty string for no value on the right side of the river
             builder.add_entry(self.parent_window, "")
         if self.partitions:
-            partition_value = JoinPrinter(
-                delimiter=",",
-                stmt_list=[
-                    partition.sql(opts) for partition in self.partitions
-                ],
+            partition_value = join_stmts(
+                [partition.sql(opts) for partition in self.partitions], opts
             )
             builder.add_entry("PARTITION", "BY " + partition_value)
         if self.orderby:
-            order_value = JoinPrinter(
-                delimiter=",",
-                stmt_list=[order_term.sql(opts) for order_term in self.orderby],
+            order_value = join_stmts(
+                [order_term.sql(opts) for order_term in self.orderby], opts
             )
             builder.add_entry("ORDER", "BY " + order_value)
         builder.add_entry(

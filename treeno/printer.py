@@ -15,6 +15,13 @@ def pad(input: str, spaces: int) -> str:
     return f"\n{pad}".join(lines)
 
 
+def join_stmts(
+    stmts: List[str], opts: PrintOptions, delimiter: str = ","
+) -> str:
+    """A convenience method for joining statements when the entire stmt list is already known"""
+    return JoinPrinter(delimiter=delimiter, stmt_list=stmts).to_string(opts)
+
+
 @attr.s
 class JoinPrinter:
     """JoinPrinter is responsible for formatting a sequence of strings. For example:

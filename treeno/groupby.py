@@ -1,6 +1,7 @@
 import attr
 from abc import ABC
 from treeno.expression import Value
+from treeno.printer import join_stmts
 from treeno.base import Sql, SetQuantifier, PrintOptions
 from typing import List
 
@@ -19,10 +20,7 @@ class GroupBy(Sql):
     groupby_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
 
     def sql(self, opts: PrintOptions) -> str:
-        multi_groupby_string = ",".join(
-            group.sql(opts) for group in self.groups
-        )
-        return f"{self.groupby_quantifier.name} {multi_groupby_string}"
+        return f"{self.groupby_quantifier.name} {join_stmts([group.sql(opts) for group in self.groups], opts)}"
 
 
 @attr.s
@@ -38,8 +36,7 @@ class GroupingSet(Group):
     def sql(self, opts: PrintOptions) -> str:
         if len(self.values) == 1:
             return self.values[0].sql(opts)
-        multi_expr_string = ",".join(val.sql(opts) for val in self.values)
-        return f"({multi_expr_string})"
+        return f"({join_stmts([val.sql(opts) for val in self.values], opts)})"
 
 
 @attr.s
@@ -57,8 +54,7 @@ class GroupingSetList(Group):
         ), "GroupingSetLists must have at least one grouping set"
 
     def sql(self, opts: PrintOptions) -> str:
-        multi_group_string = ",".join(group.sql(opts) for group in self.groups)
-        return f"GROUPING SETS ({multi_group_string})"
+        return f"GROUPING SETS ({join_stmts([group.sql(opts) for group in self.groups], opts)})"
 
 
 @attr.s
@@ -76,8 +72,9 @@ class Cube(Group):
         ), "Cube must have at least one value to group by"
 
     def sql(self, opts: PrintOptions) -> str:
-        multi_expr_string = ",".join(val.sql(opts) for val in self.values)
-        return f"CUBE ({multi_expr_string})"
+        return (
+            f"CUBE ({join_stmts([val.sql(opts) for val in self.values], opts)})"
+        )
 
 
 @attr.s
@@ -95,5 +92,4 @@ class Rollup(Group):
         ), "GroupingSets must have at least one value to group by"
 
     def sql(self, opts: PrintOptions) -> str:
-        multi_expr_string = ",".join(val.sql(opts) for val in self.values)
-        return f"ROLLUP ({multi_expr_string})"
+        return f"ROLLUP ({join_stmts([val.sql(opts) for val in self.values], opts)})"

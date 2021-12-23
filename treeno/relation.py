@@ -4,7 +4,7 @@ from typing import Optional, List, Dict
 from treeno.util import chain_identifiers, parenthesize
 from treeno.expression import Value
 from treeno.base import Sql, SetQuantifier, PrintOptions
-from treeno.printer import StatementPrinter, pad, JoinPrinter
+from treeno.printer import StatementPrinter, pad, join_stmts
 from treeno.groupby import GroupBy
 from treeno.orderby import OrderTerm
 from treeno.window import Window
@@ -37,21 +37,22 @@ class Query(Relation, ABC):
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
     with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
 
-    def with_query_string_builder(
-        self, opts: Optional[PrintOptions]
-    ) -> Dict[str, str]:
+    def with_query_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
         if not self.with_queries:
             return {}
-        return {"WITH": ",".join(str(query) for query in self.with_queries)}
+        return {
+            "WITH": join_stmts(
+                [str(query) for query in self.with_queries], opts
+            )
+        }
 
-    def constraint_string_builder(
-        self, opts: Optional[PrintOptions]
-    ) -> Dict[str, str]:
+    def constraint_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
         str_builder = {}
         if self.orderby:
             # Typically the ORDER BY clause goes across the indentation river.
-            str_builder["ORDER"] = "BY " + ",".join(
-                order.sql(opts) for order in self.orderby
+            # TODO: The "BY" will offset the max length slightly.
+            str_builder["ORDER"] = "BY " + join_stmts(
+                [order.sql(opts) for order in self.orderby], opts
             )
         if self.offset:
             str_builder["OFFSET"] = str(self.offset)
@@ -80,9 +81,7 @@ class SelectQuery(Query):
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter()
         builder.update(self.with_query_string_builder(opts))
-        select_value = JoinPrinter(
-            delimiter=",", stmt_list=[val.sql(opts) for val in self.select]
-        ).to_string(opts)
+        select_value = join_stmts([val.sql(opts) for val in self.select], opts)
         # All is the default, so we don't need to mention it
         if self.select_quantifier != SetQuantifier.ALL:
             select_value = self.select_quantifier.name + " " + select_value
@@ -155,7 +154,7 @@ class ValuesQuery(Query):
         builder = StatementPrinter()
         builder.update(self.with_query_string_builder(opts))
         builder.add_entry(
-            "VALUES", ",".join(expr.sql(opts) for expr in self.exprs)
+            "VALUES", join_stmts([expr.sql(opts) for expr in self.exprs], opts)
         )
         builder.update(self.constraint_string_builder(opts))
         return builder.to_string(opts)
@@ -174,8 +173,7 @@ class AliasedRelation(Relation):
         # TODO: Keep the "AS"?
         alias_str = f'{self.relation} "{self.alias}"'
         if self.column_aliases:
-            columns_str = ",".join(self.column_aliases)
-            alias_str += f" ({columns_str})"
+            alias_str += f" ({join_stmts(self.column_aliases, opts)})"
         return alias_str
 
 
@@ -217,9 +215,7 @@ class JoinUsingCriteria(JoinCriteria):
     column_names: List[str] = attr.ib()
 
     def sql(self, opts: PrintOptions):
-        return (
-            f"USING({chain_identifiers(*self.column_names, join_string=',')})"
-        )
+        return f"USING({join_stmts(self.column_names, opts)})"
 
 
 @attr.s
@@ -280,8 +276,9 @@ class Unnest(Relation):
     with_ordinality: bool = attr.ib(default=False, kw_only=True)
 
     def sql(self, opts: PrintOptions) -> str:
-        arrays_str = ",".join(str(arr) for arr in self.array)
-        str_builder = [f"UNNEST({arrays_str})"]
+        str_builder = [
+            f"UNNEST({join_stmts([arr.sql(opts) for arr in self.array], opts)})"
+        ]
         if self.with_ordinality:
             str_builder += " WITH ORDINALITY"
         return " ".join(str_builder)
@@ -295,4 +292,4 @@ class Lateral(Relation):
     subquery: Query = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        return f"LATERAL ({self.subquery})"
+        return f"LATERAL ({self.subquery.sql(opts)})"
