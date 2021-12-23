@@ -31,7 +31,8 @@ class Query(Relation, ABC):
     """Represents a query with filtered outputs
     """
 
-    offset: Optional[Value] = attr.ib(default=None, kw_only=True)
+    # TODO: Technically, an offset can either be an integer or a question mark(as a parameter).
+    offset: Optional[int] = attr.ib(default=None, kw_only=True)
     limit: Optional[int] = attr.ib(default=None, kw_only=True)
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
     with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
@@ -41,7 +42,7 @@ class Query(Relation, ABC):
     ) -> Dict[str, str]:
         if not self.with_queries:
             return {}
-        return {"WITH", ",".join(str(query) for query in self.with_queries)}
+        return {"WITH": ",".join(str(query) for query in self.with_queries)}
 
     def constraint_string_builder(
         self, opts: Optional[PrintOptions]
@@ -131,14 +132,15 @@ class TableQuery(Query):
     table: Table = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        table_str = self.with_query_string_builder(opts)
-        table_str += [str(self.table)]
-        table_str += self.constraint_string_builder(opts)
-        return " ".join(table_str)
+        builder = StatementPrinter()
+        builder.update(self.with_query_string_builder(opts))
+        builder.add_entry("TABLE", self.table.sql(opts))
+        builder.update(self.constraint_string_builder(opts))
+        return builder.to_string(opts)
 
 
 @attr.s
-class ValuesTable(Relation):
+class ValuesQuery(Query):
     """A literal table constructed by literal ROWs
 
     Values tables can be standalone queries by themselves, and thus can be subject to
@@ -147,19 +149,14 @@ class ValuesTable(Relation):
 
     exprs: List[Value] = attr.ib()
 
-
-@attr.s
-class ValuesQuery(Query):
-    """Represents a literal table query.
-    """
-
-    table: ValuesTable = attr.ib()
-
     def sql(self, opts: PrintOptions) -> str:
-        values_str = self.with_query_string_builder(opts)
-        values_str += [str(self.table)]
-        values_str += self.constraint_string_builder()
-        return " ".join(values_str)
+        builder = StatementPrinter()
+        builder.update(self.with_query_string_builder(opts))
+        builder.add_entry(
+            "VALUES", ",".join(expr.sql(opts) for expr in self.exprs)
+        )
+        builder.update(self.constraint_string_builder(opts))
+        return builder.to_string(opts)
 
 
 @attr.s

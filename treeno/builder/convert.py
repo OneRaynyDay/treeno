@@ -29,6 +29,8 @@ from treeno.relation import (
     Relation,
     AliasedRelation,
     Table,
+    TableQuery,
+    ValuesQuery,
     Query,
     Unnest,
     Lateral,
@@ -119,6 +121,15 @@ def apply_operator(operator: str, *args: Value) -> Value:
         raise NotImplementedError(f"Unrecognized token {operator}")
 
 
+def table_from_qualifiers(qualifiers: List[str]) -> Table:
+    qualifiers = list(reversed(qualifiers))
+    name: str = qualifiers[0]
+    schema: Optional[str] = nth(qualifiers, 1)
+    catalog: Optional[str] = nth(qualifiers, 2)
+
+    return Table(name=name, schema=schema, catalog=catalog)
+
+
 class ConvertVisitor(SqlBaseVisitor):
     """Converts the tree into a builder tree in python
     """
@@ -164,11 +175,20 @@ class ConvertVisitor(SqlBaseVisitor):
         query = self.visit(query_term)
         if ctx.ORDER() and ctx.BY():
             query.orderby = [self.visit(item) for item in ctx.sortItem()]
+        if ctx.offset:
+            query.offset = self.visit(ctx.offset)
         limit_clause = ctx.limitRowCount()
         if limit_clause:
             # TODO: Assign this to the query object
             query.limit = self.visit(limit_clause)
         return query
+
+    @overrides
+    def visitRowCount(self, ctx: SqlBaseParser.RowCountContext) -> int:
+        assert (
+            not ctx.QUESTION_MARK()
+        ), "Question mark (?) as a row count is currently not supported"
+        return int(ctx.INTEGER_VALUE().getText())
 
     @overrides
     def visitSortItem(self, ctx: SqlBaseParser.SortItemContext) -> OrderTerm:
@@ -203,6 +223,20 @@ class ConvertVisitor(SqlBaseVisitor):
         self, ctx: SqlBaseParser.QueryTermDefaultContext
     ) -> SelectQuery:
         return self.visit(ctx.queryPrimary())
+
+    @overrides
+    def visitTable(self, ctx: SqlBaseParser.TableContext) -> TableQuery:
+        return TableQuery(
+            table=table_from_qualifiers(self.visit(ctx.qualifiedName()))
+        )
+
+    @overrides
+    def visitInlineTable(
+        self, ctx: SqlBaseParser.InlineTableContext
+    ) -> ValuesQuery:
+        return ValuesQuery(
+            exprs=[self.visit(expr) for expr in ctx.expression()]
+        )
 
     @overrides
     def visitQueryPrimaryDefault(
@@ -778,14 +812,9 @@ class ConvertVisitor(SqlBaseVisitor):
 
     @overrides
     def visitTableName(self, ctx: SqlBaseParser.TableNameContext) -> Table:
+        assert not ctx.queryPeriod(), "Query period not supported"
         qualifiers = self.visit(ctx.qualifiedName())
-        qualifiers.reverse()
-
-        name: str = qualifiers[0]
-        schema: Optional[str] = nth(qualifiers, 1)
-        catalog: Optional[str] = nth(qualifiers, 2)
-
-        return Table(name=name, schema=schema, catalog=catalog)
+        return table_from_qualifiers(qualifiers)
 
     @overrides
     def visitSubqueryRelation(

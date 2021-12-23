@@ -351,6 +351,29 @@ class TestSelect(VisitorTest):
         pass
 
 
+def TestQueryPrimary(VisitorTest):
+    def test_table(self):
+        ast = get_parser("TABLE foo.bar").queryPrimary()
+        assert isinstance(ast, SqlBaseParser.TableContext)
+        assert self.visitor.visit(ast) == TableQuery(
+            Table(name="bar", catalog="foo")
+        )
+
+    def test_values(self):
+        ast = get_parser("VALUES 1,2,3").queryPrimary()
+        assert isinstance(ast, SqlBaseParser.InlineTableContext)
+        assert self.visitor.visit(ast) == ValuesQuery(
+            exprs=[wrap_literal(1), wrap_literal(2), wrap_literal(3)]
+        )
+
+    def test_select(self):
+        ast = get_parser("SELECT 1, foo").queryPrimary()
+        assert isinstance(ast, SqlBaseParser.QueryPrimaryDefaultContext)
+        assert self.visitor.visit(ast) == SelectQuery(
+            select=[wrap_literal(1), Field("foo")]
+        )
+
+
 class TestBooleanExpressions(VisitorTest):
     def test_logical_binary(self):
         ast = get_parser("TRUE AND FALSE").booleanExpression()
