@@ -1,5 +1,4 @@
 import unittest
-import pytest
 from treeno.printer import StatementPrinter, JoinPrinter
 from treeno.base import PrintOptions, PrintMode
 
@@ -58,15 +57,12 @@ class TestPrinter(unittest.TestCase):
             == "12,\n34,\n56,67"
         )
 
-        with pytest.raises(AssertionError, match="Can't fit line"):
-            printer = JoinPrinter(delimiter=",", max_length=10)
-            printer.add_entry("12345678901")
+        printer = JoinPrinter(delimiter=",", max_length=10)
+        printer.add_entry("12345678901")
+        assert (
             printer.to_string(PrintOptions(mode=PrintMode.PRETTY))
-
-        with pytest.raises(AssertionError, match="Can't fit line"):
-            printer = JoinPrinter(delimiter=",", max_length=10)
-            printer.add_entry("1234567890")
-            printer.to_string(PrintOptions(mode=PrintMode.PRETTY, spaces=4))
+            == "12345678901"
+        )
 
 
 if __name__ == "__main__":

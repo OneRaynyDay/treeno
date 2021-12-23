@@ -24,6 +24,7 @@ from treeno.expression import (
     TypeConstructor,
     TryCast,
     Cast,
+    RowConstructor,
 )
 from treeno.relation import (
     Relation,
@@ -43,7 +44,7 @@ from treeno.relation import (
     SelectQuery,
     SetQuantifier,
 )
-from treeno.functions import Function, NAMES_TO_FUNCTIONS
+from treeno.functions import Function, NAMES_TO_FUNCTIONS, AggregateFunction
 from treeno.datatypes.types import FIELDS, DataType, TIMESTAMP, TIME
 from treeno.datatypes.inference import infer_integral, infer_decimal
 from treeno.groupby import GroupBy, GroupingSet, GroupingSetList, Cube, Rollup
@@ -602,24 +603,53 @@ class ConvertVisitor(SqlBaseVisitor):
         assert (
             not ctx.sortItem()
         ), "ORDER BY in expression is currently not supported"
+
         # Qualified names usually have multiple parts, but afaik functions aren't namespaced so there should only
         # be one part
         qual_name = self.visit(ctx.qualifiedName())
         assert (
             len(qual_name) == 1
         ), f"Invalid function name {'.'.join(qual_name)}"
+
         fn_name = qual_name[0].upper()
         assert (
             fn_name in NAMES_TO_FUNCTIONS
         ), f"Function name {fn_name} not registered in treeno.functions"
         fn = NAMES_TO_FUNCTIONS[fn_name]
+
+        kwargs = {}
+        if ctx.over():
+            assert issubclass(
+                fn, AggregateFunction
+            ), "Can't scan over windows on non-aggregate functions"
+            kwargs["window"] = self.visit(ctx.over())
+
         expressions: List[Value]
         if ctx.ASTERISK():
             expressions = [Star()]
         else:
             # TODO: Are we missing the empty args case?
             expressions = [self.visit(expr) for expr in ctx.expression()]
-        return fn(*expressions)
+        return fn(*expressions, **kwargs)
+
+    @overrides
+    def visitRowConstructor(
+        self, ctx: SqlBaseParser.RowConstructorContext
+    ) -> RowConstructor:
+        values = [self.visit(expr) for expr in ctx.expression()]
+        return RowConstructor(values)
+
+    @overrides
+    def visitParameter(self, ctx: SqlBaseParser.ParameterContext) -> Literal:
+        raise NotImplementedError("Parameters currently not supported")
+
+    @overrides
+    def visitOver(self, ctx: SqlBaseParser.OverContext) -> Window:
+        """The window can either be an identifier or a full window specification.
+        """
+        if ctx.windowName:
+            return Window(parent_window=ctx.visit(ctx.windowName))
+        return self.visit(ctx.windowSpecification())
 
     @overrides
     def visitArrayConstructor(

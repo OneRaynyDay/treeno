@@ -49,15 +49,15 @@ class JoinPrinter:
             # If we're at the last element, we don't need to add a comma
             needs_comma = int(idx < len(self.stmt_list) - 1)
             line_length = len(line) + needs_comma
-            assert (
-                opts.mode != PrintMode.PRETTY or line_length <= remaining_length
-            ), f"Can't fit line {line} in remaining length of {remaining_length}"
+            # If a line is simply too long, we can't do anything about it but to include it in its own line.
             if (
                 opts.mode == PrintMode.PRETTY
                 and current_length + line_length > remaining_length
             ):
                 current_length = line_length
-                lines.append("\n" + line)
+                # If we're at the beginning of the line, we shouldn't add a newline
+                newline_if_not_beginning = "\n" if idx != 0 else ""
+                lines.append(newline_if_not_beginning + line)
             else:
                 # Add 1 because of commas
                 current_length += line_length

@@ -20,3 +20,6 @@ SELECT "a" + "b" IS NULL FROM "t";
 SELECT "a" "foo","b" "bar" FROM "t";
 SELECT "a","b" FROM "t" ORDER BY "a" DESC NULLS FIRST,"b";
 SELECT "a","b" FROM "t" GROUP BY DISTINCT GROUPING SETS (("a","b"),"a",()),ROLLUP ("a"),CUBE ("a","b","c");
+SELECT "a","b" FROM (SELECT "a","b","c" FROM "t" WHERE "c" > 5 AND "b" = 2 ORDER BY "a") LIMIT 3;
+SELECT SUM("a") OVER (PARTITION BY "date" ORDER BY "timestamp" ROWS BETWEEN 5 PRECEDING AND CURRENT ROW),"x","y","z" FROM "t";
+SELECT "a" FROM (SELECT "a","b" FROM (SELECT "a","b","c" FROM "t"));

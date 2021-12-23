@@ -34,6 +34,8 @@ from treeno.expression import (
     Star,
     TryCast,
     wrap_literal,
+    TypeConstructor,
+    RowConstructor,
 )
 from treeno.relation import (
     AliasedRelation,
@@ -194,6 +196,50 @@ class TestLiterals(VisitorTest):
         ast = get_parser("FALSE").primaryExpression()
         assert isinstance(ast, SqlBaseParser.BooleanLiteralContext)
         assert self.visitor.visit(ast) == Literal(False, boolean())
+
+
+class TestConstructorExprs(VisitorTest):
+    def test_type_constructor(self):
+        ast = get_parser("DECIMAL '3.0'").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.TypeConstructorContext)
+        assert self.visitor.visit(ast) == TypeConstructor("3.0", decimal())
+
+        ast = get_parser("TIMESTAMP '2021-01-01 00:00:01'").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.TypeConstructorContext)
+        assert self.visitor.visit(ast) == TypeConstructor(
+            "2021-01-01 00:00:01", timestamp()
+        )
+
+        ast = get_parser("BIGINT '3'").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.TypeConstructorContext)
+        assert self.visitor.visit(ast) == TypeConstructor("3", bigint())
+
+        ast_double = get_parser("DOUBLE '3'").primaryExpression()
+        assert isinstance(ast_double, SqlBaseParser.TypeConstructorContext)
+        ast_double_precision = get_parser(
+            "DOUBLE PRECISION '3'"
+        ).primaryExpression()
+        assert isinstance(
+            ast_double_precision, SqlBaseParser.TypeConstructorContext
+        )
+        assert (
+            self.visitor.visit(ast_double)
+            == self.visitor.visit(ast_double)
+            == TypeConstructor("3", double())
+        )
+
+    def test_row_constructor(self):
+        ast_row_explicit = get_parser("ROW (1,2,3)").primaryExpression()
+        assert isinstance(ast_row_explicit, SqlBaseParser.RowConstructorContext)
+        ast_row_implicit = get_parser("(1,2,3)").primaryExpression()
+        assert isinstance(ast_row_implicit, SqlBaseParser.RowConstructorContext)
+        assert (
+            self.visitor.visit(ast_row_explicit)
+            == self.visitor.visit(ast_row_implicit)
+            == RowConstructor(
+                [wrap_literal(1), wrap_literal(2), wrap_literal(3)]
+            )
+        )
 
 
 class TestRelation(VisitorTest):

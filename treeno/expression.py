@@ -4,7 +4,8 @@ from typing import TypeVar, List, Optional, Type, Any
 import attr
 from treeno.datatypes.types import DataType
 from treeno.datatypes.inference import infer_type
-from treeno.base import Sql, PrintOptions
+from treeno.base import Sql, PrintOptions, PrintMode
+from treeno.printer import join_stmts
 from treeno.util import (
     chain_identifiers,
     quote_literal,
@@ -186,12 +187,9 @@ def wrap_literal(val: Any) -> Value:
     if val is None:
         # return NullValue()
         raise NotImplementedError("Null type not supported yet")
-    if isinstance(val, list):
-        # return Array(*val)
-        raise NotImplementedError("Array types not supported yet")
-    if isinstance(val, tuple):
-        # return Tuple(*val)
-        raise NotImplementedError("Tuple types not supported yet")
+    assert not isinstance(
+        val, (list, tuple, set, dict)
+    ), "wrap_literal should not be used with composable types like ARRAY/MAP/ROW"
     return Literal(val, infer_type(val))
 
 
@@ -365,12 +363,17 @@ class LessThanOrEqual(BinaryExpression):
 
 class And(BinaryExpression):
     def sql(self, opts: PrintOptions) -> str:
-        return builtin_binary_str(self, "{left} AND {right}", opts)
+        # According to the specifications, AND and OR should be on the next line if we're in pretty mode
+        spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
+        return builtin_binary_str(
+            self, "{left}" + spacing + "AND {right}", opts
+        )
 
 
 class Or(BinaryExpression):
     def sql(self, opts: PrintOptions) -> str:
-        return builtin_binary_str(self, "{left} OR {right}", opts)
+        spacing = "\n" if opts.mode == PrintMode.PRETTY else ""
+        return builtin_binary_str(self, "{left}" + spacing + "OR {right}", opts)
 
 
 class IsNull(UnaryExpression):
@@ -477,6 +480,15 @@ class TypeConstructor(Expression):
         # but that also fails for this(since the parser recognizes a single string as the type) which means we
         # can just take the type name.
         return f"{self.type.type_name} {quote_literal(self.value)}"
+
+
+@attr.s
+class RowConstructor(Expression):
+    values: List[Value] = attr.ib()
+
+    def sql(self, opts: PrintOptions) -> str:
+        values_string = join_stmts([value.sql(opts) for value in self.values])
+        return f"({values_string})"
 
 
 @attr.s
