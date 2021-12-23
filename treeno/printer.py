@@ -1,9 +1,18 @@
 """A printer that follows a partial set of SQL formatting standards.
 StatementPrinter complies with sqlstyle.guide.
+
+Note that none of these printers are explicitly responsible for calling sql(). They should work only with the
+primitive str representation.
 """
 import attr
-from treeno.base import Sql, PrintOptions
-from typing import List, Tuple
+from treeno.base import PrintOptions
+from typing import Dict
+
+
+def pad(input: str, spaces: int) -> str:
+    lines = input.splitlines()
+    pad = " " * spaces
+    return f"\n{pad}".join(lines)
 
 
 @attr.s
@@ -20,18 +29,30 @@ class StatementPrinter:
     TODO: Before we can use this, we have to add all the groupby functionalities
     """
 
-    print_options: PrintOptions = attr.ib()
     # Buffer is a logical per-statement buffer which tries to right-adjust the keywords and left-adjust the sql entities
-    buffer: List[Tuple[str, Sql]] = attr.ib(init=False)
+    stmt_mapping: Dict[str, str] = attr.ib(factory=dict)
 
-    def add_statement(self, statement: str, sql: Sql) -> None:
-        self.buffer.append((statement, sql))
+    def add_entry(self, key: str, value: str) -> None:
+        assert (
+            key not in self.stmt_mapping
+        ), f"Key {key} already exists in statement printer"
+        self.stmt_mapping[key] = value
 
-    def to_string(self) -> str:
-        rpad = max(len(line[0]) for line in self.buffer)
-        string = ""
-        for line in self.buffer:
-            keyword, sql_expr = line
-            with self.print_options as opts:
-                sql_str = sql_expr.sql(opts)
-            string += self.pad() + keyword.rjust(rpad) + " " + sql_str
+    def update(self, new_mapping: Dict[str, str]) -> None:
+        existing_keys = new_mapping.keys() & self.stmt_mapping.keys()
+        assert not existing_keys, f"Keys {existing_keys} already exist"
+        for key, value in new_mapping.items():
+            self.add_entry(key, value)
+
+    def to_string(self, opts: PrintOptions) -> str:
+        rpad = max(len(line) for line in self.stmt_mapping)
+        lines = []
+        for keyword, sql_str in self.stmt_mapping.items():
+            if opts.pretty:
+                padded_str = pad(sql_str, rpad + 1)
+                lines.append(keyword.rjust(rpad) + " " + padded_str)
+            else:
+                lines.append(keyword + " " + sql_str)
+
+        join_char = "\n" if opts.pretty else " "
+        return join_char.join(lines)

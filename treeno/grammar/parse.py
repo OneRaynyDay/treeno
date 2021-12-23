@@ -23,11 +23,19 @@ class AST:
         self.lexer = SqlBaseLexer(InputStream(data=self._sql))
         self.stream = CommonTokenStream(self.lexer)
         self.parser = SqlBaseParser(self.stream)
-        self.root = self.parser.singleStatement()
 
     @property
     def text(self):
         return self._sql
+
+    def query(self):
+        return self.parser.query()
+
+    def expression(self):
+        return self.parser.standaloneExpression()
+
+    def type(self):
+        return self.parser.standaloneType()
 
     def __str__(self):
         return Trees.toStringTree(self.root, None, self.parser)

@@ -2,7 +2,7 @@ import attr
 from abc import ABC
 from treeno.expression import Value
 from treeno.base import Sql, SetQuantifier, PrintOptions
-from typing import Optional, List
+from typing import List
 
 
 class Group(Sql, ABC):
@@ -18,7 +18,7 @@ class GroupBy(Sql):
     groups: List[Group] = attr.ib()
     groupby_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
 
-    def sql(self, opts: Optional[PrintOptions] = None) -> str:
+    def sql(self, opts: PrintOptions) -> str:
         multi_groupby_string = ",".join(
             group.sql(opts) for group in self.groups
         )
@@ -35,10 +35,10 @@ class GroupingSet(Group):
 
     values: List[Value] = attr.ib()
 
-    def sql(self, opts: Optional[PrintOptions] = None) -> str:
+    def sql(self, opts: PrintOptions) -> str:
         if len(self.values) == 1:
-            return self.values[0].sql()
-        multi_expr_string = ",".join(str(val) for val in self.values)
+            return self.values[0].sql(opts)
+        multi_expr_string = ",".join(val.sql(opts) for val in self.values)
         return f"({multi_expr_string})"
 
 
@@ -56,8 +56,8 @@ class GroupingSetList(Group):
             len(self.groups) > 0
         ), "GroupingSetLists must have at least one grouping set"
 
-    def sql(self, opts: Optional[PrintOptions] = None) -> str:
-        multi_group_string = ",".join(str(group) for group in self.groups)
+    def sql(self, opts: PrintOptions) -> str:
+        multi_group_string = ",".join(group.sql(opts) for group in self.groups)
         return f"GROUPING SETS ({multi_group_string})"
 
 
@@ -75,8 +75,8 @@ class Cube(Group):
             len(self.values) > 0
         ), "Cube must have at least one value to group by"
 
-    def sql(self, opts: Optional[PrintOptions] = None) -> str:
-        multi_expr_string = ",".join(str(val) for val in self.values)
+    def sql(self, opts: PrintOptions) -> str:
+        multi_expr_string = ",".join(val.sql(opts) for val in self.values)
         return f"CUBE ({multi_expr_string})"
 
 
@@ -94,6 +94,6 @@ class Rollup(Group):
             len(self.values) > 0
         ), "GroupingSets must have at least one value to group by"
 
-    def sql(self, opts: Optional[PrintOptions] = None) -> str:
-        multi_expr_string = ",".join(str(val) for val in self.values)
+    def sql(self, opts: PrintOptions) -> str:
+        multi_expr_string = ",".join(val.sql(opts) for val in self.values)
         return f"ROLLUP ({multi_expr_string})"

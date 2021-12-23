@@ -7,13 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 5
+      matrix:
+        python-version: [ 3.6, 3.7, 3.8, 3.9, 3.10-dev ]
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.9
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: ${{ matrix.python-version }}
     - name: Install test dependencies
       run: |
         python -m pip install pytest flake8

@@ -69,15 +69,15 @@ from treeno.grammar.parse import AST
 
 
 def query_from_sql(sql: str) -> Query:
-    return ConvertVisitor().visitSingleStatement(AST(sql).root)
+    return ConvertVisitor().visitQuery(AST(sql).query())
 
 
 def expression_from_sql(sql: str) -> Value:
-    return ConvertVisitor().visitStandaloneExpression(AST(sql).root)
+    return ConvertVisitor().visitStandaloneExpression(AST(sql).expression())
 
 
 def type_from_sql(sql: str) -> DataType:
-    return ConvertVisitor().visitStandaloneType(AST(sql).root)
+    return ConvertVisitor().visitStandaloneType(AST(sql).type())
 
 
 def apply_operator(operator: str, *args: Value) -> Value:
