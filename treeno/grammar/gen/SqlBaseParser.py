@@ -11658,37 +11658,6 @@ class SqlBaseParser ( Parser ):
                 return visitor.visitChildren(self)
 
 
-    class LambdaContext(PrimaryExpressionContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a SqlBaseParser.PrimaryExpressionContext
-            super().__init__(parser)
-            self.copyFrom(ctx)
-
-        def identifier(self, i:int=None):
-            if i is None:
-                return self.getTypedRuleContexts(SqlBaseParser.IdentifierContext)
-            else:
-                return self.getTypedRuleContext(SqlBaseParser.IdentifierContext,i)
-
-        def expression(self):
-            return self.getTypedRuleContext(SqlBaseParser.ExpressionContext,0)
-
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterLambda" ):
-                listener.enterLambda(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitLambda" ):
-                listener.exitLambda(self)
-
-        def accept(self, visitor:ParseTreeVisitor):
-            if hasattr( visitor, "visitLambda" ):
-                return visitor.visitLambda(self)
-            else:
-                return visitor.visitChildren(self)
-
-
     class ParenthesizedExpressionContext(PrimaryExpressionContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a SqlBaseParser.PrimaryExpressionContext
@@ -12040,6 +12009,37 @@ class SqlBaseParser ( Parser ):
         def accept(self, visitor:ParseTreeVisitor):
             if hasattr( visitor, "visitSubqueryExpression" ):
                 return visitor.visitSubqueryExpression(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+    class Lambda_Context(PrimaryExpressionContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a SqlBaseParser.PrimaryExpressionContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def identifier(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(SqlBaseParser.IdentifierContext)
+            else:
+                return self.getTypedRuleContext(SqlBaseParser.IdentifierContext,i)
+
+        def expression(self):
+            return self.getTypedRuleContext(SqlBaseParser.ExpressionContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterLambda_" ):
+                listener.enterLambda_(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitLambda_" ):
+                listener.exitLambda_(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitLambda_" ):
+                return visitor.visitLambda_(self)
             else:
                 return visitor.visitChildren(self)
 
@@ -12655,7 +12655,7 @@ class SqlBaseParser ( Parser ):
                 pass
 
             elif la_ == 15:
-                localctx = SqlBaseParser.LambdaContext(self, localctx)
+                localctx = SqlBaseParser.Lambda_Context(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 1644
@@ -12667,7 +12667,7 @@ class SqlBaseParser ( Parser ):
                 pass
 
             elif la_ == 16:
-                localctx = SqlBaseParser.LambdaContext(self, localctx)
+                localctx = SqlBaseParser.Lambda_Context(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 1648

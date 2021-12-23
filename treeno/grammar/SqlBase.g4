@@ -409,8 +409,8 @@ primaryExpression
     | qualifiedName '(' ASTERISK ')' filter_? over?                                        #functionCall
     | processingMode? qualifiedName '(' (setQuantifier? expression (',' expression)*)?
         (ORDER BY sortItem (',' sortItem)*)? ')' filter_? (nullTreatment? over)?           #functionCall
-    | identifier '->' expression                                                          #lambda
-    | '(' (identifier (',' identifier)*)? ')' '->' expression                             #lambda
+    | identifier '->' expression                                                          #lambda_
+    | '(' (identifier (',' identifier)*)? ')' '->' expression                             #lambda_
     | '(' query ')'                                                                       #subqueryExpression
     // This is an extension to ANSI SQL, which considers EXISTS to be a <boolean expression>
     | EXISTS '(' query ')'                                                                #exists

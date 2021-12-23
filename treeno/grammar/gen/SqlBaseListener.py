@@ -1268,15 +1268,6 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SqlBaseParser#lambda.
-    def enterLambda(self, ctx:SqlBaseParser.LambdaContext):
-        pass
-
-    # Exit a parse tree produced by SqlBaseParser#lambda.
-    def exitLambda(self, ctx:SqlBaseParser.LambdaContext):
-        pass
-
-
     # Enter a parse tree produced by SqlBaseParser#parenthesizedExpression.
     def enterParenthesizedExpression(self, ctx:SqlBaseParser.ParenthesizedExpressionContext):
         pass
@@ -1391,6 +1382,15 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#subqueryExpression.
     def exitSubqueryExpression(self, ctx:SqlBaseParser.SubqueryExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#lambda_.
+    def enterLambda_(self, ctx:SqlBaseParser.Lambda_Context):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#lambda_.
+    def exitLambda_(self, ctx:SqlBaseParser.Lambda_Context):
         pass
 
 

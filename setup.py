@@ -33,6 +33,11 @@ setup(
         "antlr4-python3-runtime==4.9.2",
         "nltk==3.6.5",
         "attrs==21.2.0",
+        "overrides==6.1.0",
+        # For running scripts
+        "click~=8.0.3",
+        "typer~=0.4.0",
+        "requests~=2.26.0",
     ],
     cmdclass={"develop": AntlrDevelopCommand},
     license="MIT",

@@ -709,11 +709,6 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SqlBaseParser#lambda.
-    def visitLambda(self, ctx:SqlBaseParser.LambdaContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by SqlBaseParser#parenthesizedExpression.
     def visitParenthesizedExpression(self, ctx:SqlBaseParser.ParenthesizedExpressionContext):
         return self.visitChildren(ctx)
@@ -776,6 +771,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#subqueryExpression.
     def visitSubqueryExpression(self, ctx:SqlBaseParser.SubqueryExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#lambda_.
+    def visitLambda_(self, ctx:SqlBaseParser.Lambda_Context):
         return self.visitChildren(ctx)
 
 

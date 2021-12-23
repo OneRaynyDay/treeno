@@ -75,9 +75,25 @@ class Checksum(UnaryFunctionMixin, AggregateFunction):
     FN_NAME: ClassVar[str] = "CHECKSUM"
 
 
+class Count(UnaryFunctionMixin, AggregateFunction):
+    FN_NAME: ClassVar[str] = "COUNT"
+
+
+class CountIf(UnaryFunctionMixin, AggregateFunction):
+    FN_NAME: ClassVar[str] = "COUNT_IF"
+
+
 class Every(UnaryFunctionMixin, AggregateFunction):
     FN_NAME: ClassVar[str] = "EVERY"
 
 
 class GeometricMean(UnaryFunctionMixin, AggregateFunction):
     FN_NAME: ClassVar[str] = "GEOMETRIC_MEAN"
+
+
+class ListAgg(AggregateFunction):
+    FN_NAME: ClassVar[str] = "LISTAGG"
+    value: GenericValue = attr.ib(converter=wrap_literal)
+
+    def sql(self: GenericFunction, opts: Optional[PrintOptions] = None) -> str:
+        return f"{FUNCTIONS_TO_NAMES[type(self)]}({self.value.sql(opts)})"

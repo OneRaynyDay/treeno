@@ -1,6 +1,7 @@
 """
 Converts from our grammar into a buildable query tree.
 """
+from overrides import overrides
 from decimal import Decimal
 from typing import Optional, List, Union, Tuple
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
@@ -120,6 +121,7 @@ class ConvertVisitor(SqlBaseVisitor):
     """Converts the tree into a builder tree in python
     """
 
+    @overrides
     def visitSingleStatement(
         self, ctx: SqlBaseParser.SingleStatementContext
     ) -> Query:
@@ -130,24 +132,29 @@ class ConvertVisitor(SqlBaseVisitor):
             )
         return self.visit(ctx.statement())
 
+    @overrides
     def visitStandaloneExpression(
         self, ctx: SqlBaseParser.StandaloneExpressionContext
     ) -> Value:
         return self.visit(ctx.expression())
 
+    @overrides
     def visitStandaloneType(
         self, ctx: SqlBaseParser.StandaloneTypeContext
     ) -> DataType:
         return self.visit(ctx.type_())
 
+    @overrides
     def visitStatementDefault(self, ctx: SqlBaseParser.StatementDefaultContext):
         return self.visit(ctx.query())
 
+    @overrides
     def visitQuery(self, ctx: SqlBaseParser.QueryContext):
         if ctx.with_():
             raise NotImplementedError("With statements are not yet implemented")
         return self.visit(ctx.queryNoWith())
 
+    @overrides
     def visitQueryNoWith(self, ctx: SqlBaseParser.QueryNoWithContext) -> Query:
         query_term = ctx.queryTerm()
         if not isinstance(query_term, SqlBaseParser.QueryTermDefaultContext):
@@ -161,6 +168,7 @@ class ConvertVisitor(SqlBaseVisitor):
             query.limit = self.visit(limit_clause)
         return query
 
+    @overrides
     def visitSortItem(self, ctx: SqlBaseParser.SortItemContext) -> OrderTerm:
         value = self.visit(ctx.expression())
         order_type = (
@@ -175,6 +183,7 @@ class ConvertVisitor(SqlBaseVisitor):
         )
         return OrderTerm(value, order_type, null_order)
 
+    @overrides
     def visitLimitRowCount(
         self, ctx: SqlBaseParser.LimitRowCountContext
     ) -> Optional[int]:
@@ -187,11 +196,13 @@ class ConvertVisitor(SqlBaseVisitor):
             ), "LIMIT quantities can either be numeric or ALL"
             return None
 
+    @overrides
     def visitQueryTermDefault(
         self, ctx: SqlBaseParser.QueryTermDefaultContext
     ) -> SelectQuery:
         return self.visit(ctx.queryPrimary())
 
+    @overrides
     def visitQueryPrimaryDefault(
         self, ctx: SqlBaseParser.QueryPrimaryDefaultContext
     ) -> Relation:
@@ -202,11 +213,13 @@ class ConvertVisitor(SqlBaseVisitor):
             )
         return self.visit(query_spec)
 
+    @overrides
     def visitSetQuantifier(
         self, ctx: SqlBaseParser.SetQuantifierContext
     ) -> SetQuantifier:
         return SetQuantifier[ctx.getText()]
 
+    @overrides
     def visitLogicalBinary(
         self, ctx: SqlBaseParser.LogicalBinaryContext
     ) -> Value:
@@ -215,9 +228,11 @@ class ConvertVisitor(SqlBaseVisitor):
         operator = ctx.operator.text
         return apply_operator(operator, left, right)
 
+    @overrides
     def visitLogicalNot(self, ctx: SqlBaseParser.LogicalNotContext) -> Value:
         return ~self.visit(ctx.booleanExpression())
 
+    @overrides
     def visitPredicated(self, ctx: SqlBaseParser.PredicatedContext) -> Value:
         value = self.visit(ctx.valueExpression())
         # If predicate is not passed in, then the boolean expression is really a value expression.
@@ -229,6 +244,7 @@ class ConvertVisitor(SqlBaseVisitor):
             predicate.left_value = None
         return value
 
+    @overrides
     def visitComparison(
         self,
         ctx: SqlBaseParser.ComparisonContext,
@@ -242,16 +258,19 @@ class ConvertVisitor(SqlBaseVisitor):
             ctx.comparisonOperator().getText(), ctx.left_value, right_value
         )
 
+    @overrides
     def visitQuantifiedComparison(
         self, ctx: SqlBaseParser.QuantifiedComparisonContext
     ) -> None:
         raise NotImplementedError("Quantified comparison is not yet supported")
 
+    @overrides
     def visitInSubquery(self, ctx: SqlBaseParser.InSubqueryContext) -> None:
         raise NotImplementedError(
             "In subquery boolean predicate is not yet supported"
         )
 
+    @overrides
     def visitBetween(self, ctx: SqlBaseParser.BetweenContext) -> Value:
         between = Between(
             ctx.left_value,
@@ -262,6 +281,7 @@ class ConvertVisitor(SqlBaseVisitor):
             return ~between
         return between
 
+    @overrides
     def visitInList(self, ctx: SqlBaseParser.InListContext) -> Value:
         expressions = ctx.expression()
         in_list = InList(
@@ -272,6 +292,7 @@ class ConvertVisitor(SqlBaseVisitor):
             return ~in_list
         return in_list
 
+    @overrides
     def visitLike(self, ctx: SqlBaseParser.LikeContext) -> Value:
         escape = None
         if ctx.escape:
@@ -283,6 +304,7 @@ class ConvertVisitor(SqlBaseVisitor):
             return ~like
         return like
 
+    @overrides
     def visitNullPredicate(
         self, ctx: SqlBaseParser.NullPredicateContext
     ) -> Value:
@@ -291,6 +313,7 @@ class ConvertVisitor(SqlBaseVisitor):
             return ~is_null
         return is_null
 
+    @overrides
     def visitDistinctFrom(
         self, ctx: SqlBaseParser.DistinctFromContext
     ) -> Value:
@@ -299,6 +322,7 @@ class ConvertVisitor(SqlBaseVisitor):
             return ~distinct
         return distinct
 
+    @overrides
     def visitArithmeticBinary(
         self, ctx: SqlBaseParser.ArithmeticBinaryContext
     ) -> Value:
@@ -306,6 +330,7 @@ class ConvertVisitor(SqlBaseVisitor):
         right = self.visit(ctx.right)
         return apply_operator(ctx.operator.text, left, right)
 
+    @overrides
     def visitArithmeticUnary(
         self, ctx: SqlBaseParser.ArithmeticUnaryContext
     ) -> Value:
@@ -313,6 +338,7 @@ class ConvertVisitor(SqlBaseVisitor):
             ctx.operator.text, self.visit(ctx.valueExpression())
         )
 
+    @overrides
     def visitCast(self, ctx: SqlBaseParser.CastContext) -> Union[Cast, TryCast]:
         expr = self.visit(ctx.expression())
         output_type = self.visit(ctx.type_())
@@ -321,6 +347,7 @@ class ConvertVisitor(SqlBaseVisitor):
         if ctx.TRY_CAST():
             return TryCast(expr=expr, type=output_type)
 
+    @overrides
     def visitGenericType(
         self, ctx: SqlBaseParser.GenericTypeContext
     ) -> DataType:
@@ -333,21 +360,25 @@ class ConvertVisitor(SqlBaseVisitor):
         }
         return DataType(type_name, parameters=parameters)
 
+    @overrides
     def visitRowType(self, ctx: SqlBaseParser.RowTypeContext) -> DataType:
         types = [self.visit(row) for row in ctx.rowField()]
         return row(dtypes=types)
 
+    @overrides
     def visitRowField(self, ctx: SqlBaseParser.RowFieldContext) -> DataType:
         assert (
             ctx.identifier() is None
         ), "Data types with identifiers currently not supported."
         return self.visit(ctx.type_())
 
+    @overrides
     def visitIntervalField(
         self, ctx: SqlBaseParser.IntervalFieldContext
     ) -> str:
         return ctx.getText()
 
+    @overrides
     def visitIntervalType(
         self, ctx: SqlBaseParser.IntervalTypeContext
     ) -> DataType:
@@ -356,10 +387,12 @@ class ConvertVisitor(SqlBaseVisitor):
             parameters["to_interval"] = self.visit(ctx.to)
         return interval(**parameters)
 
+    @overrides
     def visitArrayType(self, ctx: SqlBaseParser.ArrayTypeContext) -> DataType:
         assert not ctx.INTEGER_VALUE(), "Explicit array size not supported"
         return array(dtype=self.visit(ctx.type_()))
 
+    @overrides
     def visitTypeParameter(
         self, ctx: SqlBaseParser.TypeParameterContext
     ) -> Union[int, DataType]:
@@ -369,6 +402,7 @@ class ConvertVisitor(SqlBaseVisitor):
             assert ctx.INTEGER_VALUE()
             return int(ctx.INTEGER_VALUE().getText())
 
+    @overrides
     def visitDateTimeType(
         self, ctx: SqlBaseParser.DateTimeTypeContext
     ) -> DataType:
@@ -383,21 +417,25 @@ class ConvertVisitor(SqlBaseVisitor):
             parameters["timezone"] = False
         return DataType(data_type, parameters=parameters)
 
+    @overrides
     def visitDoublePrecisionType(
         self, ctx: SqlBaseParser.DoublePrecisionTypeContext
     ) -> DataType:
         return double()
 
+    @overrides
     def visitLegacyArrayType(
         self, ctx: SqlBaseParser.LegacyArrayTypeContext
     ) -> DataType:
         raise NotImplementedError("Legacy array type not yet supported")
 
+    @overrides
     def visitLegacyMapType(
         self, ctx: SqlBaseParser.LegacyMapTypeContext
     ) -> DataType:
         raise NotImplementedError("Legacy map type not yet supported")
 
+    @overrides
     def visitDereference(self, ctx: SqlBaseParser.DereferenceContext) -> Field:
         primary_expr = ctx.primaryExpression()
         assert isinstance(
@@ -405,6 +443,7 @@ class ConvertVisitor(SqlBaseVisitor):
         ), "We can only dereference `table`.`column` for now."
         return Field(self.visit(ctx.fieldName), self.visit(primary_expr))
 
+    @overrides
     def visitNullLiteral(
         self, ctx: SqlBaseParser.NullLiteralContext
     ) -> Literal:
@@ -412,6 +451,7 @@ class ConvertVisitor(SqlBaseVisitor):
         # due to all types in Trino being optional.
         return Literal(None, unknown())
 
+    @overrides
     def visitNumericLiteral(
         self, ctx: SqlBaseParser.NumericLiteralContext
     ) -> Literal:
@@ -420,6 +460,7 @@ class ConvertVisitor(SqlBaseVisitor):
         # semantic meaning that's not a Literal value, then we need to change this.
         return self.visit(ctx.number())
 
+    @overrides
     def visitIntegerLiteral(
         self, ctx: SqlBaseParser.IntegerLiteralContext
     ) -> Literal:
@@ -428,6 +469,7 @@ class ConvertVisitor(SqlBaseVisitor):
             value = -value
         return Literal(value, infer_integral(value))
 
+    @overrides
     def visitDecimalLiteral(
         self, ctx: SqlBaseParser.DecimalLiteralContext
     ) -> Literal:
@@ -448,12 +490,14 @@ class ConvertVisitor(SqlBaseVisitor):
 
         return Literal(value, dtype)
 
+    @overrides
     def visitStringLiteral(
         self, ctx: SqlBaseParser.StringLiteralContext
     ) -> Literal:
         string = self.visit(ctx.string())
         return Literal(string, varchar(max_chars=len(string)))
 
+    @overrides
     def visitDoubleLiteral(
         self, ctx: SqlBaseParser.DoubleLiteralContext
     ) -> Literal:
@@ -462,11 +506,13 @@ class ConvertVisitor(SqlBaseVisitor):
             number_string = ctx.MINUS().getText() + number_string
         return Literal(float(number_string), double())
 
+    @overrides
     def visitBasicStringLiteral(
         self, ctx: SqlBaseParser.BasicStringLiteralContext
     ) -> str:
         return ctx.getText().strip("'")
 
+    @overrides
     def visitUnicodeStringLiteral(
         self, ctx: SqlBaseParser.UnicodeStringLiteralContext
     ) -> str:
@@ -477,14 +523,17 @@ class ConvertVisitor(SqlBaseVisitor):
             escape_seq = "\\"
         return ctx.getText().strip("U&").strip("'").replace(escape_seq, "\\u")
 
+    @overrides
     def visitBooleanLiteral(
         self, ctx: SqlBaseParser.BooleanLiteralContext
     ) -> Literal:
         return Literal(self.visit(ctx.booleanValue()), boolean())
 
+    @overrides
     def visitBooleanValue(self, ctx: SqlBaseParser.BooleanValueContext) -> bool:
         return ctx.TRUE() is not None
 
+    @overrides
     def visitTypeConstructor(
         self, ctx: SqlBaseParser.TypeConstructorContext
     ) -> Literal:
@@ -498,6 +547,7 @@ class ConvertVisitor(SqlBaseVisitor):
             type=DataType(self.visit(ctx.identifier())),
         )
 
+    @overrides
     def visitFunctionCall(
         self, ctx: SqlBaseParser.FunctionCallContext
     ) -> Function:
@@ -530,11 +580,13 @@ class ConvertVisitor(SqlBaseVisitor):
             expressions = [self.visit(expr) for expr in ctx.expression()]
         return fn(*expressions)
 
+    @overrides
     def visitArrayConstructor(
         self, ctx: SqlBaseParser.ArrayConstructorContext
     ) -> Array:
         return Array([self.visit(expr) for expr in ctx.expression()])
 
+    @overrides
     def visitValueExpressionDefault(
         self, ctx: SqlBaseParser.ValueExpressionDefaultContext
     ) -> Value:
@@ -553,6 +605,7 @@ class ConvertVisitor(SqlBaseVisitor):
         assert isinstance(value_or_field, Value)
         return value_or_field
 
+    @overrides
     def visitSelectSingle(
         self, ctx: SqlBaseParser.SelectSingleContext
     ) -> Value:
@@ -563,26 +616,31 @@ class ConvertVisitor(SqlBaseVisitor):
             return AliasedValue(value, alias)
         return value
 
+    @overrides
     def visitQuotedIdentifier(
         self, ctx: SqlBaseParser.QuotedIdentifierContext
     ) -> str:
         return ctx.getText().strip('"')
 
+    @overrides
     def visitUnquotedIdentifier(
         self, ctx: SqlBaseParser.UnquotedIdentifierContext
     ) -> str:
         return ctx.getText()
 
+    @overrides
     def visitBackQuotedIdentifier(
         self, ctx: SqlBaseParser.BackQuotedIdentifierContext
     ) -> str:
         raise NotImplementedError("Trino doesn't support backticks AFAIK")
 
+    @overrides
     def visitDigitIdentifier(self, ctx: SqlBaseParser.DigitIdentifierContext):
         raise NotImplementedError(
             "Trino doesn't support digit identifiers AFAIK"
         )
 
+    @overrides
     def visitColumnReference(
         self, ctx: SqlBaseParser.ColumnReferenceContext
     ) -> str:
@@ -590,16 +648,19 @@ class ConvertVisitor(SqlBaseVisitor):
         identifier = ctx.identifier()
         return self.visit(identifier)
 
+    @overrides
     def visitSubqueryExpression(
         self, ctx: SqlBaseParser.SubqueryExpressionContext
     ) -> SelectQuery:
         return self.visit(ctx.query())
 
+    @overrides
     def visitParenthesizedExpression(
         self, ctx: SqlBaseParser.ParenthesizedExpressionContext
     ) -> Value:
         return self.visit(ctx.expression())
 
+    @overrides
     def visitSelectAll(self, ctx: SqlBaseParser.SelectAllContext) -> Value:
         """Visits a `*` or `"table".*` statement. Returns a Star field.
         """
@@ -625,6 +686,7 @@ class ConvertVisitor(SqlBaseVisitor):
             return AliasedStar(table, self.visit(column_aliases))
         return Star(table)
 
+    @overrides
     def visitJoinRelation(self, ctx: SqlBaseParser.JoinRelationContext) -> Join:
         left_relation = self.visit(ctx.left)
         # This part of the Trino grammar is really weird - why make it complicated and have `rightRelation` for
@@ -648,6 +710,7 @@ class ConvertVisitor(SqlBaseVisitor):
             )
         return Join(left_relation, right_relation, config=config)
 
+    @overrides
     def visitJoinCriteria(
         self, ctx: SqlBaseParser.JoinCriteriaContext
     ) -> JoinCriteria:
@@ -659,6 +722,7 @@ class ConvertVisitor(SqlBaseVisitor):
             )
         return JoinOnCriteria(relation=self.visit(ctx.booleanExpression()))
 
+    @overrides
     def visitJoinType(self, ctx: SqlBaseParser.JoinTypeContext) -> JoinType:
         if ctx.LEFT():
             return JoinType.LEFT
@@ -668,11 +732,13 @@ class ConvertVisitor(SqlBaseVisitor):
             return JoinType.OUTER
         return JoinType.INNER
 
+    @overrides
     def visitRelationDefault(
         self, ctx: SqlBaseParser.RelationDefaultContext
     ) -> Relation:
         return self.visit(ctx.sampledRelation())
 
+    @overrides
     def visitSampledRelation(
         self, ctx: SqlBaseParser.SampledRelationContext
     ) -> Relation:
@@ -682,6 +748,7 @@ class ConvertVisitor(SqlBaseVisitor):
         assert not table_sample, "Tample samples are not supported"
         return relation
 
+    @overrides
     def visitPatternRecognition(
         self, ctx: SqlBaseParser.PatternRecognitionContext
     ) -> Relation:
@@ -690,16 +757,19 @@ class ConvertVisitor(SqlBaseVisitor):
         assert not ctx.MATCH_RECOGNIZE(), "Match recognizes are not supported"
         return relation
 
+    @overrides
     def visitColumnAliases(
         self, ctx: SqlBaseParser.ColumnAliasesContext
     ) -> List[str]:
         return [self.visit(identifier) for identifier in ctx.identifier()]
 
+    @overrides
     def visitQualifiedName(
         self, ctx: SqlBaseParser.QualifiedNameContext
     ) -> List[str]:
         return [self.visit(identifier) for identifier in ctx.identifier()]
 
+    @overrides
     def visitTableName(self, ctx: SqlBaseParser.TableNameContext) -> Table:
         qualifiers = self.visit(ctx.qualifiedName())
         qualifiers.reverse()
@@ -710,24 +780,29 @@ class ConvertVisitor(SqlBaseVisitor):
 
         return Table(name=name, schema=schema, catalog=catalog)
 
+    @overrides
     def visitSubqueryRelation(
         self, ctx: SqlBaseParser.SubqueryRelationContext
     ) -> SelectQuery:
         return self.visit(ctx.query())
 
+    @overrides
     def visitParenthesizedRelation(
         self, ctx: SqlBaseParser.ParenthesizedRelationContext
     ) -> Relation:
         return self.visit(ctx.relation())
 
+    @overrides
     def visitUnnest(self, ctx: SqlBaseParser.UnnestContext) -> Unnest:
         array_values = [self.visit(expr) for expr in ctx.expression()]
         with_ordinality = ctx.ORDINALITY() is not None
         return Unnest(array=array_values, with_ordinality=with_ordinality)
 
+    @overrides
     def visitLateral(self, ctx: SqlBaseParser.LateralContext) -> Lateral:
         return Lateral(subquery=self.visit(ctx.query()))
 
+    @overrides
     def visitAliasedRelation(
         self, ctx: SqlBaseParser.AliasedRelationContext
     ) -> Relation:
@@ -744,27 +819,33 @@ class ConvertVisitor(SqlBaseVisitor):
 
         return alias
 
+    @overrides
     def visitGroupBy(self, ctx: SqlBaseParser.GroupByContext) -> GroupBy:
         set_quantifier = self.visit(ctx.setQuantifier())
         groups = [self.visit(group) for group in ctx.groupingElement()]
         return GroupBy(groups=groups, groupby_quantifier=set_quantifier)
 
+    @overrides
     def visitSingleGroupingSet(
         self, ctx: SqlBaseParser.SingleGroupingSetContext
     ) -> GroupingSet:
         return self.visit(ctx.groupingSet())
 
+    @overrides
     def visitGroupingSet(
         self, ctx: SqlBaseParser.GroupingSetContext
     ) -> GroupingSet:
         return GroupingSet([self.visit(expr) for expr in ctx.expression()])
 
+    @overrides
     def visitRollup(self, ctx: SqlBaseParser.RollupContext) -> Rollup:
         return Rollup([self.visit(expr) for expr in ctx.expression()])
 
+    @overrides
     def visitCube(self, ctx: SqlBaseParser.CubeContext) -> Cube:
         return Cube([self.visit(expr) for expr in ctx.expression()])
 
+    @overrides
     def visitMultipleGroupingSets(
         self, ctx: SqlBaseParser.MultipleGroupingSetsContext
     ) -> GroupingSetList:
@@ -774,11 +855,13 @@ class ConvertVisitor(SqlBaseVisitor):
             ]
         )
 
+    @overrides
     def visitWindowDefinition(
         self, ctx: SqlBaseParser.WindowDefinitionContext
     ) -> Tuple[str, Window]:
         return (self.visit(ctx.name), self.visit(ctx.windowSpecification()))
 
+    @overrides
     def visitWindowSpecification(
         self, ctx: SqlBaseParser.WindowSpecificationContext
     ) -> Window:
@@ -797,6 +880,7 @@ class ConvertVisitor(SqlBaseVisitor):
             window.parent_window = self.visit(ctx.existingWindowName)
         return window
 
+    @overrides
     def visitWindowFrame(self, ctx: SqlBaseParser.WindowFrameContext) -> Window:
         params = {
             "frame_type": FrameType[ctx.frameType.text],
@@ -806,6 +890,7 @@ class ConvertVisitor(SqlBaseVisitor):
             params["end_bound"] = self.visit(ctx.end)
         return Window(**params)
 
+    @overrides
     def visitBoundedFrame(
         self, ctx: SqlBaseParser.BoundedFrameContext
     ) -> BoundedFrameBound:
@@ -814,16 +899,19 @@ class ConvertVisitor(SqlBaseVisitor):
             offset=self.visit(ctx.expression()),
         )
 
+    @overrides
     def visitUnboundedFrame(
         self, ctx: SqlBaseParser.UnboundedFrameContext
     ) -> UnboundedFrameBound:
         return UnboundedFrameBound(bound_type=BoundType[ctx.boundType.text])
 
+    @overrides
     def visitCurrentRowBound(
         self, ctx: SqlBaseParser.CurrentRowBoundContext
     ) -> CurrentFrameBound:
         return CurrentFrameBound()
 
+    @overrides
     def visitQuerySpecification(
         self, ctx: SqlBaseParser.QuerySpecificationContext
     ) -> SelectQuery:
