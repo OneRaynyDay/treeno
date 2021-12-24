@@ -32,11 +32,12 @@ from treeno.expression import (
     NotEqual,
     Or,
     Positive,
-    Star,
-    TryCast,
-    wrap_literal,
-    TypeConstructor,
     RowConstructor,
+    Star,
+    Subscript,
+    TryCast,
+    TypeConstructor,
+    wrap_literal,
 )
 from treeno.relation import (
     AliasedRelation,
@@ -639,6 +640,13 @@ class TestFunctions(VisitorTest):
         assert isinstance(ast, SqlBaseParser.CastContext)
         try_cast_expr = TryCast(Literal(1, integer()), bigint())
         assert self.visitor.visit(ast) == try_cast_expr
+
+    def test_subscript(self):
+        ast = get_parser("arr[3]").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.SubscriptContext)
+        assert self.visitor.visit(ast) == Subscript(
+            value=Field("arr"), index=wrap_literal(3)
+        )
 
 
 class TestGroupBy(VisitorTest):

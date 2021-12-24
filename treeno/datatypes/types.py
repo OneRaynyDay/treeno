@@ -1,6 +1,6 @@
 from typing import List, Any, Optional, Callable, Dict
 from collections import defaultdict
-from treeno.base import Sql
+from treeno.base import Sql, PrintOptions
 import attr
 
 (
@@ -107,7 +107,7 @@ class DataType(Sql):
         if validator is not None:
             validator(self)
 
-    def sql(self, pretty=False):
+    def sql(self, opts: PrintOptions) -> str:
         if self.type_name in (TIMESTAMP, TIME):
             return emit_timelike(self)
         elif self.type_name == INTERVAL:
@@ -133,9 +133,6 @@ class DataType(Sql):
 
         param_string = ",".join(values)
         return f"{self.type_name}({param_string})"
-
-    def __str__(self):
-        return self.sql()
 
 
 @attr.s

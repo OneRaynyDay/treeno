@@ -22,6 +22,7 @@ from treeno.expression import (
     IsNull,
     DistinctFrom,
     Literal,
+    Subscript,
     TypeConstructor,
     TryCast,
     Cast,
@@ -681,6 +682,12 @@ class ConvertVisitor(SqlBaseVisitor):
         self, ctx: SqlBaseParser.ArrayConstructorContext
     ) -> Array:
         return Array([self.visit(expr) for expr in ctx.expression()])
+
+    @overrides
+    def visitSubscript(self, ctx: SqlBaseParser.SubscriptContext) -> Subscript:
+        return Subscript(
+            value=self.visit(ctx.value), index=self.visit(ctx.index)
+        )
 
     @overrides
     def visitValueExpressionDefault(

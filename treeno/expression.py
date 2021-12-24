@@ -426,7 +426,7 @@ class Array(Expression):
         return cls(vals)
 
     def sql(self, opts: PrintOptions) -> str:
-        values_str = ",".join(str(val) for val in self.values)
+        values_str = join_stmts([val.sql(opts) for val in self.values], opts)
         return f"ARRAY[{values_str}]"
 
 
@@ -436,7 +436,7 @@ class InList(Expression):
     exprs: List[GenericValue] = attr.ib(converter=wrap_literal_list)
 
     def to_string(self, opts: PrintOptions, negate: bool = False) -> str:
-        expr_list = ",".join(expr.sql(opts) for expr in self.exprs)
+        expr_list = join_stmts([expr.sql(opts) for expr in self.exprs], opts)
         in_list_string = pemdas_str(type(self), self.value, opts)
         if negate:
             in_list_string += " NOT"
@@ -462,7 +462,7 @@ class Like(Expression):
         like_str += f" LIKE {pemdas_str(type(self), self.pattern, opts)}"
         if self.escape:
             # TODO: Should we pemdas this? I don't see it in the specs
-            like_str += f" ESCAPE {self.escape}"
+            like_str += f" ESCAPE {self.escape.sql(opts)}"
         return like_str
 
     def sql(self, opts: PrintOptions) -> str:
@@ -487,7 +487,9 @@ class RowConstructor(Expression):
     values: List[Value] = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        values_string = join_stmts([value.sql(opts) for value in self.values])
+        values_string = join_stmts(
+            [value.sql(opts) for value in self.values], opts
+        )
         return f"({values_string})"
 
 
@@ -508,7 +510,7 @@ class Cast(Expression):
     type: DataType = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        return f"CAST({self.expr} AS {self.type})"
+        return f"CAST({self.expr.sql(opts)} AS {self.type.sql(opts)})"
 
 
 @attr.s
@@ -517,7 +519,16 @@ class TryCast(Expression):
     type: DataType = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        return f"TRY_CAST({self.expr} AS {self.type})"
+        return f"TRY_CAST({self.expr.sql(opts)} AS {self.type.sql(opts)})"
+
+
+@attr.s
+class Subscript(Expression):
+    value: GenericValue = attr.ib()
+    index: GenericValue = attr.ib(converter=wrap_literal)
+
+    def sql(self, opts: PrintOptions) -> str:
+        return f"{self.value.sql(opts)}[{self.index.sql(opts)}]"
 
 
 # Operator precedence according to:
