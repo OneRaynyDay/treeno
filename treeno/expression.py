@@ -372,7 +372,7 @@ class And(BinaryExpression):
 
 class Or(BinaryExpression):
     def sql(self, opts: PrintOptions) -> str:
-        spacing = "\n" if opts.mode == PrintMode.PRETTY else ""
+        spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
         return builtin_binary_str(self, "{left}" + spacing + "OR {right}", opts)
 
 

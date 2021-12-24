@@ -64,7 +64,7 @@ from treeno.functions import (
     Every,
     GeometricMean,
 )
-from treeno.groupby import GroupingSet, GroupingSetList, Cube, Rollup
+from treeno.groupby import GroupingSet, GroupingSetList, Cube, Rollup, GroupBy
 from treeno.datatypes.builder import (
     boolean,
     integer,
@@ -387,7 +387,7 @@ class TestRelation(VisitorTest):
         )
 
 
-class TestSelect(VisitorTest):
+class TestSelectItems(VisitorTest):
     def test_select_star(self):
         ast = get_parser("*").selectItem()
         assert isinstance(ast, SqlBaseParser.SelectAllContext)
@@ -920,6 +920,40 @@ class TestDataTypes(VisitorTest):
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = double()
         assert self.visitor.visit(ast) == type_obj
+
+
+class TestSelect(VisitorTest):
+    def test_simple_selects(self):
+        ast = get_parser("SELECT tbl.a").query()
+        assert isinstance(ast, SqlBaseParser.QueryContext)
+        field = Field(name="a", table="tbl")
+        query = SelectQuery(select=[field])
+        assert self.visitor.visit(ast) == query
+
+        ast = get_parser("SELECT tbl.a FROM tbl").query()
+        assert isinstance(ast, SqlBaseParser.QueryContext)
+        query.from_relation = Table(name="tbl")
+        assert self.visitor.visit(ast) == query
+
+        ast = get_parser("SELECT tbl.a FROM tbl WHERE tbl.a > 5").query()
+        assert isinstance(ast, SqlBaseParser.QueryContext)
+        query.where = field > 5
+        assert self.visitor.visit(ast) == query
+
+        ast = get_parser(
+            "SELECT tbl.a FROM tbl WHERE tbl.a > 5 GROUP BY date"
+        ).query()
+        date_field = Field(name="date")
+        assert isinstance(ast, SqlBaseParser.QueryContext)
+        query.groupby = GroupBy([GroupingSet([date_field])])
+        assert self.visitor.visit(ast) == query
+
+        ast = get_parser(
+            "SELECT tbl.a FROM tbl WHERE tbl.a > 5 GROUP BY date ORDER BY tbl.a ASC"
+        ).query()
+        assert isinstance(ast, SqlBaseParser.QueryContext)
+        query.orderby = [OrderTerm(field, order_type=OrderType.ASC)]
+        assert self.visitor.visit(ast) == query
 
 
 if __name__ == "__main__":

@@ -48,3 +48,8 @@ SELECT "a"
   FROM (SELECT "a","b"
           FROM (SELECT "a","b","c"
                   FROM "t"));
+  WITH "foo" AS (
+       SELECT "a","b"
+         FROM "t")
+SELECT "foo"."a","t"."b"
+  FROM "t" INNER JOIN "foo" ON "foo"."a" = "t"."b";

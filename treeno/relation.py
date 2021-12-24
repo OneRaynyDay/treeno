@@ -1,9 +1,9 @@
 import attr
 from abc import ABC
 from typing import Optional, List, Dict
-from treeno.util import chain_identifiers, parenthesize
+from treeno.util import chain_identifiers, parenthesize, quote_identifier
 from treeno.expression import Value
-from treeno.base import Sql, SetQuantifier, PrintOptions
+from treeno.base import Sql, SetQuantifier, PrintOptions, PrintMode
 from treeno.printer import StatementPrinter, pad, join_stmts
 from treeno.groupby import GroupBy
 from treeno.orderby import OrderTerm
@@ -35,14 +35,24 @@ class Query(Relation, ABC):
     offset: Optional[int] = attr.ib(default=None, kw_only=True)
     limit: Optional[int] = attr.ib(default=None, kw_only=True)
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
-    with_queries: List["Query"] = attr.ib(factory=list, kw_only=True)
+    # TODO: This doesn't currently support column aliases on the WITH level.
+    with_queries: Dict[str, "Query"] = attr.ib(factory=dict, kw_only=True)
 
     def with_query_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
+        if isinstance(self.with_queries, list):
+            import pdb
+
+            pdb.set_trace()
         if not self.with_queries:
             return {}
+        newline_if_pretty = "\n" if opts.mode == PrintMode.PRETTY else ""
         return {
             "WITH": join_stmts(
-                [str(query) for query in self.with_queries], opts
+                [
+                    f"{quote_identifier(name)} AS ({newline_if_pretty}{query.sql(opts)})"
+                    for name, query in self.with_queries.items()
+                ],
+                opts,
             )
         }
 
@@ -257,13 +267,13 @@ class Join(Relation):
     config: JoinConfig = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        join_config_string = str(self.left_relation)
+        join_config_string = self.left_relation.sql(opts)
         if self.config.natural:
             join_config_string += " NATURAL"
         join_config_string += f" {self.config.join_type.value} JOIN "
-        join_config_string += str(self.right_relation)
+        join_config_string += self.right_relation.sql(opts)
         if self.config.criteria is not None:
-            join_config_string += str(self.config.criteria)
+            join_config_string += f" {self.config.criteria.sql(opts)}"
         return join_config_string
 
 

@@ -1,6 +1,7 @@
 from antlr4 import CommonTokenStream
 from antlr4.InputStream import InputStream
 from antlr4.tree.Trees import Trees
+from antlr4.ParserRuleContext import ParserRuleContext
 import nltk
 
 try:
@@ -40,6 +41,9 @@ class AST:
     def __str__(self):
         return Trees.toStringTree(self.root, None, self.parser)
 
-    def tree(self):
-        parenthetical_tree = nltk.Tree.fromstring(str(self))
-        return parenthetical_tree.pretty_print()
+
+def tree(ast: AST, node: ParserRuleContext) -> str:
+    parenthetical_tree = nltk.Tree.fromstring(
+        Trees.toStringTree(node, None, ast.parser)
+    )
+    return parenthetical_tree.pretty_print()

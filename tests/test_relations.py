@@ -46,14 +46,16 @@ class TestRelations(unittest.TestCase):
         v = ValuesQuery(
             [wrap_literal(1), wrap_literal(2), wrap_literal(3)],
             offset=3,
-            with_queries=[TableQuery(Table(name="foo"))],
+            with_queries={"foo": TableQuery(Table(name="foo"))},
         )
         assert (
             v.sql(PrintOptions(mode=PrintMode.DEFAULT))
-            == 'WITH TABLE "foo" VALUES 1,2,3 OFFSET 3'
+            == 'WITH "foo" AS (TABLE "foo") VALUES 1,2,3 OFFSET 3'
         )
         assert v.sql(PrintOptions(mode=PrintMode.PRETTY)) == (
-            '  WITH TABLE "foo"\n' "VALUES 1,2,3\n" "OFFSET 3"
+            '  WITH "foo" AS (\n       TABLE "foo")\n'
+            "VALUES 1,2,3\n"
+            "OFFSET 3"
         )
 
 

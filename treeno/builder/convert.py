@@ -3,7 +3,7 @@ Converts from our grammar into a buildable query tree.
 """
 from overrides import overrides
 from decimal import Decimal
-from typing import Optional, List, Union, Tuple
+from typing import Optional, List, Union, Tuple, Dict
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.expression import (
@@ -165,10 +165,29 @@ class ConvertVisitor(SqlBaseVisitor):
         return self.visit(ctx.query())
 
     @overrides
-    def visitQuery(self, ctx: SqlBaseParser.QueryContext):
-        if ctx.with_():
-            raise NotImplementedError("With statements are not yet implemented")
-        return self.visit(ctx.queryNoWith())
+    def visitQuery(self, ctx: SqlBaseParser.QueryContext) -> Query:
+        query = self.visit(ctx.queryNoWith())
+        with_ = ctx.with_()
+        if with_:
+            named_queries = self.visit(with_)
+            query.with_queries = named_queries
+        return query
+
+    @overrides
+    def visitWith_(self, ctx: SqlBaseParser.With_Context) -> Dict[str, Query]:
+        assert (
+            not ctx.RECURSIVE()
+        ), "Recursive with queries currently not supported"
+        return dict(self.visit(named_query) for named_query in ctx.namedQuery())
+
+    @overrides
+    def visitNamedQuery(
+        self, ctx: SqlBaseParser.NamedQueryContext
+    ) -> Tuple[str, Query]:
+        assert (
+            not ctx.columnAliases()
+        ), "Column aliases currently not supported in WITH clause"
+        return (self.visit(ctx.name), self.visit(ctx.query()))
 
     @overrides
     def visitQueryNoWith(self, ctx: SqlBaseParser.QueryNoWithContext) -> Query:
@@ -919,9 +938,13 @@ class ConvertVisitor(SqlBaseVisitor):
 
     @overrides
     def visitGroupBy(self, ctx: SqlBaseParser.GroupByContext) -> GroupBy:
-        set_quantifier = self.visit(ctx.setQuantifier())
-        groups = [self.visit(group) for group in ctx.groupingElement()]
-        return GroupBy(groups=groups, groupby_quantifier=set_quantifier)
+        kwargs = {
+            "groups": [self.visit(group) for group in ctx.groupingElement()]
+        }
+        quantifier = ctx.setQuantifier()
+        if quantifier:
+            kwargs["groupby_quantifier"] = self.visit(quantifier)
+        return GroupBy(**kwargs)
 
     @overrides
     def visitSingleGroupingSet(
