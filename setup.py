@@ -21,25 +21,4 @@ def compile_grammar():
     return os.path.join(parser_dir, "gen")
 
 
-setup(
-    name="treeno",
-    description="A trino SQL parsing library",
-    version="0.0.1",
-    author="Ray Zhang",
-    author_email="peifeng2005@gmail.com",
-    packages=["treeno"],
-    install_requires=[
-        "setuptools",
-        "antlr4-python3-runtime==4.9.2",
-        "nltk==3.6.5",
-        "attrs==21.2.0",
-        "overrides==6.1.0",
-        # For running scripts
-        "click~=8.0.3",
-        "typer~=0.4.0",
-        "requests~=2.26.0",
-    ],
-    cmdclass={"develop": AntlrDevelopCommand},
-    license="MIT",
-    python_requires=">=3.6",
-)
+setup(cmdclass={"develop": AntlrDevelopCommand})
