@@ -17,6 +17,7 @@ from treeno.expression import (
     AliasedStar,
     AliasedValue,
     InList,
+    Interval,
     Like,
     IsNull,
     DistinctFrom,
@@ -413,6 +414,30 @@ class ConvertVisitor(SqlBaseVisitor):
             ctx.identifier() is None
         ), "Data types with identifiers currently not supported."
         return self.visit(ctx.type_())
+
+    @overrides
+    def visitInterval(self, ctx: SqlBaseParser.IntervalContext) -> Interval:
+        string_value = self.visit(ctx.string())
+        # Unary plus is essentially a no-op.
+        if string_value.startswith("+"):
+            string_value = string_value.lstrip("+")
+
+        # There's a pesky sign that can appear outside of the string. We do some inference on the string
+        # and push the negation inside the string. I've verified that -"3-100" YEAR TO MONTH is equivalent to "-3-100".
+        if ctx.sign and ctx.sign.text == "-":
+            # I've tested this and the unary operator +/- can only be applied once to the values inside the string.
+            # This means the string can either be +value, -value, or value.
+            if string_value.startswith("-"):
+                string_value = string_value.lstrip("-")
+            else:
+                string_value = "-" + string_value
+        parameters = {
+            "value": string_value,
+            "from_interval": self.visit(ctx.from_),
+        }
+        if ctx.to is not None:
+            parameters["to_interval"] = self.visit(ctx.to)
+        return Interval(**parameters)
 
     @overrides
     def visitIntervalField(

@@ -18,6 +18,7 @@ from treeno.expression import (
     GreaterThan,
     GreaterThanOrEqual,
     InList,
+    Interval,
     IsNull,
     LessThan,
     LessThanOrEqual,
@@ -239,6 +240,30 @@ class TestConstructorExprs(VisitorTest):
             == RowConstructor(
                 [wrap_literal(1), wrap_literal(2), wrap_literal(3)]
             )
+        )
+
+    def test_interval_constructor(self):
+        ast = get_parser("INTERVAL '3' YEAR").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.IntervalLiteralContext)
+        assert self.visitor.visit(ast) == Interval("3", from_interval="YEAR")
+
+        ast = get_parser("INTERVAL -'3' YEAR").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.IntervalLiteralContext)
+        assert self.visitor.visit(ast) == Interval("-3", from_interval="YEAR")
+
+        ast = get_parser("INTERVAL -'-3' YEAR").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.IntervalLiteralContext)
+        assert self.visitor.visit(ast) == Interval("3", from_interval="YEAR")
+
+        ast = get_parser("INTERVAL -'+3' YEAR").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.IntervalLiteralContext)
+        assert self.visitor.visit(ast) == Interval("-3", from_interval="YEAR")
+
+        # This is 3 years and 100 months, which is simplified to 11-4 in Trino, but we don't take care of that.
+        ast = get_parser("INTERVAL '3-100' YEAR TO MONTH").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.IntervalLiteralContext)
+        assert self.visitor.visit(ast) == Interval(
+            "3-100", from_interval="YEAR", to_interval="MONTH"
         )
 
 

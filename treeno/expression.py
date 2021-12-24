@@ -492,6 +492,17 @@ class RowConstructor(Expression):
 
 
 @attr.s
+class Interval(Expression):
+    value: str = attr.ib()
+    from_interval: str = attr.ib()
+    to_interval: Optional[str] = attr.ib(default=None)
+
+    def sql(self, opts: PrintOptions) -> str:
+        to_interval_str = f" TO {self.to_interval}" if self.to_interval else ""
+        return f"INTERVAL {self.value} {self.from_interval}" + to_interval_str
+
+
+@attr.s
 class Cast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
     type: DataType = attr.ib()
