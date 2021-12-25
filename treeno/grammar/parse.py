@@ -21,29 +21,28 @@ class AST:
 
     def __init__(self, sql):
         self._sql = sql
-        self.lexer = SqlBaseLexer(InputStream(data=self._sql))
-        self.stream = CommonTokenStream(self.lexer)
-        self.parser = SqlBaseParser(self.stream)
+
+    def parser(self) -> SqlBaseParser:
+        lexer = SqlBaseLexer(InputStream(data=self._sql))
+        stream = CommonTokenStream(lexer)
+        return SqlBaseParser(stream)
 
     @property
     def text(self):
         return self._sql
 
     def query(self):
-        return self.parser.query()
+        return self.parser().query()
 
     def expression(self):
-        return self.parser.standaloneExpression()
+        return self.parser().standaloneExpression()
 
     def type(self):
-        return self.parser.standaloneType()
-
-    def __str__(self):
-        return Trees.toStringTree(self.root, None, self.parser)
+        return self.parser().standaloneType()
 
 
 def tree(ast: AST, node: ParserRuleContext) -> str:
     parenthetical_tree = nltk.Tree.fromstring(
-        Trees.toStringTree(node, None, ast.parser)
+        Trees.toStringTree(node, None, ast.parser())
     )
     return parenthetical_tree.pretty_print()
