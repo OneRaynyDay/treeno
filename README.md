@@ -5,8 +5,8 @@
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
 
-A user friendly query tree building library for Trino, a distributed SQL engine.
-Treeno supports `python>=3.6`.
+A user friendly query tree building library for [Trino](https://trino.io/), a distributed SQL query engine.
+Treeno supports `python>=3.6`, and aims to support Trino `v367` grammar.
 
 
 # Install
