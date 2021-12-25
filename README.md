@@ -6,7 +6,7 @@
 
 
 A user friendly query tree building library for [Trino](https://trino.io/), a distributed SQL query engine.
-Treeno supports `python>=3.6`, and aims to support Trino `v367` grammar.
+Treeno supports `python>=3.6`, and aims to support Trino `v367` grammar. **This project is currently in development and new features are added frequently.**
 
 
 # Install
