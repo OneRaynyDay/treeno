@@ -41,3 +41,7 @@ data_type = type_from_sql("TIMESTAMP(9) WITH TIME ZONE")
 from treeno.builder.convert import expression_from_sql
 data_type = expression_from_sql("(3 + 5) / 7 ")
 ```
+
+## Links
+
+PyPI Releases: https://pypi.org/project/treeno/
