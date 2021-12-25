@@ -1,18 +1,20 @@
 import functools
 from abc import ABC
 from decimal import Decimal
-from typing import TypeVar, List, Optional, Type, Any
+from typing import Any, List, Optional, Type, TypeVar
+
 import attr
-from treeno.datatypes.types import DataType
+
+from treeno.base import PrintMode, PrintOptions, Sql
 from treeno.datatypes.builder import unknown
 from treeno.datatypes.inference import infer_type
-from treeno.base import Sql, PrintOptions, PrintMode
+from treeno.datatypes.types import DataType
 from treeno.printer import join_stmts
 from treeno.util import (
     chain_identifiers,
-    quote_literal,
-    quote_identifier,
     parenthesize,
+    quote_identifier,
+    quote_literal,
 )
 
 GenericValue = TypeVar("GenericValue", bound="Value")
