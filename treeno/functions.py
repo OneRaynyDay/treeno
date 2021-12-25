@@ -2,7 +2,7 @@ import attr
 import inspect
 from abc import ABC
 from typing import Type, Dict, TypeVar, Optional, ClassVar
-from treeno.expression import Expression, GenericValue, wrap_literal
+from treeno.expression import Expression, GenericValue, wrap_literal, value_attr
 from treeno.window import Window
 from treeno.base import PrintOptions, PrintMode
 
@@ -12,6 +12,7 @@ NAMES_TO_FUNCTIONS: Dict[str, Type["Function"]] = {}
 FUNCTIONS_TO_NAMES: Dict[Type["Function"], str] = {}
 
 
+@value_attr
 class Function(Expression, ABC):
     """Functions are expressions that require parenthesizing and support aggregation, filter, sortItem,
     pattern recognition, etc.
@@ -38,7 +39,7 @@ class Function(Expression, ABC):
         FUNCTIONS_TO_NAMES[cls] = fn_name
 
 
-@attr.s
+@value_attr
 class UnaryFunction(Function, ABC):
     value: GenericValue = attr.ib(converter=wrap_literal)
 
@@ -46,7 +47,7 @@ class UnaryFunction(Function, ABC):
         return f"{FUNCTIONS_TO_NAMES[type(self)]}({self.value.sql(opts)})"
 
 
-@attr.s
+@value_attr
 class AggregateFunction(Function, ABC):
     """Aggregate functions are functions that return a single aggregate value per group.
     They have special properties such as the ability to scan over windows using the OVER clause. For example:
@@ -64,7 +65,7 @@ class AggregateFunction(Function, ABC):
         return f"OVER ({newline_if_pretty}{self.window.sql(opts)})"
 
 
-@attr.s
+@value_attr
 class UnaryAggregateFunction(AggregateFunction, ABC):
     value: GenericValue = attr.ib(converter=wrap_literal)
 

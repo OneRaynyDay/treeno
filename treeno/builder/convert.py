@@ -536,7 +536,7 @@ class ConvertVisitor(SqlBaseVisitor):
     ) -> Literal:
         # A null literal doesn't have a well-defined type, since it can be any type
         # due to all types in Trino being optional.
-        return Literal(None, unknown())
+        return Literal(None, data_type=unknown())
 
     @overrides
     def visitNumericLiteral(
@@ -554,7 +554,7 @@ class ConvertVisitor(SqlBaseVisitor):
         value = int(ctx.INTEGER_VALUE().getText())
         if ctx.MINUS() is not None:
             value = -value
-        return Literal(value, infer_integral(value))
+        return Literal(value, data_type=infer_integral(value))
 
     @overrides
     def visitDecimalLiteral(
@@ -575,14 +575,14 @@ class ConvertVisitor(SqlBaseVisitor):
         if negative:
             value = -value
 
-        return Literal(value, dtype)
+        return Literal(value, data_type=dtype)
 
     @overrides
     def visitStringLiteral(
         self, ctx: SqlBaseParser.StringLiteralContext
     ) -> Literal:
         string = self.visit(ctx.string())
-        return Literal(string, varchar(max_chars=len(string)))
+        return Literal(string, data_type=varchar(max_chars=len(string)))
 
     @overrides
     def visitDoubleLiteral(
@@ -591,7 +591,7 @@ class ConvertVisitor(SqlBaseVisitor):
         number_string = ctx.DOUBLE_VALUE().getText()
         if ctx.MINUS() is not None:
             number_string = ctx.MINUS().getText() + number_string
-        return Literal(float(number_string), double())
+        return Literal(float(number_string), data_type=double())
 
     @overrides
     def visitBasicStringLiteral(
@@ -614,7 +614,7 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitBooleanLiteral(
         self, ctx: SqlBaseParser.BooleanLiteralContext
     ) -> Literal:
-        return Literal(self.visit(ctx.booleanValue()), boolean())
+        return Literal(self.visit(ctx.booleanValue()), data_type=boolean())
 
     @overrides
     def visitBooleanValue(self, ctx: SqlBaseParser.BooleanValueContext) -> bool:

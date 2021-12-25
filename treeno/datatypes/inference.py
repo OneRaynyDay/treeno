@@ -52,6 +52,6 @@ def infer_decimal(decimal_value: Decimal) -> DataType:
         assert str_val.count(".") == 1, f"Malformed decimal str_val {str_val}"
         decimal_point_pos = str_val.index(".")
         return decimal(
-            precision=decimal_point_pos,
+            precision=len(str_val) - 1,
             scale=len(str_val) - decimal_point_pos - 1,
         )

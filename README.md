@@ -6,7 +6,7 @@
 
 
 A user friendly query tree building library for Trino, a distributed SQL engine.
-It supports Python>=3.9.
+It supports Python>=3.6.
 
 Crafting SQL commands is often a duplicated art.
 A standard library of common SQL functions is necessary to reduce common boilerplate.

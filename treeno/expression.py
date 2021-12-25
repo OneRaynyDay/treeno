@@ -1,8 +1,10 @@
+import functools
 from abc import ABC
 from decimal import Decimal
 from typing import TypeVar, List, Optional, Type, Any
 import attr
 from treeno.datatypes.types import DataType
+from treeno.datatypes.builder import unknown
 from treeno.datatypes.inference import infer_type
 from treeno.base import Sql, PrintOptions, PrintMode
 from treeno.printer import join_stmts
@@ -15,7 +17,11 @@ from treeno.util import (
 
 GenericValue = TypeVar("GenericValue", bound="Value")
 
+# Attr tries to assign __le__, __ge__, __eq__ and friends by default. We define our own.
+value_attr = functools.partial(attr.s, order=False, eq=False, str=False)
 
+
+@value_attr
 class Value(Sql, ABC):
     """A value can be one of the following:
 
@@ -28,9 +34,7 @@ class Value(Sql, ABC):
     as syntactic sugar for Expression(<op>, operands...).
     """
 
-    def __init__(self, data_type: Optional[DataType] = None):
-        # TODO: We don't have full data type inference support yet
-        self.data_type = data_type
+    data_type: DataType = attr.ib(factory=unknown, kw_only=True)
 
     def __invert__(self):
         return Not(self)
@@ -84,20 +88,16 @@ class Value(Sql, ABC):
         return Or(self, other)
 
 
+@value_attr
 class Expression(Value, ABC):
     """Represents a complex expression which involves a function and its corresponding
     arguments.
     """
 
-    def __init__(self):
-        super().__init__()
 
-
+@value_attr
 class Literal(Value):
-    def __init__(self, value: Any, data_type: DataType) -> None:
-        super().__init__(data_type)
-        self.value = value
-        # Literals can't be NaN or Infinity by definition.
+    value: Any = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
         """
@@ -117,46 +117,43 @@ class Literal(Value):
         return s
 
 
+@value_attr
 class Field(Value):
     """Represents a field referenced in the input relations of a SELECT query"""
 
-    def __init__(self, name: str, table: Optional[str] = None):
-        super().__init__()
-        # None if we're selecting all columns from a source
-        self.name = name
-        # None if we're not referencing any underlying tables
-        self.table = table
+    name: str = attr.ib()
+    table: Optional[str] = attr.ib(default=None)
 
     def sql(self, opts: PrintOptions) -> str:
         return chain_identifiers(self.table, self.name)
 
 
+@value_attr
 class AliasedValue(Value):
     """Represents an alias on a value. For unpacking individual column aliases
     from a star, see AliasedStar
     """
 
-    def __init__(self, value: Value, alias: str):
-        super().__init__()
+    value: Value = attr.ib()
+    alias: str = attr.ib()
+
+    def __attrs_post_init__(self) -> None:
         assert not isinstance(
-            value, Star
+            self.value, Star
         ), "Stars cannot have aliases. Consider using AliasedStar"
-        self.value = value
-        self.alias = alias
 
     def sql(self, opts: PrintOptions) -> str:
         return f'{self.value} "{self.alias}"'
 
 
+@value_attr
 class Star(Value):
     """Represents a `*` or a `table.*` statement
     NOTE: The reason Star does not inherit from Field is because a star has no name.
     Fields must have a name, and allow an optional table identifier.
     """
 
-    def __init__(self, table: Optional[str] = None):
-        super().__init__()
-        self.table = table
+    table: Optional[str] = attr.ib(default=None)
 
     def sql(self, opts: PrintOptions) -> str:
         star_string = f"{quote_identifier(self.table)}." if self.table else ""
@@ -190,7 +187,7 @@ def wrap_literal(val: Any) -> Value:
     assert not isinstance(
         val, (list, tuple, set, dict)
     ), "wrap_literal should not be used with composable types like ARRAY/MAP/ROW"
-    return Literal(val, infer_type(val))
+    return Literal(val, data_type=infer_type(val))
 
 
 def wrap_literal_list(vals: List[Any]) -> List[Value]:
@@ -258,13 +255,13 @@ def call_str(
     return f"{function_name}{parenthesize(arg_str)}"
 
 
-@attr.s
+@value_attr
 class BinaryExpression(Expression, ABC):
     left: GenericValue = attr.ib(converter=wrap_literal)
     right: GenericValue = attr.ib(converter=wrap_literal)
 
 
-@attr.s
+@value_attr
 class UnaryExpression(Expression, ABC):
     value: GenericValue = attr.ib(converter=wrap_literal)
 
@@ -400,7 +397,7 @@ class DistinctFrom(BinaryExpression):
         return self.to_string(opts, negate=False)
 
 
-@attr.s
+@value_attr
 class Between(Expression):
     value: GenericValue = attr.ib(converter=wrap_literal)
     lower: GenericValue = attr.ib(converter=wrap_literal)
@@ -417,7 +414,7 @@ class Between(Expression):
         return self.to_string(opts, negate=False)
 
 
-@attr.s
+@value_attr
 class Array(Expression):
     values: List[GenericValue] = attr.ib(converter=wrap_literal_list)
 
@@ -430,7 +427,7 @@ class Array(Expression):
         return f"ARRAY[{values_str}]"
 
 
-@attr.s
+@value_attr
 class InList(Expression):
     value: GenericValue = attr.ib(converter=wrap_literal)
     exprs: List[GenericValue] = attr.ib(converter=wrap_literal_list)
@@ -447,7 +444,7 @@ class InList(Expression):
         return self.to_string(opts, negate=False)
 
 
-@attr.s
+@value_attr
 class Like(Expression):
     value: GenericValue = attr.ib(converter=wrap_literal)
     pattern: GenericValue = attr.ib(converter=wrap_literal)
@@ -469,7 +466,7 @@ class Like(Expression):
         return self.to_string(opts, negate=False)
 
 
-@attr.s
+@value_attr
 class TypeConstructor(Expression):
     value: str = attr.ib()
     type: DataType = attr.ib()
@@ -482,7 +479,7 @@ class TypeConstructor(Expression):
         return f"{self.type.type_name} {quote_literal(self.value)}"
 
 
-@attr.s
+@value_attr
 class RowConstructor(Expression):
     values: List[Value] = attr.ib()
 
@@ -493,7 +490,7 @@ class RowConstructor(Expression):
         return f"({values_string})"
 
 
-@attr.s
+@value_attr
 class Interval(Expression):
     value: str = attr.ib()
     from_interval: str = attr.ib()
@@ -504,7 +501,7 @@ class Interval(Expression):
         return f"INTERVAL {self.value} {self.from_interval}" + to_interval_str
 
 
-@attr.s
+@value_attr
 class Cast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
     type: DataType = attr.ib()
@@ -513,7 +510,7 @@ class Cast(Expression):
         return f"CAST({self.expr.sql(opts)} AS {self.type.sql(opts)})"
 
 
-@attr.s
+@value_attr
 class TryCast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
     type: DataType = attr.ib()
@@ -522,7 +519,7 @@ class TryCast(Expression):
         return f"TRY_CAST({self.expr.sql(opts)} AS {self.type.sql(opts)})"
 
 
-@attr.s
+@value_attr
 class Subscript(Expression):
     value: GenericValue = attr.ib()
     index: GenericValue = attr.ib(converter=wrap_literal)
