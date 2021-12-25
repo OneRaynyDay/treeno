@@ -1,12 +1,15 @@
-import typer
 from enum import Enum
+
+import typer
+
+from treeno.base import PrintMode, PrintOptions, Sql
 from treeno.builder.convert import (
-    query_from_sql,
     expression_from_sql,
+    query_from_sql,
     type_from_sql,
 )
-from treeno.base import Sql, PrintMode, PrintOptions
-from treeno.grammar.parse import AST, tree as print_tree
+from treeno.grammar.parse import AST
+from treeno.grammar.parse import tree as print_tree
 
 app = typer.Typer()
 
@@ -34,7 +37,6 @@ def format(construct_type: SqlConstruct, sql: str) -> None:
 @app.command()
 def tree(construct_type: SqlConstruct, sql: str) -> None:
     ast = AST(sql)
-    node = ast.query()
     if construct_type == SqlConstruct.QUERY:
         node = ast.query()
     elif construct_type == SqlConstruct.EXPRESSION:

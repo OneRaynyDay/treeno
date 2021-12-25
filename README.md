@@ -6,12 +6,8 @@
 
 
 A user friendly query tree building library for Trino, a distributed SQL engine.
-It supports Python>=3.6.
+Treeno supports `python>=3.6`.
 
-Crafting SQL commands is often a duplicated art.
-A standard library of common SQL functions is necessary to reduce common boilerplate.
-Treeno is a way for standard library authors to build on top of arbitrary queries to
-aggregate, filter, join, etc on top of Trino SQL.
 
 # Install
 
@@ -21,25 +17,132 @@ $ pip install trino
 
 # Quick Start
 
-Treeno is interoperable with raw SQL, so users don't need to be aware of `treeno.relation.Query` objects (`SelectQuery`, `TableQuery`, etc):
+## CLI
+You can use `treeno` to format your SQL queries:
 
-```python
-from treeno.builder.convert import query_from_sql
-select_query = query_from_sql("SELECT * FROM table")
+```shell
+❯ treeno format query "SELECT a,b FROM (SELECT a, b, c FROM t WHERE c > 5 AND b = 2 ORDER BY a) LIMIT 3;"
+SELECT "a","b"
+  FROM (SELECT "a","b","c"
+          FROM "t"
+         WHERE "c" > 5
+               AND "b" = 2
+         ORDER BY "a")
+ LIMIT 3
 ```
 
-In addition, Treeno is able to parse standalone types:
+`treeno tree` allows you to view the SQL syntax as a tree to better understand your query structure:
 
-```python
-from treeno.builder.convert import type_from_sql
-data_type = type_from_sql("TIMESTAMP(9) WITH TIME ZONE")
+```shell
+❯ treeno tree expression "1+2"
+          standaloneExpres
+                sion
+   ______________|________________
+  |                           expression
+  |                               |
+  |                        booleanExpressio
+  |                               n
+  |                               |
+  |                        valueExpression
+  |     __________________________|________________
+  |    |                   valueExpression  valueExpression
+  |    |                          |                |
+  |    |                   primaryExpressio primaryExpressio
+  |    |                          n                n
+  |    |                          |                |
+  |    |                        number           number
+  |    |                          |                |
+<EOF>  +                          1                2
 ```
 
-... and arbitrary expressions:
+## Library
 
-```python
-from treeno.builder.convert import expression_from_sql
-data_type = expression_from_sql("(3 + 5) / 7 ")
+`treeno.builder.convert` supplies three useful functions `query_from_sql`, `expression_from_sql` and `type_from_sql`,
+which allows us to parse Trino SQL into python data types.
+
+Underneath the hood, every expression is a `Value`, which has a `sql()` function which gives us the string
+representation of the query.
+
+### Support for joins:
+
+```doctest
+>>> query = query_from_sql("SELECT foo.a, t.b FROM t INNER JOIN foo ON foo.a = t.b")
+>>> print(query.sql(PrintOptions(PrintMode.PRETTY)))
+SELECT "foo"."a","t"."b"
+  FROM "t" INNER JOIN "foo" ON "foo"."a" = "t"."b"
+>>> print(str(query))
+SELECT "foo"."a","t"."b" FROM "t" INNER JOIN "foo" ON "foo"."a" = "t"."b"
+```
+
+### Support for basic window functions:
+
+```doctest
+>>> query = query_from_sql("SELECT SUM(a) OVER (PARTITION BY date ORDER BY timestamp ROWS BETWEEN 5 PRECEDING AND CURRENT ROW), x, y, z FROM t")
+>>> print(query.sql(PrintOptions(PrintMode.PRETTY)))
+SELECT SUM("a") OVER (
+       PARTITION BY "date"
+           ORDER BY "timestamp"
+            ROWS BETWEEN 5 PRECEDING AND CURRENT ROW),
+       "x","y","z"
+  FROM "t"
+>>> print(query)
+SELECT SUM("a") OVER (PARTITION BY "date" ORDER BY "timestamp" ROWS BETWEEN 5 PRECEDING AND CURRENT ROW),"x","y","z" FROM "t"
+```
+
+### Support for subqueries:
+
+```doctest
+>>> query = query_from_sql("SELECT a FROM (SELECT a,b FROM (SELECT a,b,c FROM t))")
+>>> print(str(query))
+SELECT "a" FROM (SELECT "a","b" FROM (SELECT "a","b","c" FROM "t"))
+>>> print(query.sql(PrintOptions(PrintMode.PRETTY)))
+SELECT "a"
+  FROM (SELECT "a","b"
+          FROM (SELECT "a","b","c"
+                  FROM "t"))
+```
+
+### Support for CTE's:
+
+```doctest
+>>> query = query_from_sql("WITH foo AS (SELECT a,b FROM t) SELECT foo.a")
+>>> print(query.sql(PrintOptions(PrintMode.PRETTY)))
+  WITH "foo" AS (
+       SELECT "a","b"
+         FROM "t")
+SELECT "foo"."a"
+>>> print(str(query))
+WITH "foo" AS (SELECT "a","b" FROM "t") SELECT "foo"."a"
+```
+
+### Support for all pemdas:
+
+```doctest
+>>> query = query_from_sql("SELECT (((1+2)*3)/4)-10")
+>>> print(str(query)) # only + needs parenthesizing
+SELECT (1 + 2) * 3 / 4 - 10
+>> query = query_from_sql("SELECT (TRUE OR TRUE) AND FALSE")
+>>> print(str(query)) # AND has precedence, so we preserve the parentheses
+SELECT (TRUE OR TRUE) AND FALSE
+>>> query = query_from_sql("SELECT TRUE OR (TRUE AND FALSE)")
+>>> print(str(query)) # AND has precedence so parentheses are redundant
+SELECT TRUE OR TRUE AND FALSE
+```
+
+### `treeno` is type-aware:
+
+```doctest
+>>> query = query_from_sql("SELECT CAST(3 AS DECIMAL(29,1))")
+>>> print(str(query))
+SELECT CAST(3 AS DECIMAL(29,1))
+```
+
+The above decimal type can be constructed in python using the `treeno.datatypes.builder` module:
+
+```doctest
+>>> from treeno.datatypes.builder import decimal
+>>> decimal(precision=29, scale=1)
+DataType(type_name='DECIMAL', parameters={'precision': 29, 'scale': 1})
 ```
 
 ## Links
