@@ -808,8 +808,26 @@ class TestWindow(VisitorTest):
 
 class TestFunction(VisitorTest):
     def test_complex_aggregate_expression(self):
-        # TODO: Add complex tests for this.
-        ...
+        ast = get_parser(
+            "SUM(a ORDER BY b ASC) FILTER (WHERE a <> b) OVER (w PARTITION BY date ORDER BY a,b GROUPS 5 PRECEDING AND CURRENT ROW"
+        ).primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        window = Window(
+            parent_window="w",
+            orderby=[OrderTerm(Field("a")), OrderTerm(Field("b"))],
+            partitions=[Field("date")],
+            frame_type=FrameType.GROUPS,
+            start_bound=BoundedFrameBound(
+                bound_type=BoundType.PRECEDING, offset=5
+            ),
+            end_bound=CurrentFrameBound(),
+        )
+        assert self.visitor.visit(ast) == Sum(
+            Field("a"),
+            orderby=[OrderTerm(Field("b"), order_type=OrderType.ASC)],
+            filter_=Field("a") != Field("b"),
+            window=window,
+        )
 
     def test_aggregate_functions(self):
         # Check lowercase as an example

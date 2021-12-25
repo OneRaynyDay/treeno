@@ -420,7 +420,7 @@ predicate[ParserRuleContext value]
 
 valueExpression
     : primaryExpression                                                                 #valueExpressionDefault
-    | valueExpression AT timeZoneSpecifier                                              #atTimeZone
+    | valueExpression AT timeZoneSpecifier                                              #atTimeZon ORDER BY b ASCe
     | operator=(MINUS | PLUS) valueExpression                                           #arithmeticUnary
     | left=valueExpression operator=(ASTERISK | SLASH | PERCENT) right=valueExpression  #arithmeticBinary
     | left=valueExpression operator=(PLUS | MINUS) right=valueExpression                #arithmeticBinary
