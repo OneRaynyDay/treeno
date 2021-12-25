@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-import requests
-import sys
-import os
-import click
-import typer
-import re
 import difflib
+import os
+import re
+import sys
 
+import click
+import requests
+import typer
 
 # Refer to https://github.com/antlr/antlr4/blob/master/tool/src/org/antlr/v4/codegen/target/Python3Target.java
 KEYWORDS_TO_REPLACE = [
@@ -155,7 +155,7 @@ def escape_keywords(content_lines, fromfile, tofile):
     return escaped_content_lines
 
 
-def monkeypatch_letters(content_lines):
+def monkeypatch_letter(content_lines):
     # Hacky way to allow us to recognize lowercased letters correctly.
     for idx, line in enumerate(content_lines):
         if "fragment LETTER" in line:
@@ -171,6 +171,29 @@ def monkeypatch_letters(content_lines):
             content_lines[idx + 1] = patched_line
             return content_lines
     raise ValueError("Expected grammar rule LETTER. Not found.")
+
+
+def allow_lowercase_keywords(content_lines, fromfile, tofile):
+    lines = []
+    for line in content_lines:
+        match = re.match(r"^([A-Z]*): '\1';$", line)
+        if not match:
+            lines.append(line)
+        else:
+            rule_name = match.group(1)
+            lines.append(
+                f"{rule_name}: '{rule_name}' | '{rule_name.lower()}';\n"
+            )
+
+    diffs = difflib.context_diff(
+        content_lines, lines, fromfile=fromfile, tofile=tofile
+    )
+    diff_output = "".join(diffs)
+    if not click.confirm(
+        f"After fetching SqlBase.g4 from Trino, applied the following changes to allow lowercase keywords in grammar:\n{diff_output}\nContinue?"
+    ):
+        sys.exit(1)
+    return lines
 
 
 def download_file(
@@ -194,7 +217,10 @@ def download_file(
     content_lines = escape_keywords(
         content_lines, fromfile=grammar_url, tofile=file_name
     )
-    content_lines = monkeypatch_letters(content_lines)
+    content_lines = monkeypatch_letter(content_lines)
+    content_lines = allow_lowercase_keywords(
+        content_lines, fromfile=grammar_url, tofile=file_name
+    )
 
     with open(file_name, "w") as f:
         f.writelines(content_lines)

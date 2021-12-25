@@ -1,8 +1,10 @@
 # Generated from SqlBase.g4 by ANTLR 4.9.2
 # encoding: utf-8
-from antlr4 import *
-from io import StringIO
 import sys
+from io import StringIO
+
+from antlr4 import *
+
 if sys.version_info[1] > 5:
 	from typing import TextIO
 else:
@@ -1395,59 +1397,68 @@ class SqlBaseParser ( Parser ):
 
     literalNames = [ "<INVALID>", "'.'", "'('", "')'", "','", "'SKIP'", 
                      "'->'", "'['", "']'", "'|'", "'^'", "'$'", "'{-'", 
-                     "'-}'", "'{'", "'}'", "'=>'", "'ADD'", "'ADMIN'", "'AFTER'", 
-                     "'ALL'", "'ALTER'", "'ANALYZE'", "'AND'", "'ANY'", 
-                     "'ARRAY'", "'AS'", "'ASC'", "'AT'", "'AUTHORIZATION'", 
-                     "'BERNOULLI'", "'BETWEEN'", "'BY'", "'CALL'", "'CASCADE'", 
-                     "'CASE'", "'CAST'", "'CATALOGS'", "'COLUMN'", "'COLUMNS'", 
-                     "'COMMENT'", "'COMMIT'", "'COMMITTED'", "'CONSTRAINT'", 
-                     "'COUNT'", "'CREATE'", "'CROSS'", "'CUBE'", "'CURRENT'", 
-                     "'CURRENT_CATALOG'", "'CURRENT_DATE'", "'CURRENT_PATH'", 
-                     "'CURRENT_ROLE'", "'CURRENT_SCHEMA'", "'CURRENT_TIME'", 
-                     "'CURRENT_TIMESTAMP'", "'CURRENT_USER'", "'DATA'", 
-                     "'DATE'", "'DAY'", "'DEALLOCATE'", "'DEFINER'", "'DELETE'", 
-                     "'DENY'", "'DESC'", "'DESCRIBE'", "'DEFINE'", "'DISTINCT'", 
-                     "'DISTRIBUTED'", "'DOUBLE'", "'DROP'", "'ELSE'", "'EMPTY'", 
-                     "'END'", "'ERROR'", "'ESCAPE'", "'EXCEPT'", "'EXCLUDING'", 
-                     "'EXECUTE'", "'EXISTS'", "'EXPLAIN'", "'EXTRACT'", 
-                     "'FALSE'", "'FETCH'", "'FILTER'", "'FINAL'", "'FIRST'", 
-                     "'FOLLOWING'", "'FOR'", "'FORMAT'", "'FROM'", "'FULL'", 
-                     "'FUNCTIONS'", "'GRANT'", "'GRANTED'", "'GRANTS'", 
-                     "'GRAPHVIZ'", "'GROUP'", "'GROUPING'", "'GROUPS'", 
-                     "'HAVING'", "'HOUR'", "'IF'", "'IGNORE'", "'IN'", "'INCLUDING'", 
-                     "'INITIAL'", "'INNER'", "'INPUT'", "'INSERT'", "'INTERSECT'", 
-                     "'INTERVAL'", "'INTO'", "'INVOKER'", "'IO'", "'IS'", 
-                     "'ISOLATION'", "'JOIN'", "'JSON'", "'LAST'", "'LATERAL'", 
-                     "'LEFT'", "'LEVEL'", "'LIKE'", "'LIMIT'", "'LISTAGG'", 
-                     "'LOCAL'", "'LOCALTIME'", "'LOCALTIMESTAMP'", "'LOGICAL'", 
-                     "'MAP'", "'MATCH'", "'MATCHED'", "'MATCHES'", "'MATCH_RECOGNIZE'", 
-                     "'MATERIALIZED'", "'MEASURES'", "'MERGE'", "'MINUTE'", 
-                     "'MONTH'", "'NATURAL'", "'NEXT'", "'NFC'", "'NFD'", 
-                     "'NFKC'", "'NFKD'", "'NO'", "'NONE'", "'NORMALIZE'", 
-                     "'NOT'", "'NULL'", "'NULLIF'", "'NULLS'", "'OFFSET'", 
-                     "'OMIT'", "'OF'", "'ON'", "'ONE'", "'ONLY'", "'OPTION'", 
-                     "'OR'", "'ORDER'", "'ORDINALITY'", "'OUTER'", "'OUTPUT'", 
-                     "'OVER'", "'OVERFLOW'", "'PARTITION'", "'PARTITIONS'", 
-                     "'PAST'", "'PATH'", "'PATTERN'", "'PER'", "'PERMUTE'", 
-                     "'POSITION'", "'PRECEDING'", "'PRECISION'", "'PREPARE'", 
-                     "'PRIVILEGES'", "'PROPERTIES'", "'RANGE'", "'READ'", 
-                     "'RECURSIVE'", "'REFRESH'", "'RENAME'", "'REPEATABLE'", 
-                     "'REPLACE'", "'RESET'", "'RESPECT'", "'RESTRICT'", 
-                     "'REVOKE'", "'RIGHT'", "'ROLE'", "'ROLES'", "'ROLLBACK'", 
-                     "'ROLLUP'", "'ROW'", "'ROWS'", "'RUNNING'", "'SCHEMA'", 
-                     "'SCHEMAS'", "'SECOND'", "'SECURITY'", "'SEEK'", "'SELECT'", 
-                     "'SERIALIZABLE'", "'SESSION'", "'SET'", "'SETS'", "'SHOW'", 
-                     "'SOME'", "'START'", "'STATS'", "'SUBSET'", "'SUBSTRING'", 
-                     "'SYSTEM'", "'TABLE'", "'TABLES'", "'TABLESAMPLE'", 
-                     "'TEXT'", "'THEN'", "'TIES'", "'TIME'", "'TIMESTAMP'", 
-                     "'TO'", "'TRANSACTION'", "'TRUE'", "'TRUNCATE'", "'TRY_CAST'", 
-                     "'TYPE'", "'UESCAPE'", "'UNBOUNDED'", "'UNCOMMITTED'", 
-                     "'UNION'", "'UNMATCHED'", "'UNNEST'", "'UPDATE'", "'USE'", 
-                     "'USER'", "'USING'", "'VALIDATE'", "'VALUES'", "'VERBOSE'", 
-                     "'VERSION'", "'VIEW'", "'WHEN'", "'WHERE'", "'WINDOW'", 
-                     "'WITH'", "'WITHIN'", "'WITHOUT'", "'WORK'", "'WRITE'", 
-                     "'YEAR'", "'ZONE'", "'='", "<INVALID>", "'<'", "'<='", 
-                     "'>'", "'>='", "'+'", "'-'", "'*'", "'/'", "'%'", "'||'", 
+                     "'-}'", "'{'", "'}'", "'=>'", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "'CURRENT_CATALOG'", "'CURRENT_DATE'", 
+                     "'CURRENT_PATH'", "'CURRENT_ROLE'", "'CURRENT_SCHEMA'", 
+                     "'CURRENT_TIME'", "'CURRENT_TIMESTAMP'", "'CURRENT_USER'", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "'MATCH_RECOGNIZE'", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "'NFC'", "'NFD'", "'NFKC'", "'NFKD'", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "'TRY_CAST'", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "'='", "<INVALID>", "'<'", "'<='", "'>'", 
+                     "'>='", "'+'", "'-'", "'*'", "'/'", "'%'", "'||'", 
                      "'?'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
@@ -7992,7 +8003,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_queryTerm)
                         self.state = 1056
                         if not self.precpred(self._ctx, 2):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
                         self.state = 1057
                         localctx.operator = self.match(SqlBaseParser.INTERSECT)
@@ -8014,7 +8027,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_queryTerm)
                         self.state = 1062
                         if not self.precpred(self._ctx, 1):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
                         self.state = 1063
                         localctx.operator = self._input.LT(1)
@@ -11608,7 +11623,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_booleanExpression)
                         self.state = 1577
                         if not self.precpred(self._ctx, 2):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
                         self.state = 1578
                         self.match(SqlBaseParser.AND)
@@ -11621,7 +11638,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_booleanExpression)
                         self.state = 1580
                         if not self.precpred(self._ctx, 1):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
                         self.state = 1581
                         self.match(SqlBaseParser.OR)
@@ -12334,7 +12353,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_valueExpression)
                         self.state = 1657
                         if not self.precpred(self._ctx, 3):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 3)")
                         self.state = 1658
                         localctx.operator = self._input.LT(1)
@@ -12354,7 +12375,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_valueExpression)
                         self.state = 1660
                         if not self.precpred(self._ctx, 2):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
                         self.state = 1661
                         localctx.operator = self._input.LT(1)
@@ -12374,7 +12397,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_valueExpression)
                         self.state = 1663
                         if not self.precpred(self._ctx, 1):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
                         self.state = 1664
                         self.match(SqlBaseParser.CONCAT)
@@ -12387,7 +12412,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_valueExpression)
                         self.state = 1666
                         if not self.precpred(self._ctx, 5):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
                         self.state = 1667
                         self.match(SqlBaseParser.AT)
@@ -14290,7 +14317,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_primaryExpression)
                         self.state = 1964
                         if not self.precpred(self._ctx, 17):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 17)")
                         self.state = 1965
                         self.match(SqlBaseParser.T__6)
@@ -14306,7 +14335,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_primaryExpression)
                         self.state = 1969
                         if not self.precpred(self._ctx, 15):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 15)")
                         self.state = 1970
                         self.match(SqlBaseParser.T__0)
@@ -16970,7 +17001,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_rowPattern)
                         self.state = 2312
                         if not self.precpred(self._ctx, 2):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
                         self.state = 2313
                         self.rowPattern(3)
@@ -16981,7 +17014,9 @@ class SqlBaseParser ( Parser ):
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_rowPattern)
                         self.state = 2314
                         if not self.precpred(self._ctx, 1):
-                            from antlr4.error.Errors import FailedPredicateException
+                            from antlr4.error.Errors import (
+                                FailedPredicateException,
+                            )
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
                         self.state = 2315
                         self.match(SqlBaseParser.T__8)
