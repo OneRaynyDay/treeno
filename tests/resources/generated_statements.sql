@@ -24,3 +24,4 @@ SELECT "a","b" FROM (SELECT "a","b","c" FROM "t" WHERE "c" > 5 AND "b" = 2 ORDER
 SELECT SUM("a") OVER (PARTITION BY "date" ORDER BY "timestamp" ROWS BETWEEN 5 PRECEDING AND CURRENT ROW),"x","y","z" FROM "t";
 SELECT "a" FROM (SELECT "a","b" FROM (SELECT "a","b","c" FROM "t"));
 WITH "foo" AS (SELECT "a","b" FROM "t") SELECT "foo"."a","t"."b" FROM "t" INNER JOIN "foo" ON "foo"."a" = "t"."b";
+SELECT SUM("a" ORDER BY "b","c" NULLS FIRST) FILTER (WHERE "a" IS NULL) OVER (RANGE BETWEEN 5 PRECEDING AND CURRENT ROW) FROM "t";

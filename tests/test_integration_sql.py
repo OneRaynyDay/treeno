@@ -1,7 +1,8 @@
-import unittest
 import os
-from treeno.builder.convert import query_from_sql
+import unittest
+
 from treeno.base import PrintMode, PrintOptions
+from treeno.builder.convert import query_from_sql
 
 RESOURCES_DIR = os.path.join(os.path.dirname(__file__), "resources")
 RESOURCES_PATH = os.path.join(RESOURCES_DIR, "statements.sql")
@@ -32,6 +33,13 @@ class IntegrationSQL(unittest.TestCase):
             )
             assert result_sql == generated_sql_statement
             # Make sure the result sql can be correctly parsed and transformed as well
+            if (
+                query_from_sql(result_sql).sql(PrintOptions(PrintMode.DEFAULT))
+                != generated_sql_statement
+            ):
+                import pdb
+
+                pdb.set_trace()
             assert (
                 query_from_sql(result_sql).sql(PrintOptions(PrintMode.DEFAULT))
                 == generated_sql_statement

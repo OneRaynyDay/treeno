@@ -4,12 +4,17 @@ StatementPrinter complies with sqlstyle.guide.
 Note that none of these printers are explicitly responsible for calling sql(). They should work only with the
 primitive str representation.
 """
-import attr
-from treeno.base import PrintOptions, PrintMode
 from typing import Dict, List
+
+import attr
+
+from treeno.base import PrintMode, PrintOptions
 
 
 def pad(input: str, spaces: int) -> str:
+    """Pads the input lines with spaces except for the first line.
+    We don't need opts here because the default mode will always be a single line so we'll never invoke this.
+    """
     lines = input.splitlines()
     pad = " " * spaces
     return f"\n{pad}".join(lines)

@@ -38,10 +38,10 @@ SELECT "a","b"
                AND "b" = 2
          ORDER BY "a")
  LIMIT 3;
-SELECT SUM("a") OVER (
-       PARTITION BY "date"
-           ORDER BY "timestamp"
-            ROWS BETWEEN 5 PRECEDING AND CURRENT ROW),
+SELECT SUM("a")
+           OVER (PARTITION BY "date"
+                    ORDER BY "timestamp"
+                     ROWS BETWEEN 5 PRECEDING AND CURRENT ROW),
        "x","y","z"
   FROM "t";
 SELECT "a"
@@ -53,3 +53,7 @@ SELECT "a"
          FROM "t")
 SELECT "foo"."a","t"."b"
   FROM "t" INNER JOIN "foo" ON "foo"."a" = "t"."b";
+SELECT SUM("a" ORDER BY "b","c" NULLS FIRST)
+           FILTER (WHERE "a" IS NULL)
+             OVER (RANGE BETWEEN 5 PRECEDING AND CURRENT ROW)
+  FROM "t";

@@ -1,14 +1,16 @@
-import attr
 from abc import ABC
-from typing import Optional, List, Dict
-from treeno.util import chain_identifiers, parenthesize, quote_identifier
+from enum import Enum
+from typing import Dict, List, Optional
+
+import attr
+
+from treeno.base import PrintMode, PrintOptions, SetQuantifier, Sql
 from treeno.expression import Value
-from treeno.base import Sql, SetQuantifier, PrintOptions, PrintMode
-from treeno.printer import StatementPrinter, pad, join_stmts
 from treeno.groupby import GroupBy
 from treeno.orderby import OrderTerm
+from treeno.printer import StatementPrinter, join_stmts, pad
+from treeno.util import chain_identifiers, parenthesize, quote_identifier
 from treeno.window import Window
-from enum import Enum
 
 
 class Relation(Sql, ABC):
@@ -39,10 +41,6 @@ class Query(Relation, ABC):
     with_queries: Dict[str, "Query"] = attr.ib(factory=dict, kw_only=True)
 
     def with_query_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
-        if isinstance(self.with_queries, list):
-            import pdb
-
-            pdb.set_trace()
         if not self.with_queries:
             return {}
         newline_if_pretty = "\n" if opts.mode == PrintMode.PRETTY else ""
@@ -77,7 +75,7 @@ class SelectQuery(Query):
     """
 
     select: List[Value] = attr.ib()
-    from_relation: Optional[Relation] = attr.ib(default=None)
+    from_: Optional[Relation] = attr.ib(default=None)
     where: Optional[Value] = attr.ib(default=None)
     groupby: Optional[GroupBy] = attr.ib(default=None)
     having: Optional[Value] = attr.ib(default=None)
@@ -97,10 +95,10 @@ class SelectQuery(Query):
             select_value = self.select_quantifier.name + " " + select_value
         builder.add_entry("SELECT", select_value)
 
-        if self.from_relation:
-            relation_str = self.from_relation.sql(opts)
+        if self.from_:
+            relation_str = self.from_.sql(opts)
             # Queries need to be parenthesized to be considered relations
-            if isinstance(self.from_relation, Query):
+            if isinstance(self.from_, Query):
                 # Add padding of 1 character to realign the statement)
                 relation_str = pad(parenthesize(relation_str), 1)
             builder.add_entry("FROM", relation_str)

@@ -1,76 +1,78 @@
 """
 Converts from our grammar into a buildable query tree.
 """
-from overrides import overrides
 from decimal import Decimal
-from typing import Optional, List, Union, Tuple, Dict
-from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
-from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
+from typing import Dict, List, Optional, Tuple, Union
+
+from overrides import overrides
+
+from treeno.datatypes.builder import (
+    array,
+    boolean,
+    double,
+    integer,
+    interval,
+    row,
+    unknown,
+    varchar,
+)
+from treeno.datatypes.inference import infer_decimal, infer_integral
+from treeno.datatypes.types import FIELDS, TIME, TIMESTAMP, DataType
 from treeno.expression import (
-    Value,
-    Array,
-    And,
-    Or,
-    Between,
-    Field,
-    Star,
     AliasedStar,
     AliasedValue,
+    And,
+    Array,
+    Between,
+    Cast,
+    DistinctFrom,
+    Field,
     InList,
     Interval,
-    Like,
     IsNull,
-    DistinctFrom,
+    Like,
     Literal,
-    Subscript,
-    TypeConstructor,
-    TryCast,
-    Cast,
+    Or,
     RowConstructor,
+    Star,
+    Subscript,
+    TryCast,
+    TypeConstructor,
+    Value,
 )
+from treeno.functions import NAMES_TO_FUNCTIONS, AggregateFunction, Function
+from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
+from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
+from treeno.grammar.parse import AST
+from treeno.groupby import Cube, GroupBy, GroupingSet, GroupingSetList, Rollup
+from treeno.orderby import NullOrder, OrderTerm, OrderType
 from treeno.relation import (
-    Relation,
     AliasedRelation,
-    Table,
-    TableQuery,
-    ValuesQuery,
-    Query,
-    Unnest,
-    Lateral,
     Join,
-    JoinType,
     JoinConfig,
-    JoinOnCriteria,
-    JoinUsingCriteria,
     JoinCriteria,
+    JoinOnCriteria,
+    JoinType,
+    JoinUsingCriteria,
+    Lateral,
+    Query,
+    Relation,
     SelectQuery,
     SetQuantifier,
-)
-from treeno.functions import Function, NAMES_TO_FUNCTIONS, AggregateFunction
-from treeno.datatypes.types import FIELDS, DataType, TIMESTAMP, TIME
-from treeno.datatypes.inference import infer_integral, infer_decimal
-from treeno.groupby import GroupBy, GroupingSet, GroupingSetList, Cube, Rollup
-from treeno.orderby import OrderTerm, OrderType, NullOrder
-from treeno.window import (
-    Window,
-    BoundType,
-    UnboundedFrameBound,
-    BoundedFrameBound,
-    CurrentFrameBound,
-    FrameType,
-)
-from treeno.datatypes.builder import (
-    double,
-    unknown,
-    boolean,
-    row,
-    varchar,
-    interval,
-    array,
-    integer,
+    Table,
+    TableQuery,
+    Unnest,
+    ValuesQuery,
 )
 from treeno.util import nth
-from treeno.grammar.parse import AST
+from treeno.window import (
+    BoundedFrameBound,
+    BoundType,
+    CurrentFrameBound,
+    FrameType,
+    UnboundedFrameBound,
+    Window,
+)
 
 
 def query_from_sql(sql: str) -> Query:
@@ -641,13 +643,9 @@ class ConvertVisitor(SqlBaseVisitor):
         assert (
             not ctx.processingMode()
         ), "Pattern recognition is currently not supported"
-        assert not ctx.filter_(), "Filter is currently not supported"
         assert (
             not ctx.nullTreatment()
         ), "Null treatment is currently not supported"
-        assert (
-            not ctx.sortItem()
-        ), "ORDER BY in expression is currently not supported"
 
         # Qualified names usually have multiple parts, but afaik functions aren't namespaced so there should only
         # be one part
@@ -663,11 +661,22 @@ class ConvertVisitor(SqlBaseVisitor):
         fn = NAMES_TO_FUNCTIONS[fn_name]
 
         kwargs = {}
+
         if ctx.over():
             assert issubclass(
                 fn, AggregateFunction
             ), "Can't scan over windows on non-aggregate functions"
             kwargs["window"] = self.visit(ctx.over())
+
+        sort_items = ctx.sortItem()
+        if sort_items:
+            kwargs["orderby"] = [
+                self.visit(sort_item) for sort_item in sort_items
+            ]
+
+        filter_ = ctx.filter_()
+        if filter_:
+            kwargs["filter_"] = self.visit(filter_)
 
         expressions: List[Value]
         if ctx.ASTERISK():
@@ -676,6 +685,11 @@ class ConvertVisitor(SqlBaseVisitor):
             # TODO: Are we missing the empty args case?
             expressions = [self.visit(expr) for expr in ctx.expression()]
         return fn(*expressions, **kwargs)
+
+    @overrides
+    def visitFilter_(self, ctx: SqlBaseParser.Filter_Context) -> Value:
+        # For now, filter_ is only used inside of a query, solely to get the boolean value.
+        return self.visit(ctx.booleanExpression())
 
     @overrides
     def visitRowConstructor(
@@ -693,7 +707,7 @@ class ConvertVisitor(SqlBaseVisitor):
         """The window can either be an identifier or a full window specification.
         """
         if ctx.windowName:
-            return Window(parent_window=ctx.visit(ctx.windowName))
+            return Window(parent_window=self.visit(ctx.windowName))
         return self.visit(ctx.windowSpecification())
 
     @overrides
@@ -1065,7 +1079,7 @@ class ConvertVisitor(SqlBaseVisitor):
                 raise NotImplementedError(
                     "Currently multiple FROM relations are not supported"
                 )
-            query_builder.from_relation = self.visit(relations[0])
+            query_builder.from_ = self.visit(relations[0])
 
         # Dictates whether we select ALL rows or DISTINCT rows (all by default)
         set_qualifier = ctx.setQuantifier()

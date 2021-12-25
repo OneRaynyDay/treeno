@@ -1,8 +1,26 @@
 import unittest
+from decimal import Decimal
+
 import pytest
+from antlr4 import CommonTokenStream
+from antlr4.InputStream import InputStream
+
 from treeno.builder.convert import ConvertVisitor
-from treeno.grammar.gen.SqlBaseLexer import SqlBaseLexer
-from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
+from treeno.datatypes.builder import (
+    array,
+    bigint,
+    boolean,
+    decimal,
+    double,
+    integer,
+    interval,
+    map_,
+    row,
+    timestamp,
+    unknown,
+    varchar,
+)
+from treeno.datatypes.types import DataType
 from treeno.expression import (
     Add,
     AliasedStar,
@@ -39,6 +57,21 @@ from treeno.expression import (
     TypeConstructor,
     wrap_literal,
 )
+from treeno.functions import (
+    Arbitrary,
+    ArrayAgg,
+    Avg,
+    BoolAnd,
+    BoolOr,
+    Checksum,
+    Every,
+    GeometricMean,
+    Sum,
+)
+from treeno.grammar.gen.SqlBaseLexer import SqlBaseLexer
+from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
+from treeno.groupby import Cube, GroupBy, GroupingSet, GroupingSetList, Rollup
+from treeno.orderby import NullOrder, OrderTerm, OrderType
 from treeno.relation import (
     AliasedRelation,
     Join,
@@ -53,45 +86,14 @@ from treeno.relation import (
     Unnest,
     ValuesQuery,
 )
-from treeno.functions import (
-    Sum,
-    Arbitrary,
-    ArrayAgg,
-    Avg,
-    BoolAnd,
-    BoolOr,
-    Checksum,
-    Every,
-    GeometricMean,
-)
-from treeno.groupby import GroupingSet, GroupingSetList, Cube, Rollup, GroupBy
-from treeno.datatypes.builder import (
-    boolean,
-    integer,
-    bigint,
-    decimal,
-    varchar,
-    interval,
-    row,
-    map_,
-    double,
-    timestamp,
-    array,
-    unknown,
-)
-from decimal import Decimal
-from treeno.datatypes.types import DataType
-from treeno.orderby import OrderType, NullOrder, OrderTerm
 from treeno.window import (
-    Window,
-    UnboundedFrameBound,
     BoundedFrameBound,
-    CurrentFrameBound,
     BoundType,
+    CurrentFrameBound,
     FrameType,
+    UnboundedFrameBound,
+    Window,
 )
-from antlr4 import CommonTokenStream
-from antlr4.InputStream import InputStream
 
 
 def get_parser(sql: str) -> SqlBaseParser:
@@ -805,6 +807,10 @@ class TestWindow(VisitorTest):
 
 
 class TestFunction(VisitorTest):
+    def test_complex_aggregate_expression(self):
+        # TODO: Add complex tests for this.
+        ...
+
     def test_aggregate_functions(self):
         # Check lowercase as an example
         ast = get_parser("Sum(a)").primaryExpression()
@@ -959,7 +965,7 @@ class TestSelect(VisitorTest):
 
         ast = get_parser("SELECT tbl.a FROM tbl").query()
         assert isinstance(ast, SqlBaseParser.QueryContext)
-        query.from_relation = Table(name="tbl")
+        query.from_ = Table(name="tbl")
         assert self.visitor.visit(ast) == query
 
         ast = get_parser("SELECT tbl.a FROM tbl WHERE tbl.a > 5").query()
