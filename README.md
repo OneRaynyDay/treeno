@@ -65,7 +65,7 @@ representation of the query.
 
 ### Support for joins:
 
-```doctest
+```python
 >>> query = query_from_sql("SELECT foo.a, t.b FROM t INNER JOIN foo ON foo.a = t.b")
 >>> print(query.sql(PrintOptions(PrintMode.PRETTY)))
 SELECT "foo"."a","t"."b"
@@ -76,7 +76,7 @@ SELECT "foo"."a","t"."b" FROM "t" INNER JOIN "foo" ON "foo"."a" = "t"."b"
 
 ### Support for basic window functions:
 
-```doctest
+```python
 >>> query = query_from_sql("SELECT SUM(a) OVER (PARTITION BY date ORDER BY timestamp ROWS BETWEEN 5 PRECEDING AND CURRENT ROW), x, y, z FROM t")
 >>> print(query.sql(PrintOptions(PrintMode.PRETTY)))
 SELECT SUM("a") OVER (
@@ -91,7 +91,7 @@ SELECT SUM("a") OVER (PARTITION BY "date" ORDER BY "timestamp" ROWS BETWEEN 5 PR
 
 ### Support for subqueries:
 
-```doctest
+```python
 >>> query = query_from_sql("SELECT a FROM (SELECT a,b FROM (SELECT a,b,c FROM t))")
 >>> print(str(query))
 SELECT "a" FROM (SELECT "a","b" FROM (SELECT "a","b","c" FROM "t"))
@@ -104,7 +104,7 @@ SELECT "a"
 
 ### Support for CTE's:
 
-```doctest
+```python
 >>> query = query_from_sql("WITH foo AS (SELECT a,b FROM t) SELECT foo.a")
 >>> print(query.sql(PrintOptions(PrintMode.PRETTY)))
   WITH "foo" AS (
@@ -117,7 +117,7 @@ WITH "foo" AS (SELECT "a","b" FROM "t") SELECT "foo"."a"
 
 ### Support for all pemdas:
 
-```doctest
+```python
 >>> query = query_from_sql("SELECT (((1+2)*3)/4)-10")
 >>> print(str(query)) # only + needs parenthesizing
 SELECT (1 + 2) * 3 / 4 - 10
@@ -131,7 +131,7 @@ SELECT TRUE OR TRUE AND FALSE
 
 ### `treeno` is type-aware:
 
-```doctest
+```python
 >>> query = query_from_sql("SELECT CAST(3 AS DECIMAL(29,1))")
 >>> print(str(query))
 SELECT CAST(3 AS DECIMAL(29,1))
@@ -139,7 +139,7 @@ SELECT CAST(3 AS DECIMAL(29,1))
 
 The above decimal type can be constructed in python using the `treeno.datatypes.builder` module:
 
-```doctest
+```python
 >>> from treeno.datatypes.builder import decimal
 >>> decimal(precision=29, scale=1)
 DataType(type_name='DECIMAL', parameters={'precision': 29, 'scale': 1})
