@@ -57,7 +57,7 @@ from treeno.expression import (
     TypeConstructor,
     wrap_literal,
 )
-from treeno.functions import (
+from treeno.functions.aggregate import (
     Arbitrary,
     ArrayAgg,
     Avg,

@@ -40,7 +40,8 @@ from treeno.expression import (
     TypeConstructor,
     Value,
 )
-from treeno.functions import NAMES_TO_FUNCTIONS, AggregateFunction, Function
+from treeno.functions.aggregate import AggregateFunction
+from treeno.functions.base import NAMES_TO_FUNCTIONS, Function
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
 from treeno.grammar.parse import AST
