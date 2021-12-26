@@ -70,6 +70,7 @@ from treeno.window import (
     BoundType,
     CurrentFrameBound,
     FrameType,
+    NullTreatment,
     UnboundedFrameBound,
     Window,
 )
@@ -643,9 +644,6 @@ class ConvertVisitor(SqlBaseVisitor):
         assert (
             not ctx.processingMode()
         ), "Pattern recognition is currently not supported"
-        assert (
-            not ctx.nullTreatment()
-        ), "Null treatment is currently not supported"
 
         # Qualified names usually have multiple parts, but afaik functions aren't namespaced so there should only
         # be one part
@@ -678,13 +676,34 @@ class ConvertVisitor(SqlBaseVisitor):
         if filter_:
             kwargs["filter_"] = self.visit(filter_)
 
+        null_treatment = ctx.nullTreatment()
+        if null_treatment:
+            kwargs["null_treatment"] = self.visit(null_treatment)
+
         expressions: List[Value]
         if ctx.ASTERISK():
-            expressions = [Star()]
+            star: Star
+            if ctx.label:
+                star = Star(table=self.visit(ctx.label))
+            else:
+                star = Star()
+            expressions = [star]
         else:
             # TODO: Are we missing the empty args case?
             expressions = [self.visit(expr) for expr in ctx.expression()]
+
         return fn(*expressions, **kwargs)
+
+    @overrides
+    def visitNullTreatment(
+        self, ctx: SqlBaseParser.NullTreatmentContext
+    ) -> NullTreatment:
+        if ctx.IGNORE():
+            return NullTreatment.IGNORE
+        elif ctx.RESPECT():
+            return NullTreatment.RESPECT
+        else:
+            raise ValueError(f"Null treatment {ctx.getText()} not supported")
 
     @overrides
     def visitFilter_(self, ctx: SqlBaseParser.Filter_Context) -> Value:

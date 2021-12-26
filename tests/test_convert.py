@@ -91,6 +91,7 @@ from treeno.window import (
     BoundType,
     CurrentFrameBound,
     FrameType,
+    NullTreatment,
     UnboundedFrameBound,
     Window,
 )
@@ -809,7 +810,7 @@ class TestWindow(VisitorTest):
 class TestFunction(VisitorTest):
     def test_complex_aggregate_expression(self):
         ast = get_parser(
-            "SUM(a ORDER BY b ASC) FILTER (WHERE a <> b) OVER (w PARTITION BY date ORDER BY a,b GROUPS 5 PRECEDING AND CURRENT ROW"
+            "SUM(a ORDER BY b ASC) FILTER (WHERE a <> b) IGNORE NULLS OVER (w PARTITION BY date ORDER BY a,b GROUPS 5 PRECEDING AND CURRENT ROW"
         ).primaryExpression()
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
         window = Window(
@@ -826,6 +827,7 @@ class TestFunction(VisitorTest):
             Field("a"),
             orderby=[OrderTerm(Field("b"), order_type=OrderType.ASC)],
             filter_=Field("a") != Field("b"),
+            null_treatment=NullTreatment.IGNORE,
             window=window,
         )
 

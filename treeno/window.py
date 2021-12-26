@@ -1,11 +1,20 @@
-import attr
 from abc import ABC
-from treeno.expression import Value, GenericValue, wrap_literal
-from treeno.base import Sql, PrintOptions
-from typing import Optional, List
+from enum import Enum
+from typing import List, Optional
+
+import attr
+
+from treeno.base import PrintOptions, Sql
+from treeno.expression import GenericValue, Value, wrap_literal
 from treeno.orderby import OrderTerm
 from treeno.printer import StatementPrinter, join_stmts
-from enum import Enum
+
+
+class NullTreatment(Enum):
+    """Used in conjunction with window functions in primary expressions"""
+
+    IGNORE = "IGNORE"
+    RESPECT = "RESPECT"
 
 
 class FrameType(Enum):

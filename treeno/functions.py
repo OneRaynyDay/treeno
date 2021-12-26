@@ -15,7 +15,7 @@ from treeno.expression import (
 from treeno.orderby import OrderTerm
 from treeno.printer import StatementPrinter, join_stmts, pad
 from treeno.util import parenthesize
-from treeno.window import Window
+from treeno.window import NullTreatment, Window
 
 GenericFunction = TypeVar("GenericFunction", bound="Function")
 
@@ -69,6 +69,9 @@ class AggregateFunction(Function, ABC):
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
     filter_: Optional[GenericValue] = attr.ib(default=None, kw_only=True)
     window: Optional[Window] = attr.ib(default=None, kw_only=True)
+    null_treatment: NullTreatment = attr.ib(
+        default=NullTreatment.RESPECT, kw_only=True
+    )
 
     def get_constraint_string(self, opts: PrintOptions) -> str:
         constraint_builder = StatementPrinter()
@@ -76,6 +79,8 @@ class AggregateFunction(Function, ABC):
             constraint_builder.add_entry(
                 "FILTER", f"(WHERE {self.filter_.sql(opts)})"
             )
+        if self.null_treatment != NullTreatment.RESPECT:
+            constraint_builder.add_entry(self.null_treatment.value, "NULLS")
         if self.window:
             constraint_builder.add_entry(
                 "OVER", parenthesize(self.window.sql(opts))
