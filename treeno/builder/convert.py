@@ -40,7 +40,12 @@ from treeno.expression import (
     TypeConstructor,
     Value,
 )
-from treeno.functions.aggregate import AggregateFunction
+from treeno.functions.aggregate import (
+    AggregateFunction,
+    CountIndication,
+    ListAgg,
+    OverflowFiller,
+)
 from treeno.functions.base import NAMES_TO_FUNCTIONS, Function
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
@@ -717,6 +722,49 @@ class ConvertVisitor(SqlBaseVisitor):
     ) -> RowConstructor:
         values = [self.visit(expr) for expr in ctx.expression()]
         return RowConstructor(values)
+
+    @overrides
+    def visitListagg(self, ctx: SqlBaseParser.ListaggContext) -> ListAgg:
+        kwargs = {}
+        separator = ctx.string()
+        if separator:
+            kwargs["separator"] = self.visit(separator)
+
+        overflow_behavior = ctx.listAggOverflowBehavior()
+        if overflow_behavior:
+            kwargs["overflow_filler"] = self.visit(overflow_behavior)
+
+        sort_items = ctx.sortItem()
+        if sort_items:
+            kwargs["orderby"] = [self.visit(item) for item in sort_items]
+        return ListAgg(self.visit(ctx.expression()), **kwargs)
+
+    @overrides
+    def visitListAggOverflowBehavior(
+        self, ctx: SqlBaseParser.ListAggOverflowBehaviorContext
+    ) -> Optional[OverflowFiller]:
+        # This is by default None in the parameter. It's only used in LISTAGG.
+        if ctx.ERROR():
+            return None
+        filler = (
+            self.visit(ctx.string())
+            if ctx.string()
+            else OverflowFiller.DEFAULT_FILLER
+        )
+        return OverflowFiller(
+            count_indication=self.visit(ctx.listaggCountIndication()),
+            filler=filler,
+        )
+
+    @overrides
+    def visitListaggCountIndication(
+        self, ctx: SqlBaseParser.ListaggCountIndicationContext
+    ) -> CountIndication:
+        if ctx.WITHOUT():
+            return CountIndication.WITHOUT_COUNT
+        elif ctx.WITH():
+            return CountIndication.WITH_COUNT
+        raise ValueError(f"Unknown count indication mode {ctx.getText()}")
 
     @overrides
     def visitParameter(self, ctx: SqlBaseParser.ParameterContext) -> Literal:

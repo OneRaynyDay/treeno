@@ -16,11 +16,19 @@ class NullTreatment(Enum):
     IGNORE = "IGNORE"
     RESPECT = "RESPECT"
 
+    @staticmethod
+    def default() -> "NullTreatment":
+        return NullTreatment.RESPECT
+
 
 class FrameType(Enum):
     RANGE = "RANGE"
     ROWS = "ROWS"
     GROUPS = "GROUPS"
+
+    @staticmethod
+    def default() -> "FrameType":
+        return FrameType.RANGE
 
 
 class BoundType(Enum):
@@ -70,7 +78,7 @@ class Window(Sql):
     parent_window: Optional[str] = attr.ib(default=None)
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None)
     partitions: Optional[List[Value]] = attr.ib(default=None)
-    frame_type: FrameType = attr.ib(default=FrameType.RANGE)
+    frame_type: FrameType = attr.ib(factory=FrameType.default)
     # TODO: For now we represent missing bounds as default bounds
     start_bound: FrameBound = attr.ib(factory=default_start_bound)
     end_bound: FrameBound = attr.ib(factory=default_end_bound)

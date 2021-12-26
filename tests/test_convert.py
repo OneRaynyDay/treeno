@@ -64,8 +64,11 @@ from treeno.functions.aggregate import (
     BoolAnd,
     BoolOr,
     Checksum,
+    CountIndication,
     Every,
     GeometricMean,
+    ListAgg,
+    OverflowFiller,
     Sum,
 )
 from treeno.grammar.gen.SqlBaseLexer import SqlBaseLexer
@@ -868,6 +871,28 @@ class TestFunction(VisitorTest):
         ast = get_parser("GEOMETRIC_MEAN(a)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
         assert self.visitor.visit(ast) == GeometricMean(Field("a"))
+
+    def test_list_agg(self):
+        ast = get_parser(
+            "LISTAGG(a) WITHIN GROUP (ORDER BY a)"
+        ).primaryExpression()
+        assert isinstance(ast, SqlBaseParser.ListaggContext)
+        assert self.visitor.visit(ast) == ListAgg(
+            Field("a"), orderby=[OrderTerm(value=Field("a"))]
+        )
+
+        ast = get_parser(
+            "LISTAGG(a, 'abc' ON OVERFLOW TRUNCATE 'xyz' WITH COUNT) WITHIN GROUP (ORDER BY a)"
+        ).primaryExpression()
+        assert isinstance(ast, SqlBaseParser.ListaggContext)
+        assert self.visitor.visit(ast) == ListAgg(
+            Field("a"),
+            separator="abc",
+            overflow_filler=OverflowFiller(
+                count_indication=CountIndication.WITH_COUNT, filler="xyz"
+            ),
+            orderby=[OrderTerm(value=Field("a"))],
+        )
 
 
 class TestDataTypes(VisitorTest):

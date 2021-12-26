@@ -80,7 +80,6 @@ class StatementPrinter:
      WHERE p.release_date > '2014-09-30';
 
     The keywords are right adjusted to form a "river" for better readability
-    TODO: Before we can use this, we have to add all the groupby functionalities
     """
 
     # Buffer is a logical per-statement buffer which tries to right-adjust the keywords and left-adjust the sql entities
@@ -120,6 +119,5 @@ class StatementPrinter:
             else:
                 lines.append(keyword)
 
-        # TODO: Consider appropriate join_char for other print modes
         join_char = "\n" if opts.mode == PrintMode.PRETTY else " "
         return join_char.join(lines)
