@@ -30,6 +30,7 @@ from treeno.expression import (
     InList,
     Interval,
     IsNull,
+    Lambda,
     Like,
     Literal,
     Or,
@@ -534,9 +535,6 @@ class ConvertVisitor(SqlBaseVisitor):
     @overrides
     def visitDereference(self, ctx: SqlBaseParser.DereferenceContext) -> Field:
         primary_expr = ctx.primaryExpression()
-        assert isinstance(
-            primary_expr, SqlBaseParser.ColumnReferenceContext
-        ), "We can only dereference `table`.`column` for now."
         return Field(self.visit(ctx.fieldName), self.visit(primary_expr))
 
     @overrides
@@ -614,10 +612,19 @@ class ConvertVisitor(SqlBaseVisitor):
     ) -> str:
         if ctx.UESCAPE():
             assert ctx.STRING(), "Escape string must be supplied for unicode"
-            escape_seq = ctx.STRING().getText()
+            escape_seq = ctx.STRING().getText().strip("'")
         else:
             escape_seq = "\\"
-        return ctx.getText().strip("U&").strip("'").replace(escape_seq, "\\u")
+        s = (
+            ctx.UNICODE_STRING()
+            .getText()
+            .strip("U&")
+            .strip("'")
+            .replace(escape_seq, "\\u")
+            .encode("raw_unicode_escape")
+            .decode("unicode_escape")
+        )
+        return s
 
     @overrides
     def visitBooleanLiteral(
@@ -699,6 +706,14 @@ class ConvertVisitor(SqlBaseVisitor):
             expressions = [self.visit(expr) for expr in ctx.expression()]
 
         return fn(*expressions, **kwargs)
+
+    @overrides
+    def visitLambda_(self, ctx: SqlBaseParser.Lambda_Context) -> Lambda:
+        # TODO: We have to implement better tree traversal to get this to work.
+        # variables = [Lambda.Variable(self.visit(identifier)) for identifier in ctx.identifier()]
+        # lambda_expression = Lambda.reassign(variables, self.visit(ctx.expression()))
+        # return Lambda(variables, lambda_expression)
+        raise NotImplementedError()
 
     @overrides
     def visitNullTreatment(
@@ -794,20 +809,7 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitValueExpressionDefault(
         self, ctx: SqlBaseParser.ValueExpressionDefaultContext
     ) -> Value:
-        primary_expr = ctx.primaryExpression()
-        value_or_field = self.visit(primary_expr)
-        # When we visit primary expressions, we don't always get Literals or Values, we might get a string
-        # reference to a column, in which case we return a Field. It can be confusing when to wrap a string
-        # in a Literal or to interpret it as a field.
-        if isinstance(primary_expr, SqlBaseParser.ColumnReferenceContext):
-            assert isinstance(value_or_field, str)
-            return Field(value_or_field)
-        if value_or_field is None:
-            import pdb
-
-            pdb.set_trace()
-        assert isinstance(value_or_field, Value)
-        return value_or_field
+        return self.visit(ctx.primaryExpression())
 
     @overrides
     def visitSelectSingle(
@@ -847,10 +849,10 @@ class ConvertVisitor(SqlBaseVisitor):
     @overrides
     def visitColumnReference(
         self, ctx: SqlBaseParser.ColumnReferenceContext
-    ) -> str:
+    ) -> Field:
         # A column reference can be one of many forms of identifiers
         identifier = ctx.identifier()
-        return self.visit(identifier)
+        return Field(self.visit(identifier))
 
     @overrides
     def visitSubqueryExpression(
@@ -876,14 +878,8 @@ class ConvertVisitor(SqlBaseVisitor):
         # NOTE: The class we're dealing with here says it's a ColumnReference, but in this case
         #       it's wrong and we're dealing with tables here.
         primary_expr = ctx.primaryExpression()
-        table: Optional[str] = None
+        table: Optional[Value] = None
         if primary_expr:
-            if not isinstance(
-                primary_expr, SqlBaseParser.ColumnReferenceContext
-            ):
-                raise NotImplementedError(
-                    "Only column references are supported for asterisk references"
-                )
             table = self.visit(primary_expr)
         column_aliases = ctx.columnAliases()
         if column_aliases:

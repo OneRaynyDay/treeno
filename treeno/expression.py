@@ -89,6 +89,19 @@ class Value(Sql, ABC):
     def __or__(self, other):
         return Or(self, other)
 
+    def equals(self, other):
+        """Because we've overridden __eq__, we can no longer use that to test equality on objects. We use attr.asdict
+        to make sure the fields are completely collapsed.
+        TODO: However, this doesn't completely test equality as the type of the class doesn't show up, so we have to
+        add that later.
+        """
+        self_dict = attr.asdict(self)
+        other_dict = attr.asdict(other)
+        if self_dict != other_dict:
+            print(self_dict)
+            print(other_dict)
+        return self_dict == other_dict
+
 
 @value_attr
 class Expression(Value, ABC):
@@ -124,10 +137,10 @@ class Field(Value):
     """Represents a field referenced in the input relations of a SELECT query"""
 
     name: str = attr.ib()
-    table: Optional[str] = attr.ib(default=None)
+    table: Optional[Value] = attr.ib(default=None)
 
     def sql(self, opts: PrintOptions) -> str:
-        return chain_identifiers(self.table, self.name)
+        return chain_identifiers(self.table.sql(opts), self.name)
 
 
 @value_attr
@@ -145,7 +158,7 @@ class AliasedValue(Value):
         ), "Stars cannot have aliases. Consider using AliasedStar"
 
     def sql(self, opts: PrintOptions) -> str:
-        return f'{self.value} "{self.alias}"'
+        return f'{self.value.sql(opts)} "{self.alias}"'
 
 
 @value_attr
@@ -155,28 +168,53 @@ class Star(Value):
     Fields must have a name, and allow an optional table identifier.
     """
 
-    table: Optional[str] = attr.ib(default=None)
+    table: Optional[Value] = attr.ib(default=None)
 
     def sql(self, opts: PrintOptions) -> str:
-        star_string = f"{quote_identifier(self.table)}." if self.table else ""
+        star_string = (
+            f"{quote_identifier(self.table.sql(opts))}." if self.table else ""
+        )
         star_string += "*"
         return star_string
 
 
-class AliasedStar(Star):
+@value_attr
+class AliasedStar(Value):
     """Represents one or more aliases corresponding to an unpacked star
     """
 
-    def __init__(self, table: str, aliases: List[str]):
-        super().__init__(table=table)
-        assert (
-            self.table is not None
-        ), "Stars without a table cannot have column aliases"
-        self.aliases = aliases
+    star: Star = attr.ib()
+    aliases: List[str] = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        alias_str = ",".join(self.aliases)
-        return f"{super().__str__()} ({alias_str})"
+        alias_str = join_stmts(self.aliases, opts)
+        return f"{self.star(opts)} ({alias_str})"
+
+
+@value_attr
+class Lambda(Expression):
+    """Represents an anonymous function. This expression will currently have an unknown type because it can never be
+    expressed as a standalone expression.
+    """
+
+    @value_attr
+    class Variable(Value):
+        name: str = attr.ib()
+
+        def sql(self, opts: PrintOptions) -> str:
+            return self.name
+
+    inputs: List[Variable] = attr.ib()
+    expr: Value = attr.ib()
+
+    def __attrs_post_init__(self):
+        assert len(set(input.name for input in self.inputs)) == len(self.inputs)
+
+    def sql(self, opts: PrintOptions) -> str:
+        input_string = join_stmts(self.inputs, opts)
+        if len(self.inputs) > 1:
+            input_string = parenthesize(input_string)
+        return f"{input_string} -> {self.expr.sql(opts)}"
 
 
 def wrap_literal(val: Any) -> Value:

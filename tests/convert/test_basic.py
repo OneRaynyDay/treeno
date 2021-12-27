@@ -44,69 +44,77 @@ class TestLiterals(VisitorTest):
     def test_null(self):
         ast = get_parser("NULL").primaryExpression()
         assert isinstance(ast, SqlBaseParser.NullLiteralContext)
-        assert self.visitor.visit(ast) == Literal(None, data_type=unknown())
+        assert self.visitor.visit(ast).equals(
+            Literal(None, data_type=unknown())
+        )
 
     def test_integer(self):
         ast = get_parser("123").number()
         assert isinstance(ast, SqlBaseParser.IntegerLiteralContext)
-        assert self.visitor.visit(ast) == Literal(123, data_type=integer())
+        assert self.visitor.visit(ast).equals(Literal(123, data_type=integer()))
 
         ast = get_parser("-123").number()
         assert isinstance(ast, SqlBaseParser.IntegerLiteralContext)
-        assert self.visitor.visit(ast) == Literal(123, data_type=integer())
+        assert self.visitor.visit(ast).equals(
+            Literal(-123, data_type=integer())
+        )
 
     def test_decimal(self):
         ast = get_parser("123.45").number()
         assert isinstance(ast, SqlBaseParser.DecimalLiteralContext)
-        assert self.visitor.visit(ast) == Literal(
-            Decimal("123.45"), data_type=decimal(precision=5, scale=2)
+        assert self.visitor.visit(ast).equals(
+            Literal(Decimal("123.45"), data_type=decimal(precision=5, scale=2))
         )
 
         ast = get_parser("-123.45").number()
         assert isinstance(ast, SqlBaseParser.DecimalLiteralContext)
-        assert self.visitor.visit(ast) == Literal(
-            Decimal("-123.45"), data_type=decimal(precision=5, scale=2)
+        assert self.visitor.visit(ast).equals(
+            Literal(Decimal("-123.45"), data_type=decimal(precision=5, scale=2))
         )
 
     def test_double(self):
         ast = get_parser("-1.23E+2").number()
         assert isinstance(ast, SqlBaseParser.DoubleLiteralContext)
-        assert self.visitor.visit(ast) == Literal(
-            pytest.approx(-1.23e2), data_type=double()
+        assert self.visitor.visit(ast).equals(
+            Literal(pytest.approx(-1.23e2), data_type=double())
         )
 
         ast = get_parser(".45E-2").number()
         assert isinstance(ast, SqlBaseParser.DoubleLiteralContext)
-        assert self.visitor.visit(ast) == Literal(
-            pytest.approx(-0.45e-2), data_type=double()
+        assert self.visitor.visit(ast).equals(
+            Literal(pytest.approx(0.45e-2), data_type=double())
         )
 
     def test_string(self):
         ast = get_parser("'abc'").primaryExpression()
         assert isinstance(ast, SqlBaseParser.StringLiteralContext)
-        assert self.visitor.visit(ast) == Literal(
-            "abc", data_type=varchar(max_chars=3)
+        assert self.visitor.visit(ast).equals(
+            Literal("abc", data_type=varchar(max_chars=3))
         )
 
-        ast = get_parser("U&'chilly snowman \2603'").primaryExpression()
+        ast = get_parser("U&'chilly snowman \\2603'").primaryExpression()
         assert isinstance(ast, SqlBaseParser.StringLiteralContext)
-        assert self.visitor.visit(ast) == Literal(
-            "chilly snowman \u2603", data_type=varchar(max_chars=16)
+        assert self.visitor.visit(ast).equals(
+            Literal("chilly snowman \u2603", data_type=varchar(max_chars=16))
         )
 
         ast = get_parser(
             "U&'chilly snowman #2603' UESCAPE '#'"
         ).primaryExpression()
         assert isinstance(ast, SqlBaseParser.StringLiteralContext)
-        assert self.visitor.visit(ast) == Literal(
-            "chilly snowman \u2603", data_type=varchar(max_chars=16)
+        assert self.visitor.visit(ast).equals(
+            Literal("chilly snowman \u2603", data_type=varchar(max_chars=16))
         )
 
     def test_boolean(self):
         ast = get_parser("TRUE").primaryExpression()
         assert isinstance(ast, SqlBaseParser.BooleanLiteralContext)
-        assert self.visitor.visit(ast) == Literal(True, data_type=boolean())
+        assert self.visitor.visit(ast).equals(
+            Literal(True, data_type=boolean())
+        )
 
         ast = get_parser("FALSE").primaryExpression()
         assert isinstance(ast, SqlBaseParser.BooleanLiteralContext)
-        assert self.visitor.visit(ast) == Literal(False, data_type=boolean())
+        assert self.visitor.visit(ast).equals(
+            Literal(False, data_type=boolean())
+        )
