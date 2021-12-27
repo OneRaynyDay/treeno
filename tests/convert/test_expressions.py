@@ -1,5 +1,3 @@
-from helpers import VisitorTest, get_parser
-
 from treeno.datatypes.builder import (
     array,
     bigint,
@@ -94,6 +92,8 @@ from treeno.window import (
     UnboundedFrameBound,
     Window,
 )
+
+from .helpers import VisitorTest, get_parser
 
 
 class TestFunctions(VisitorTest):
