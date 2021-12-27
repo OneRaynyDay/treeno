@@ -1,7 +1,7 @@
 import functools
 from abc import ABC
 from decimal import Decimal
-from typing import Any, List, Optional, Type, TypeVar
+from typing import Any, List, Optional, Type, TypeVar, Union
 
 import attr
 
@@ -10,12 +10,7 @@ from treeno.datatypes.builder import unknown
 from treeno.datatypes.inference import infer_type
 from treeno.datatypes.types import DataType
 from treeno.printer import join_stmts
-from treeno.util import (
-    chain_identifiers,
-    parenthesize,
-    quote_identifier,
-    quote_literal,
-)
+from treeno.util import chain_identifiers, parenthesize, quote_literal
 
 GenericValue = TypeVar("GenericValue", bound="Value")
 
@@ -89,19 +84,6 @@ class Value(Sql, ABC):
     def __or__(self, other):
         return Or(self, other)
 
-    def equals(self, other):
-        """Because we've overridden __eq__, we can no longer use that to test equality on objects. We use attr.asdict
-        to make sure the fields are completely collapsed.
-        TODO: However, this doesn't completely test equality as the type of the class doesn't show up, so we have to
-        add that later.
-        """
-        self_dict = attr.asdict(self)
-        other_dict = attr.asdict(other)
-        if self_dict != other_dict:
-            print(self_dict)
-            print(other_dict)
-        return self_dict == other_dict
-
 
 @value_attr
 class Expression(Value, ABC):
@@ -137,10 +119,21 @@ class Field(Value):
     """Represents a field referenced in the input relations of a SELECT query"""
 
     name: str = attr.ib()
-    table: Optional[Value] = attr.ib(default=None)
+    table: Optional[Union[str, Value]] = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        assert not isinstance(
+            self.table, Field
+        ), "Table must be either a complex expression or a string representing the table, not a field"
 
     def sql(self, opts: PrintOptions) -> str:
-        return chain_identifiers(self.table.sql(opts), self.name)
+        table_sql = None
+        if self.table:
+            if isinstance(self.table, str):
+                table_sql = self.table
+            else:
+                table_sql = self.table.sql(opts)
+        return chain_identifiers(table_sql, self.name)
 
 
 @value_attr
@@ -168,12 +161,22 @@ class Star(Value):
     Fields must have a name, and allow an optional table identifier.
     """
 
-    table: Optional[Value] = attr.ib(default=None)
+    # TODO: It should be noted that if table is a Field, that is a field referring to a table, not a column.
+    table: Optional[Union[str, Value]] = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        assert not isinstance(
+            self.table, Field
+        ), "Table must be either a complex expression or a string representing the table, not a field"
 
     def sql(self, opts: PrintOptions) -> str:
-        star_string = (
-            f"{quote_identifier(self.table.sql(opts))}." if self.table else ""
-        )
+        star_string = ""
+        if self.table:
+            if isinstance(self.table, str):
+                table_sql = self.table
+            else:
+                table_sql = self.table.sql(opts)
+            star_string = f"{table_sql}."
         star_string += "*"
         return star_string
 

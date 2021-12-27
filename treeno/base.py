@@ -1,6 +1,7 @@
-import attr
 from abc import ABC, abstractmethod
 from enum import Enum, auto
+
+import attr
 
 
 class PrintMode(Enum):
@@ -30,6 +31,19 @@ class Sql(ABC):
     def __str__(self):
         # Default print options
         return self.sql(PrintOptions())
+
+    def equals(self, other):
+        """Because we've overridden __eq__, we can no longer use that to test equality on objects. We use attr.asdict
+        to make sure the fields are completely collapsed.
+        TODO: However, this doesn't completely test equality as the type of the class doesn't show up, so we have to
+        add that later.
+        """
+        self_dict = attr.asdict(self)
+        other_dict = attr.asdict(other)
+        if self_dict != other_dict:
+            print(self_dict)
+            print(other_dict)
+        return self_dict == other_dict
 
 
 class SetQuantifier(Enum):

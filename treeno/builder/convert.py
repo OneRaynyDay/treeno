@@ -534,8 +534,13 @@ class ConvertVisitor(SqlBaseVisitor):
 
     @overrides
     def visitDereference(self, ctx: SqlBaseParser.DereferenceContext) -> Field:
-        primary_expr = ctx.primaryExpression()
-        return Field(self.visit(ctx.fieldName), self.visit(primary_expr))
+        primary_expr = self.visit(ctx.primaryExpression())
+        table = (
+            primary_expr.name
+            if isinstance(primary_expr, Field)
+            else primary_expr
+        )
+        return Field(self.visit(ctx.fieldName), table)
 
     @overrides
     def visitNullLiteral(
@@ -697,7 +702,10 @@ class ConvertVisitor(SqlBaseVisitor):
         if ctx.ASTERISK():
             star: Star
             if ctx.label:
-                star = Star(table=self.visit(ctx.label))
+                # If this is an identifier, treat it as an aliased relation
+                label = self.visit(ctx.label)
+                table = label.name if isinstance(label, Field) else label
+                star = Star(table=table)
             else:
                 star = Star()
             expressions = [star]
@@ -872,19 +880,19 @@ class ConvertVisitor(SqlBaseVisitor):
         """
         if ctx.getText() == "*":
             return Star()
-        # This could be a table reference. When we're joining multiple tables together,
-        # it makes sense to select all columns from a given input table, in which case
-        # this expression is defined.
-        # NOTE: The class we're dealing with here says it's a ColumnReference, but in this case
-        #       it's wrong and we're dealing with tables here.
         primary_expr = ctx.primaryExpression()
         table: Optional[Value] = None
         if primary_expr:
-            table = self.visit(primary_expr)
+            expr = self.visit(primary_expr)
+            table = expr.name if isinstance(expr, Field) else expr
+
+        # TODO: This is a bit hacky right now, but the table reference is derived from a ColumnReference which is a field
+        # here we just interpret a Field to mean a table reference.
         column_aliases = ctx.columnAliases()
+        star = Star(table)
         if column_aliases:
-            return AliasedStar(table, self.visit(column_aliases))
-        return Star(table)
+            return AliasedStar(star, self.visit(column_aliases))
+        return star
 
     @overrides
     def visitJoinRelation(self, ctx: SqlBaseParser.JoinRelationContext) -> Join:
