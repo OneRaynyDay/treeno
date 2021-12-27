@@ -3,52 +3,14 @@ from decimal import Decimal
 import pytest
 
 from treeno.datatypes.builder import (
-    array,
-    bigint,
     boolean,
     decimal,
     double,
     integer,
-    interval,
     unknown,
     varchar,
 )
-from treeno.expression import (
-    Add,
-    AliasedStar,
-    AliasedValue,
-    And,
-    Array,
-    Between,
-    Cast,
-    DistinctFrom,
-    Divide,
-    Equal,
-    Field,
-    GreaterThan,
-    GreaterThanOrEqual,
-    InList,
-    Interval,
-    IsNull,
-    LessThan,
-    LessThanOrEqual,
-    Like,
-    Literal,
-    Minus,
-    Modulus,
-    Multiply,
-    Negative,
-    Not,
-    NotEqual,
-    Or,
-    Positive,
-    RowConstructor,
-    Star,
-    Subscript,
-    TryCast,
-    TypeConstructor,
-    wrap_literal,
-)
+from treeno.expression import Literal
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 
 from .helpers import VisitorTest, get_parser

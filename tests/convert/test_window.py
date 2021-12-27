@@ -9,7 +9,6 @@ from treeno.window import (
     BoundType,
     CurrentFrameBound,
     FrameType,
-    NullTreatment,
     UnboundedFrameBound,
     Window,
 )
