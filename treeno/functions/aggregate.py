@@ -1,6 +1,6 @@
 from abc import ABC
 from enum import Enum
-from typing import ClassVar, List, Optional
+from typing import Any, ClassVar, List, Optional
 
 import attr
 
@@ -267,7 +267,7 @@ class BitwiseAndAgg(UnaryAggregateFunction):
 
 @value_attr
 class BitwiseOrAgg(UnaryAggregateFunction):
-    FN_NAME: ClassVar[str] = "BITWISE_AND_AGG"
+    FN_NAME: ClassVar[str] = "BITWISE_OR_AGG"
 
 
 @value_attr
@@ -326,16 +326,21 @@ class ApproxMostFrequent(AggregateFunction):
         return self.to_string([self.buckets, self.value, self.capacity], opts)
 
 
-@value_attr
+@value_attr(init=False)
 class ApproxPercentile(AggregateFunction):
     FN_NAME: ClassVar[str] = "APPROX_PERCENTILE"
     value: GenericValue = attr.ib(converter=wrap_literal)
-    percentage: GenericValue = attr.ib(converter=wrap_literal, kw_only=True)
+    percentage: GenericValue = attr.ib(converter=wrap_literal)
     weight: Optional[GenericValue] = attr.ib(
-        default=None,
-        converter=attr.converters.optional(wrap_literal),
-        kw_only=True,
+        default=None, converter=attr.converters.optional(wrap_literal)
     )
+
+    def __init__(self, value: GenericValue, *args: Any, **kwargs: Any):
+        # This function is strange in that the overloads causes positional arguments to mean different things.
+        # We have to swap weight and percentage if they're both specified.
+        if len(args) == 2:
+            args = (args[1], args[0])
+        self.__attrs_init__(value, *args, **kwargs)
 
     def sql(self, opts: PrintOptions) -> str:
         values = [self.value, self.percentage]
@@ -442,29 +447,29 @@ class Skewness(UnaryAggregateFunction):
 
 @value_attr
 class StdDev(UnaryAggregateFunction):
-    FN_NAME: ClassVar[str] = "SKEWNESS"
+    FN_NAME: ClassVar[str] = "STDDEV"
 
 
 @value_attr
 class StdDevPop(UnaryAggregateFunction):
-    FN_NAME: ClassVar[str] = "SKEWNESS"
+    FN_NAME: ClassVar[str] = "STDDEV_POP"
 
 
 @value_attr
 class StdDevSamp(UnaryAggregateFunction):
-    FN_NAME: ClassVar[str] = "SKEWNESS"
+    FN_NAME: ClassVar[str] = "STDDEV_SAMP"
 
 
 @value_attr
 class Variance(UnaryAggregateFunction):
-    FN_NAME: ClassVar[str] = "SKEWNESS"
+    FN_NAME: ClassVar[str] = "VARIANCE"
 
 
 @value_attr
 class VarPop(UnaryAggregateFunction):
-    FN_NAME: ClassVar[str] = "SKEWNESS"
+    FN_NAME: ClassVar[str] = "VAR_POP"
 
 
 @value_attr
 class VarSamp(UnaryAggregateFunction):
-    FN_NAME: ClassVar[str] = "SKEWNESS"
+    FN_NAME: ClassVar[str] = "VAR_SAMP"

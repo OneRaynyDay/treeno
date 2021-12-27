@@ -101,6 +101,8 @@ class StatementPrinter:
             self.add_entry(key, value)
 
     def to_string(self, opts: PrintOptions) -> str:
+        if not self.stmt_mapping:
+            return ""
         rpad = max(len(line) for line in self.stmt_mapping)
         lines = []
         for keyword, sql_str in self.stmt_mapping.items():
