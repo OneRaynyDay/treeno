@@ -80,6 +80,15 @@ class UnaryAggregateFunction(AggregateFunction, ABC):
         return self.to_string([self.value], opts)
 
 
+@value_attr
+class BinaryStatsFunction(AggregateFunction, ABC):
+    y: GenericValue = attr.ib(converter=wrap_literal)
+    x: GenericValue = attr.ib(converter=wrap_literal)
+
+    def sql(self: GenericFunction, opts: PrintOptions) -> str:
+        return self.to_string([self.y, self.x], opts)
+
+
 class Sum(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "SUM"
 
@@ -187,3 +196,275 @@ class ListAgg(AggregateFunction):
         spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
         constraint_string = pad(spacing + constraint_string, 4)
         return f"{FUNCTIONS_TO_NAMES[type(self)]}({value_string}){constraint_string}"
+
+
+@value_attr
+class Max(AggregateFunction):
+    FN_NAME: ClassVar[str] = "MAX"
+    value: GenericValue = attr.ib(converter=wrap_literal)
+    num_values: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        values = [self.value]
+        if self.num_values:
+            values.append(self.num_values)
+        return self.to_string(values, opts)
+
+
+@value_attr
+class MaxBy(AggregateFunction):
+    FN_NAME: ClassVar[str] = "MAX_BY"
+    value: GenericValue = attr.ib(converter=wrap_literal)
+    max_by: GenericValue = attr.ib(converter=wrap_literal)
+    num_values: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        values = [self.value, self.max_by]
+        if self.num_values:
+            values.append(self.num_values)
+        return self.to_string(values, opts)
+
+
+@value_attr
+class Min(AggregateFunction):
+    FN_NAME: ClassVar[str] = "MIN"
+    value: GenericValue = attr.ib(converter=wrap_literal)
+    num_values: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        values = [self.value]
+        if self.num_values:
+            values.append(self.num_values)
+        return self.to_string(values, opts)
+
+
+@value_attr
+class MinBy(AggregateFunction):
+    FN_NAME: ClassVar[str] = "MIN_BY"
+    value: GenericValue = attr.ib(converter=wrap_literal)
+    max_by: GenericValue = attr.ib(converter=wrap_literal)
+    num_values: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        values = [self.value, self.max_by]
+        if self.num_values:
+            values.append(self.num_values)
+        return self.to_string(values, opts)
+
+
+@value_attr
+class BitwiseAndAgg(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "BITWISE_AND_AGG"
+
+
+@value_attr
+class BitwiseOrAgg(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "BITWISE_AND_AGG"
+
+
+@value_attr
+class Histogram(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "HISTOGRAM"
+
+
+@value_attr
+class MapAgg(AggregateFunction):
+    FN_NAME: ClassVar[str] = "MAP_AGG"
+    key: GenericValue = attr.ib(converter=wrap_literal)
+    value: GenericValue = attr.ib(converter=wrap_literal)
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string([self.key, self.value], opts)
+
+
+@value_attr
+class MapUnion(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "MAP_UNION"
+
+
+@value_attr
+class MultiMapAgg(AggregateFunction):
+    FN_NAME: ClassVar[str] = "MULTIMAP_AGG"
+    key: GenericValue = attr.ib(converter=wrap_literal)
+    value: GenericValue = attr.ib(converter=wrap_literal)
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string([self.key, self.value], opts)
+
+
+@value_attr
+class ApproxDistinct(AggregateFunction):
+    FN_NAME: ClassVar[str] = "APPROX_DISTINCT"
+    key: GenericValue = attr.ib(converter=wrap_literal)
+    epsilon: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        values = [self.key]
+        if self.epsilon:
+            values.append(self.epsilon)
+        return self.to_string(values, opts)
+
+
+@value_attr
+class ApproxMostFrequent(AggregateFunction):
+    FN_NAME: ClassVar[str] = "APPROX_MOST_FREQUENT"
+    buckets: GenericValue = attr.ib(converter=wrap_literal)
+    value: GenericValue = attr.ib(converter=wrap_literal)
+    capacity: GenericValue = attr.ib(converter=wrap_literal)
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string([self.buckets, self.value, self.capacity], opts)
+
+
+@value_attr
+class ApproxPercentile(AggregateFunction):
+    FN_NAME: ClassVar[str] = "APPROX_PERCENTILE"
+    value: GenericValue = attr.ib(converter=wrap_literal)
+    percentage: GenericValue = attr.ib(converter=wrap_literal, kw_only=True)
+    weight: Optional[GenericValue] = attr.ib(
+        default=None,
+        converter=attr.converters.optional(wrap_literal),
+        kw_only=True,
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        values = [self.value, self.percentage]
+        if self.weight:
+            values.append(self.weight)
+        return self.to_string(values, opts)
+
+
+@value_attr
+class ApproxSet(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "APPROX_SET"
+
+
+@value_attr
+class Merge(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "MERGE"
+
+
+@value_attr
+class NumericHistogram(AggregateFunction):
+    FN_NAME: ClassVar[str] = "NUMERIC_HISTOGRAM"
+    buckets: GenericValue = attr.ib(converter=wrap_literal)
+    value: GenericValue = attr.ib(converter=wrap_literal)
+    weight: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        values = [self.buckets, self.value]
+        if self.weight:
+            values.append(self.weight)
+        return self.to_string(values, opts)
+
+
+@value_attr
+class QDigestAgg(AggregateFunction):
+    FN_NAME: ClassVar[str] = "QDIGEST_AGG"
+    value: GenericValue = attr.ib(converter=wrap_literal)
+    weight: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+    accuracy: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        values = [self.value]
+        if self.weight:
+            values.append(self.weight)
+        if self.accuracy:
+            values.append(self.accuracy)
+        return self.to_string(values, opts)
+
+
+@value_attr
+class TDigestAgg(AggregateFunction):
+    FN_NAME: ClassVar[str] = "TDIGEST_AGG"
+    value: GenericValue = attr.ib(converter=wrap_literal)
+    weight: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        values = [self.value]
+        if self.weight:
+            values.append(self.weight)
+        return self.to_string(values, opts)
+
+
+@value_attr
+class Corr(BinaryStatsFunction):
+    FN_NAME: ClassVar[str] = "CORR"
+
+
+@value_attr
+class CovarPop(BinaryStatsFunction):
+    FN_NAME: ClassVar[str] = "COVAR_POP"
+
+
+@value_attr
+class CovarSamp(BinaryStatsFunction):
+    FN_NAME: ClassVar[str] = "COVAR_SAMP"
+
+
+@value_attr
+class Kurtosis(BinaryStatsFunction):
+    FN_NAME: ClassVar[str] = "KURTOSIS"
+
+
+@value_attr
+class RegrIntercept(BinaryStatsFunction):
+    FN_NAME: ClassVar[str] = "REGR_INTERCEPT"
+
+
+@value_attr
+class RegrSlope(BinaryStatsFunction):
+    FN_NAME: ClassVar[str] = "REGR_SLOPE"
+
+
+@value_attr
+class Skewness(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "SKEWNESS"
+
+
+@value_attr
+class StdDev(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "SKEWNESS"
+
+
+@value_attr
+class StdDevPop(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "SKEWNESS"
+
+
+@value_attr
+class StdDevSamp(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "SKEWNESS"
+
+
+@value_attr
+class Variance(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "SKEWNESS"
+
+
+@value_attr
+class VarPop(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "SKEWNESS"
+
+
+@value_attr
+class VarSamp(UnaryAggregateFunction):
+    FN_NAME: ClassVar[str] = "SKEWNESS"
