@@ -4906,7 +4906,6 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 197
                 self.query()
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.UseContext(self, localctx)
@@ -4915,7 +4914,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.USE)
                 self.state = 199
                 localctx.schema = self.identifier()
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.UseContext(self, localctx)
@@ -4928,7 +4926,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.T__0)
                 self.state = 203
                 localctx.schema = self.identifier()
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.CreateSchemaContext(self, localctx)
@@ -4971,7 +4968,6 @@ class SqlBaseParser ( Parser ):
                     self.properties()
 
 
-                pass
 
             elif la_ == 5:
                 localctx = SqlBaseParser.DropSchemaContext(self, localctx)
@@ -5005,7 +5001,6 @@ class SqlBaseParser ( Parser ):
                         self.consume()
 
 
-                pass
 
             elif la_ == 6:
                 localctx = SqlBaseParser.RenameSchemaContext(self, localctx)
@@ -5022,7 +5017,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TO)
                 self.state = 236
                 self.identifier()
-                pass
 
             elif la_ == 7:
                 localctx = SqlBaseParser.SetSchemaAuthorizationContext(self, localctx)
@@ -5039,7 +5033,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.AUTHORIZATION)
                 self.state = 243
                 self.principal()
-                pass
 
             elif la_ == 8:
                 localctx = SqlBaseParser.CreateTableAsSelectContext(self, localctx)
@@ -5098,7 +5091,6 @@ class SqlBaseParser ( Parser ):
                 if la_ == 1:
                     self.state = 265
                     self.query()
-                    pass
 
                 elif la_ == 2:
                     self.state = 266
@@ -5107,7 +5099,6 @@ class SqlBaseParser ( Parser ):
                     self.query()
                     self.state = 268
                     self.match(SqlBaseParser.T__2)
-                    pass
 
 
                 self.state = 277
@@ -5128,7 +5119,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.DATA)
 
 
-                pass
 
             elif la_ == 9:
                 localctx = SqlBaseParser.CreateTableContext(self, localctx)
@@ -5189,7 +5179,6 @@ class SqlBaseParser ( Parser ):
                     self.properties()
 
 
-                pass
 
             elif la_ == 10:
                 localctx = SqlBaseParser.DropTableContext(self, localctx)
@@ -5210,7 +5199,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 311
                 self.qualifiedName()
-                pass
 
             elif la_ == 11:
                 localctx = SqlBaseParser.InsertIntoContext(self, localctx)
@@ -5231,7 +5219,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 318
                 self.query()
-                pass
 
             elif la_ == 12:
                 localctx = SqlBaseParser.DeleteContext(self, localctx)
@@ -5252,7 +5239,6 @@ class SqlBaseParser ( Parser ):
                     self.booleanExpression(0)
 
 
-                pass
 
             elif la_ == 13:
                 localctx = SqlBaseParser.TruncateTableContext(self, localctx)
@@ -5263,7 +5249,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TABLE)
                 self.state = 329
                 self.qualifiedName()
-                pass
 
             elif la_ == 14:
                 localctx = SqlBaseParser.CommentTableContext(self, localctx)
@@ -5284,15 +5269,12 @@ class SqlBaseParser ( Parser ):
                 if token in [SqlBaseParser.STRING, SqlBaseParser.UNICODE_STRING]:
                     self.state = 335
                     self.string()
-                    pass
                 elif token in [SqlBaseParser.NULL]:
                     self.state = 336
                     self.match(SqlBaseParser.NULL)
-                    pass
                 else:
                     raise NoViableAltException(self)
 
-                pass
 
             elif la_ == 15:
                 localctx = SqlBaseParser.CommentColumnContext(self, localctx)
@@ -5313,15 +5295,12 @@ class SqlBaseParser ( Parser ):
                 if token in [SqlBaseParser.STRING, SqlBaseParser.UNICODE_STRING]:
                     self.state = 344
                     self.string()
-                    pass
                 elif token in [SqlBaseParser.NULL]:
                     self.state = 345
                     self.match(SqlBaseParser.NULL)
-                    pass
                 else:
                     raise NoViableAltException(self)
 
-                pass
 
             elif la_ == 16:
                 localctx = SqlBaseParser.RenameTableContext(self, localctx)
@@ -5348,7 +5327,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TO)
                 self.state = 357
                 localctx.to = self.qualifiedName()
-                pass
 
             elif la_ == 17:
                 localctx = SqlBaseParser.AddColumnContext(self, localctx)
@@ -5387,7 +5365,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 373
                 localctx.column = self.columnDefinition()
-                pass
 
             elif la_ == 18:
                 localctx = SqlBaseParser.RenameColumnContext(self, localctx)
@@ -5428,7 +5405,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TO)
                 self.state = 390
                 localctx.to = self.identifier()
-                pass
 
             elif la_ == 19:
                 localctx = SqlBaseParser.DropColumnContext(self, localctx)
@@ -5465,7 +5441,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 405
                 localctx.column = self.qualifiedName()
-                pass
 
             elif la_ == 20:
                 localctx = SqlBaseParser.SetTableAuthorizationContext(self, localctx)
@@ -5482,7 +5457,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.AUTHORIZATION)
                 self.state = 412
                 self.principal()
-                pass
 
             elif la_ == 21:
                 localctx = SqlBaseParser.SetTablePropertiesContext(self, localctx)
@@ -5499,7 +5473,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.PROPERTIES)
                 self.state = 419
                 self.propertyAssignments()
-                pass
 
             elif la_ == 22:
                 localctx = SqlBaseParser.TableExecuteContext(self, localctx)
@@ -5554,7 +5527,6 @@ class SqlBaseParser ( Parser ):
                     localctx.where = self.booleanExpression(0)
 
 
-                pass
 
             elif la_ == 23:
                 localctx = SqlBaseParser.AnalyzeContext(self, localctx)
@@ -5573,7 +5545,6 @@ class SqlBaseParser ( Parser ):
                     self.properties()
 
 
-                pass
 
             elif la_ == 24:
                 localctx = SqlBaseParser.CreateMaterializedViewContext(self, localctx)
@@ -5632,7 +5603,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.AS)
                 self.state = 472
                 self.query()
-                pass
 
             elif la_ == 25:
                 localctx = SqlBaseParser.CreateViewContext(self, localctx)
@@ -5682,7 +5652,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.AS)
                 self.state = 490
                 self.query()
-                pass
 
             elif la_ == 26:
                 localctx = SqlBaseParser.RefreshMaterializedViewContext(self, localctx)
@@ -5695,7 +5664,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.VIEW)
                 self.state = 495
                 self.qualifiedName()
-                pass
 
             elif la_ == 27:
                 localctx = SqlBaseParser.DropMaterializedViewContext(self, localctx)
@@ -5718,7 +5686,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 503
                 self.qualifiedName()
-                pass
 
             elif la_ == 28:
                 localctx = SqlBaseParser.RenameMaterializedViewContext(self, localctx)
@@ -5747,7 +5714,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TO)
                 self.state = 514
                 localctx.to = self.qualifiedName()
-                pass
 
             elif la_ == 29:
                 localctx = SqlBaseParser.DropViewContext(self, localctx)
@@ -5768,7 +5734,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 522
                 self.qualifiedName()
-                pass
 
             elif la_ == 30:
                 localctx = SqlBaseParser.RenameViewContext(self, localctx)
@@ -5785,7 +5750,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TO)
                 self.state = 528
                 localctx.to = self.qualifiedName()
-                pass
 
             elif la_ == 31:
                 localctx = SqlBaseParser.SetViewAuthorizationContext(self, localctx)
@@ -5802,7 +5766,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.AUTHORIZATION)
                 self.state = 535
                 self.principal()
-                pass
 
             elif la_ == 32:
                 localctx = SqlBaseParser.CallContext(self, localctx)
@@ -5835,7 +5798,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 550
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 33:
                 localctx = SqlBaseParser.CreateRoleContext(self, localctx)
@@ -5868,7 +5830,6 @@ class SqlBaseParser ( Parser ):
                     localctx.catalog = self.identifier()
 
 
-                pass
 
             elif la_ == 34:
                 localctx = SqlBaseParser.DropRoleContext(self, localctx)
@@ -5889,7 +5850,6 @@ class SqlBaseParser ( Parser ):
                     localctx.catalog = self.identifier()
 
 
-                pass
 
             elif la_ == 35:
                 localctx = SqlBaseParser.GrantRolesContext(self, localctx)
@@ -5948,7 +5908,6 @@ class SqlBaseParser ( Parser ):
                     localctx.catalog = self.identifier()
 
 
-                pass
 
             elif la_ == 36:
                 localctx = SqlBaseParser.RevokeRolesContext(self, localctx)
@@ -6007,7 +5966,6 @@ class SqlBaseParser ( Parser ):
                     localctx.catalog = self.identifier()
 
 
-                pass
 
             elif la_ == 37:
                 localctx = SqlBaseParser.SetRoleContext(self, localctx)
@@ -6022,17 +5980,14 @@ class SqlBaseParser ( Parser ):
                 if la_ == 1:
                     self.state = 623
                     self.match(SqlBaseParser.ALL)
-                    pass
 
                 elif la_ == 2:
                     self.state = 624
                     self.match(SqlBaseParser.NONE)
-                    pass
 
                 elif la_ == 3:
                     self.state = 625
                     localctx.role = self.identifier()
-                    pass
 
 
                 self.state = 630
@@ -6045,7 +6000,6 @@ class SqlBaseParser ( Parser ):
                     localctx.catalog = self.identifier()
 
 
-                pass
 
             elif la_ == 38:
                 localctx = SqlBaseParser.GrantContext(self, localctx)
@@ -6070,13 +6024,11 @@ class SqlBaseParser ( Parser ):
                         self._errHandler.sync(self)
                         _la = self._input.LA(1)
 
-                    pass
                 elif token in [SqlBaseParser.ALL]:
                     self.state = 641
                     self.match(SqlBaseParser.ALL)
                     self.state = 642
                     self.match(SqlBaseParser.PRIVILEGES)
-                    pass
                 else:
                     raise NoViableAltException(self)
 
@@ -6113,7 +6065,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.OPTION)
 
 
-                pass
 
             elif la_ == 39:
                 localctx = SqlBaseParser.DenyContext(self, localctx)
@@ -6138,13 +6089,11 @@ class SqlBaseParser ( Parser ):
                         self._errHandler.sync(self)
                         _la = self._input.LA(1)
 
-                    pass
                 elif token in [SqlBaseParser.ALL]:
                     self.state = 666
                     self.match(SqlBaseParser.ALL)
                     self.state = 667
                     self.match(SqlBaseParser.PRIVILEGES)
-                    pass
                 else:
                     raise NoViableAltException(self)
 
@@ -6169,7 +6118,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TO)
                 self.state = 676
                 localctx.grantee = self.principal()
-                pass
 
             elif la_ == 40:
                 localctx = SqlBaseParser.RevokeContext(self, localctx)
@@ -6206,13 +6154,11 @@ class SqlBaseParser ( Parser ):
                         self._errHandler.sync(self)
                         _la = self._input.LA(1)
 
-                    pass
                 elif token in [SqlBaseParser.ALL]:
                     self.state = 692
                     self.match(SqlBaseParser.ALL)
                     self.state = 693
                     self.match(SqlBaseParser.PRIVILEGES)
-                    pass
                 else:
                     raise NoViableAltException(self)
 
@@ -6237,7 +6183,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.FROM)
                 self.state = 702
                 localctx.grantee = self.principal()
-                pass
 
             elif la_ == 41:
                 localctx = SqlBaseParser.ShowGrantsContext(self, localctx)
@@ -6264,7 +6209,6 @@ class SqlBaseParser ( Parser ):
                     self.qualifiedName()
 
 
-                pass
 
             elif la_ == 42:
                 localctx = SqlBaseParser.ExplainContext(self, localctx)
@@ -6297,7 +6241,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 727
                 self.statement()
-                pass
 
             elif la_ == 43:
                 localctx = SqlBaseParser.ExplainAnalyzeContext(self, localctx)
@@ -6316,7 +6259,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 733
                 self.statement()
-                pass
 
             elif la_ == 44:
                 localctx = SqlBaseParser.ShowCreateTableContext(self, localctx)
@@ -6329,7 +6271,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TABLE)
                 self.state = 737
                 self.qualifiedName()
-                pass
 
             elif la_ == 45:
                 localctx = SqlBaseParser.ShowCreateSchemaContext(self, localctx)
@@ -6342,7 +6283,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.SCHEMA)
                 self.state = 741
                 self.qualifiedName()
-                pass
 
             elif la_ == 46:
                 localctx = SqlBaseParser.ShowCreateViewContext(self, localctx)
@@ -6355,7 +6295,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.VIEW)
                 self.state = 745
                 self.qualifiedName()
-                pass
 
             elif la_ == 47:
                 localctx = SqlBaseParser.ShowCreateMaterializedViewContext(self, localctx)
@@ -6370,7 +6309,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.VIEW)
                 self.state = 750
                 self.qualifiedName()
-                pass
 
             elif la_ == 48:
                 localctx = SqlBaseParser.ShowTablesContext(self, localctx)
@@ -6414,7 +6352,6 @@ class SqlBaseParser ( Parser ):
 
 
 
-                pass
 
             elif la_ == 49:
                 localctx = SqlBaseParser.ShowSchemasContext(self, localctx)
@@ -6458,7 +6395,6 @@ class SqlBaseParser ( Parser ):
 
 
 
-                pass
 
             elif la_ == 50:
                 localctx = SqlBaseParser.ShowCatalogsContext(self, localctx)
@@ -6487,7 +6423,6 @@ class SqlBaseParser ( Parser ):
 
 
 
-                pass
 
             elif la_ == 51:
                 localctx = SqlBaseParser.ShowColumnsContext(self, localctx)
@@ -6531,7 +6466,6 @@ class SqlBaseParser ( Parser ):
 
 
 
-                pass
 
             elif la_ == 52:
                 localctx = SqlBaseParser.ShowStatsContext(self, localctx)
@@ -6544,7 +6478,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.FOR)
                 self.state = 806
                 self.qualifiedName()
-                pass
 
             elif la_ == 53:
                 localctx = SqlBaseParser.ShowStatsForQueryContext(self, localctx)
@@ -6561,7 +6494,6 @@ class SqlBaseParser ( Parser ):
                 self.query()
                 self.state = 812
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 54:
                 localctx = SqlBaseParser.ShowRolesContext(self, localctx)
@@ -6593,7 +6525,6 @@ class SqlBaseParser ( Parser ):
                     self.identifier()
 
 
-                pass
 
             elif la_ == 55:
                 localctx = SqlBaseParser.ShowRoleGrantsContext(self, localctx)
@@ -6619,7 +6550,6 @@ class SqlBaseParser ( Parser ):
                     self.identifier()
 
 
-                pass
 
             elif la_ == 56:
                 localctx = SqlBaseParser.ShowColumnsContext(self, localctx)
@@ -6628,7 +6558,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.DESCRIBE)
                 self.state = 831
                 self.qualifiedName()
-                pass
 
             elif la_ == 57:
                 localctx = SqlBaseParser.ShowColumnsContext(self, localctx)
@@ -6637,7 +6566,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.DESC)
                 self.state = 833
                 self.qualifiedName()
-                pass
 
             elif la_ == 58:
                 localctx = SqlBaseParser.ShowFunctionsContext(self, localctx)
@@ -6666,7 +6594,6 @@ class SqlBaseParser ( Parser ):
 
 
 
-                pass
 
             elif la_ == 59:
                 localctx = SqlBaseParser.ShowSessionContext(self, localctx)
@@ -6695,7 +6622,6 @@ class SqlBaseParser ( Parser ):
 
 
 
-                pass
 
             elif la_ == 60:
                 localctx = SqlBaseParser.SetSessionContext(self, localctx)
@@ -6710,7 +6636,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.EQ)
                 self.state = 858
                 self.expression()
-                pass
 
             elif la_ == 61:
                 localctx = SqlBaseParser.ResetSessionContext(self, localctx)
@@ -6721,7 +6646,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.SESSION)
                 self.state = 862
                 self.qualifiedName()
-                pass
 
             elif la_ == 62:
                 localctx = SqlBaseParser.StartTransactionContext(self, localctx)
@@ -6750,7 +6674,6 @@ class SqlBaseParser ( Parser ):
 
 
 
-                pass
 
             elif la_ == 63:
                 localctx = SqlBaseParser.CommitContext(self, localctx)
@@ -6765,7 +6688,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.WORK)
 
 
-                pass
 
             elif la_ == 64:
                 localctx = SqlBaseParser.RollbackContext(self, localctx)
@@ -6780,7 +6702,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.WORK)
 
 
-                pass
 
             elif la_ == 65:
                 localctx = SqlBaseParser.PrepareContext(self, localctx)
@@ -6793,7 +6714,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.FROM)
                 self.state = 886
                 self.statement()
-                pass
 
             elif la_ == 66:
                 localctx = SqlBaseParser.DeallocateContext(self, localctx)
@@ -6804,7 +6724,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.PREPARE)
                 self.state = 890
                 self.identifier()
-                pass
 
             elif la_ == 67:
                 localctx = SqlBaseParser.ExecuteContext(self, localctx)
@@ -6835,7 +6754,6 @@ class SqlBaseParser ( Parser ):
 
 
 
-                pass
 
             elif la_ == 68:
                 localctx = SqlBaseParser.DescribeInputContext(self, localctx)
@@ -6846,7 +6764,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.INPUT)
                 self.state = 906
                 self.identifier()
-                pass
 
             elif la_ == 69:
                 localctx = SqlBaseParser.DescribeOutputContext(self, localctx)
@@ -6857,7 +6774,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.OUTPUT)
                 self.state = 909
                 self.identifier()
-                pass
 
             elif la_ == 70:
                 localctx = SqlBaseParser.SetPathContext(self, localctx)
@@ -6868,7 +6784,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.PATH)
                 self.state = 912
                 self.pathSpecification()
-                pass
 
             elif la_ == 71:
                 localctx = SqlBaseParser.SetTimeZoneContext(self, localctx)
@@ -6885,15 +6800,12 @@ class SqlBaseParser ( Parser ):
                 if la_ == 1:
                     self.state = 916
                     self.match(SqlBaseParser.LOCAL)
-                    pass
 
                 elif la_ == 2:
                     self.state = 917
                     self.expression()
-                    pass
 
 
-                pass
 
             elif la_ == 72:
                 localctx = SqlBaseParser.UpdateContext(self, localctx)
@@ -6928,7 +6840,6 @@ class SqlBaseParser ( Parser ):
                     localctx.where = self.booleanExpression(0)
 
 
-                pass
 
             elif la_ == 73:
                 localctx = SqlBaseParser.MergeContext(self, localctx)
@@ -6975,7 +6886,6 @@ class SqlBaseParser ( Parser ):
                     if not (_la==SqlBaseParser.WHEN):
                         break
 
-                pass
 
 
         except RecognitionException as re:
@@ -7175,12 +7085,10 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 972
                 self.columnDefinition()
-                pass
             elif token in [SqlBaseParser.LIKE]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 973
                 self.likeClause()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -7711,7 +7619,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.LIMIT)
                 self.state = 1033
                 localctx.limit = self.limitRowCount()
-                pass
             elif token in [SqlBaseParser.FETCH]:
                 self.state = 1034
                 self.match(SqlBaseParser.FETCH)
@@ -7743,17 +7650,14 @@ class SqlBaseParser ( Parser ):
                 if token in [SqlBaseParser.ONLY]:
                     self.state = 1040
                     self.match(SqlBaseParser.ONLY)
-                    pass
                 elif token in [SqlBaseParser.WITH]:
                     self.state = 1041
                     self.match(SqlBaseParser.WITH)
                     self.state = 1042
                     self.match(SqlBaseParser.TIES)
-                    pass
                 else:
                     raise NoViableAltException(self)
 
-                pass
             elif token in [SqlBaseParser.EOF, SqlBaseParser.T__2, SqlBaseParser.WITH]:
                 pass
             else:
@@ -7813,12 +7717,10 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 1047
                 self.match(SqlBaseParser.ALL)
-                pass
             elif token in [SqlBaseParser.QUESTION_MARK, SqlBaseParser.INTEGER_VALUE]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1048
                 self.rowCount()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -8019,7 +7921,6 @@ class SqlBaseParser ( Parser ):
 
                         self.state = 1061
                         localctx.right = self.queryTerm(3)
-                        pass
 
                     elif la_ == 2:
                         localctx = SqlBaseParser.SetOperationContext(self, SqlBaseParser.QueryTermContext(self, _parentctx, _parentState))
@@ -8049,7 +7950,6 @@ class SqlBaseParser ( Parser ):
 
                         self.state = 1067
                         localctx.right = self.queryTerm(2)
-                        pass
 
              
                 self.state = 1072
@@ -8203,7 +8103,6 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 1073
                 self.querySpecification()
-                pass
             elif token in [SqlBaseParser.TABLE]:
                 localctx = SqlBaseParser.TableContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
@@ -8211,7 +8110,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TABLE)
                 self.state = 1075
                 self.qualifiedName()
-                pass
             elif token in [SqlBaseParser.VALUES]:
                 localctx = SqlBaseParser.InlineTableContext(self, localctx)
                 self.enterOuterAlt(localctx, 3)
@@ -8232,7 +8130,6 @@ class SqlBaseParser ( Parser ):
                     self._errHandler.sync(self)
                     _alt = self._interp.adaptivePredict(self._input,126,self._ctx)
 
-                pass
             elif token in [SqlBaseParser.T__1]:
                 localctx = SqlBaseParser.SubqueryContext(self, localctx)
                 self.enterOuterAlt(localctx, 4)
@@ -8242,7 +8139,6 @@ class SqlBaseParser ( Parser ):
                 self.queryNoWith()
                 self.state = 1087
                 self.match(SqlBaseParser.T__2)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -8780,7 +8676,6 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 1157
                 self.groupingSet()
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.RollupContext(self, localctx)
@@ -8811,7 +8706,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1170
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.CubeContext(self, localctx)
@@ -8842,7 +8736,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1183
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.MultipleGroupingSetsContext(self, localctx)
@@ -8869,7 +8762,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1195
                 self.match(SqlBaseParser.T__2)
-                pass
 
 
         except RecognitionException as re:
@@ -8950,13 +8842,11 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1210
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1211
                 self.expression()
-                pass
 
 
         except RecognitionException as re:
@@ -9421,7 +9311,6 @@ class SqlBaseParser ( Parser ):
                     self.identifier()
 
 
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.SelectAllContext(self, localctx)
@@ -9442,14 +9331,12 @@ class SqlBaseParser ( Parser ):
                     self.columnAliases()
 
 
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.SelectAllContext(self, localctx)
                 self.enterOuterAlt(localctx, 3)
                 self.state = 1275
                 self.match(SqlBaseParser.ASTERISK)
-                pass
 
 
         except RecognitionException as re:
@@ -9590,7 +9477,6 @@ class SqlBaseParser ( Parser ):
                         self.match(SqlBaseParser.JOIN)
                         self.state = 1284
                         localctx.right = self.sampledRelation()
-                        pass
                     elif token in [SqlBaseParser.FULL, SqlBaseParser.INNER, SqlBaseParser.JOIN, SqlBaseParser.LEFT, SqlBaseParser.RIGHT]:
                         self.state = 1285
                         self.joinType()
@@ -9600,7 +9486,6 @@ class SqlBaseParser ( Parser ):
                         localctx.rightRelation = self.relation(0)
                         self.state = 1288
                         self.joinCriteria()
-                        pass
                     elif token in [SqlBaseParser.NATURAL]:
                         self.state = 1290
                         self.match(SqlBaseParser.NATURAL)
@@ -9610,7 +9495,6 @@ class SqlBaseParser ( Parser ):
                         self.match(SqlBaseParser.JOIN)
                         self.state = 1293
                         localctx.right = self.sampledRelation()
-                        pass
                     else:
                         raise NoViableAltException(self)
              
@@ -9688,7 +9572,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.INNER)
 
 
-                pass
             elif token in [SqlBaseParser.LEFT]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1305
@@ -9701,7 +9584,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.OUTER)
 
 
-                pass
             elif token in [SqlBaseParser.RIGHT]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 1309
@@ -9714,7 +9596,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.OUTER)
 
 
-                pass
             elif token in [SqlBaseParser.FULL]:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 1313
@@ -9727,7 +9608,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.OUTER)
 
 
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -9799,7 +9679,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.ON)
                 self.state = 1320
                 self.booleanExpression(0)
-                pass
             elif token in [SqlBaseParser.USING]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1321
@@ -9822,7 +9701,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1331
                 self.match(SqlBaseParser.T__2)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -10021,7 +9899,6 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 1346
                 self.match(SqlBaseParser.ERROR)
-                pass
             elif token in [SqlBaseParser.TRUNCATE]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1347
@@ -10036,7 +9913,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1351
                 self.listaggCountIndication()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -10099,14 +9975,12 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.WITH)
                 self.state = 1355
                 self.match(SqlBaseParser.COUNT)
-                pass
             elif token in [SqlBaseParser.WITHOUT]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1356
                 self.match(SqlBaseParser.WITHOUT)
                 self.state = 1357
                 self.match(SqlBaseParser.COUNT)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -10581,7 +10455,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.PER)
                 self.state = 1452
                 self.match(SqlBaseParser.MATCH)
-                pass
             elif token in [SqlBaseParser.ALL]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1453
@@ -10600,7 +10473,6 @@ class SqlBaseParser ( Parser ):
                     self.emptyMatchHandling()
 
 
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -10677,7 +10549,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.EMPTY)
                 self.state = 1464
                 self.match(SqlBaseParser.MATCHES)
-                pass
             elif token in [SqlBaseParser.OMIT]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1465
@@ -10686,7 +10557,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.EMPTY)
                 self.state = 1467
                 self.match(SqlBaseParser.MATCHES)
-                pass
             elif token in [SqlBaseParser.WITH]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 1468
@@ -10695,7 +10565,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.UNMATCHED)
                 self.state = 1470
                 self.match(SqlBaseParser.ROWS)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -10775,7 +10644,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.NEXT)
                 self.state = 1476
                 self.match(SqlBaseParser.ROW)
-                pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
@@ -10787,7 +10655,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.LAST)
                 self.state = 1480
                 self.match(SqlBaseParser.ROW)
-                pass
 
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
@@ -10799,7 +10666,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.FIRST)
                 self.state = 1484
                 self.identifier()
-                pass
 
             elif la_ == 4:
                 self.enterOuterAlt(localctx, 4)
@@ -10811,7 +10677,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.LAST)
                 self.state = 1488
                 self.identifier()
-                pass
 
             elif la_ == 5:
                 self.enterOuterAlt(localctx, 5)
@@ -10821,7 +10686,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TO)
                 self.state = 1491
                 self.identifier()
-                pass
 
 
         except RecognitionException as re:
@@ -11303,7 +11167,6 @@ class SqlBaseParser ( Parser ):
                     self.queryPeriod()
 
 
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.SubqueryRelationContext(self, localctx)
@@ -11314,7 +11177,6 @@ class SqlBaseParser ( Parser ):
                 self.query()
                 self.state = 1538
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.UnnestContext(self, localctx)
@@ -11349,7 +11211,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.ORDINALITY)
 
 
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.LateralContext(self, localctx)
@@ -11362,7 +11223,6 @@ class SqlBaseParser ( Parser ):
                 self.query()
                 self.state = 1558
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 5:
                 localctx = SqlBaseParser.ParenthesizedRelationContext(self, localctx)
@@ -11373,7 +11233,6 @@ class SqlBaseParser ( Parser ):
                 self.relation(0)
                 self.state = 1562
                 self.match(SqlBaseParser.T__2)
-                pass
 
 
         except RecognitionException as re:
@@ -11593,7 +11452,6 @@ class SqlBaseParser ( Parser ):
                     self.predicate(localctx._valueExpression)
 
 
-                pass
             elif token in [SqlBaseParser.NOT]:
                 localctx = SqlBaseParser.LogicalNotContext(self, localctx)
                 self._ctx = localctx
@@ -11602,7 +11460,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.NOT)
                 self.state = 1574
                 self.booleanExpression(3)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -11631,7 +11488,6 @@ class SqlBaseParser ( Parser ):
                         self.match(SqlBaseParser.AND)
                         self.state = 1579
                         self.booleanExpression(3)
-                        pass
 
                     elif la_ == 2:
                         localctx = SqlBaseParser.Or_Context(self, SqlBaseParser.BooleanExpressionContext(self, _parentctx, _parentState))
@@ -11646,7 +11502,6 @@ class SqlBaseParser ( Parser ):
                         self.match(SqlBaseParser.OR)
                         self.state = 1582
                         self.booleanExpression(2)
-                        pass
 
              
                 self.state = 1587
@@ -11954,7 +11809,6 @@ class SqlBaseParser ( Parser ):
                 self.comparisonOperator()
                 self.state = 1589
                 localctx.right = self.valueExpression(0)
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.QuantifiedComparisonContext(self, localctx)
@@ -11969,7 +11823,6 @@ class SqlBaseParser ( Parser ):
                 self.query()
                 self.state = 1595
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.BetweenContext(self, localctx)
@@ -11990,7 +11843,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.AND)
                 self.state = 1603
                 localctx.upper = self.valueExpression(0)
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.InListContext(self, localctx)
@@ -12023,7 +11875,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1618
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 5:
                 localctx = SqlBaseParser.InSubqueryContext(self, localctx)
@@ -12044,7 +11895,6 @@ class SqlBaseParser ( Parser ):
                 self.query()
                 self.state = 1626
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 6:
                 localctx = SqlBaseParser.LikeContext(self, localctx)
@@ -12071,7 +11921,6 @@ class SqlBaseParser ( Parser ):
                     localctx.escape = self.valueExpression(0)
 
 
-                pass
 
             elif la_ == 7:
                 localctx = SqlBaseParser.NullPredicateContext(self, localctx)
@@ -12088,7 +11937,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1641
                 self.match(SqlBaseParser.NULL)
-                pass
 
             elif la_ == 8:
                 localctx = SqlBaseParser.DistinctFromContext(self, localctx)
@@ -12109,7 +11957,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.FROM)
                 self.state = 1648
                 localctx.right = self.valueExpression(0)
-                pass
 
 
         except RecognitionException as re:
@@ -12316,7 +12163,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1652
                 self.primaryExpression(0)
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.ArithmeticUnaryContext(self, localctx)
@@ -12332,7 +12178,6 @@ class SqlBaseParser ( Parser ):
                     self.consume()
                 self.state = 1654
                 self.valueExpression(4)
-                pass
 
 
             self._ctx.stop = self._input.LT(-1)
@@ -12367,7 +12212,6 @@ class SqlBaseParser ( Parser ):
                             self.consume()
                         self.state = 1659
                         localctx.right = self.valueExpression(4)
-                        pass
 
                     elif la_ == 2:
                         localctx = SqlBaseParser.ArithmeticBinaryContext(self, SqlBaseParser.ValueExpressionContext(self, _parentctx, _parentState))
@@ -12389,7 +12233,6 @@ class SqlBaseParser ( Parser ):
                             self.consume()
                         self.state = 1662
                         localctx.right = self.valueExpression(3)
-                        pass
 
                     elif la_ == 3:
                         localctx = SqlBaseParser.ConcatenationContext(self, SqlBaseParser.ValueExpressionContext(self, _parentctx, _parentState))
@@ -12405,7 +12248,6 @@ class SqlBaseParser ( Parser ):
                         self.match(SqlBaseParser.CONCAT)
                         self.state = 1665
                         localctx.right = self.valueExpression(2)
-                        pass
 
                     elif la_ == 4:
                         localctx = SqlBaseParser.AtTimeZoneContext(self, SqlBaseParser.ValueExpressionContext(self, _parentctx, _parentState))
@@ -12420,7 +12262,6 @@ class SqlBaseParser ( Parser ):
                         self.match(SqlBaseParser.AT)
                         self.state = 1668
                         self.timeZoneSpecifier()
-                        pass
 
              
                 self.state = 1673
@@ -13483,7 +13324,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1675
                 self.match(SqlBaseParser.NULL)
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.IntervalLiteralContext(self, localctx)
@@ -13491,7 +13331,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1676
                 self.interval()
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.TypeConstructorContext(self, localctx)
@@ -13501,7 +13340,6 @@ class SqlBaseParser ( Parser ):
                 self.identifier()
                 self.state = 1678
                 self.string()
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.TypeConstructorContext(self, localctx)
@@ -13513,7 +13351,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.PRECISION)
                 self.state = 1682
                 self.string()
-                pass
 
             elif la_ == 5:
                 localctx = SqlBaseParser.NumericLiteralContext(self, localctx)
@@ -13521,7 +13358,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1683
                 self.number()
-                pass
 
             elif la_ == 6:
                 localctx = SqlBaseParser.BooleanLiteralContext(self, localctx)
@@ -13529,7 +13365,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1684
                 self.booleanValue()
-                pass
 
             elif la_ == 7:
                 localctx = SqlBaseParser.StringLiteralContext(self, localctx)
@@ -13537,7 +13372,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1685
                 self.string()
-                pass
 
             elif la_ == 8:
                 localctx = SqlBaseParser.BinaryLiteralContext(self, localctx)
@@ -13545,7 +13379,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1686
                 self.match(SqlBaseParser.BINARY_LITERAL)
-                pass
 
             elif la_ == 9:
                 localctx = SqlBaseParser.ParameterContext(self, localctx)
@@ -13553,7 +13386,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1687
                 self.match(SqlBaseParser.QUESTION_MARK)
-                pass
 
             elif la_ == 10:
                 localctx = SqlBaseParser.PositionContext(self, localctx)
@@ -13571,7 +13403,6 @@ class SqlBaseParser ( Parser ):
                 self.valueExpression(0)
                 self.state = 1693
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 11:
                 localctx = SqlBaseParser.RowConstructorContext(self, localctx)
@@ -13597,7 +13428,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1703
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 12:
                 localctx = SqlBaseParser.RowConstructorContext(self, localctx)
@@ -13623,7 +13453,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1715
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 13:
                 localctx = SqlBaseParser.ListaggContext(self, localctx)
@@ -13694,7 +13523,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1746
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 14:
                 localctx = SqlBaseParser.FunctionCallContext(self, localctx)
@@ -13742,7 +13570,6 @@ class SqlBaseParser ( Parser ):
                     self.over()
 
 
-                pass
 
             elif la_ == 15:
                 localctx = SqlBaseParser.FunctionCallContext(self, localctx)
@@ -13838,7 +13665,6 @@ class SqlBaseParser ( Parser ):
                     self.over()
 
 
-                pass
 
             elif la_ == 16:
                 localctx = SqlBaseParser.MeasureContext(self, localctx)
@@ -13848,7 +13674,6 @@ class SqlBaseParser ( Parser ):
                 self.identifier()
                 self.state = 1807
                 self.over()
-                pass
 
             elif la_ == 17:
                 localctx = SqlBaseParser.Lambda_Context(self, localctx)
@@ -13860,7 +13685,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.T__5)
                 self.state = 1811
                 self.expression()
-                pass
 
             elif la_ == 18:
                 localctx = SqlBaseParser.Lambda_Context(self, localctx)
@@ -13894,7 +13718,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.T__5)
                 self.state = 1826
                 self.expression()
-                pass
 
             elif la_ == 19:
                 localctx = SqlBaseParser.SubqueryExpressionContext(self, localctx)
@@ -13906,7 +13729,6 @@ class SqlBaseParser ( Parser ):
                 self.query()
                 self.state = 1829
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 20:
                 localctx = SqlBaseParser.ExistsContext(self, localctx)
@@ -13920,7 +13742,6 @@ class SqlBaseParser ( Parser ):
                 self.query()
                 self.state = 1834
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 21:
                 localctx = SqlBaseParser.SimpleCaseContext(self, localctx)
@@ -13954,7 +13775,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1847
                 self.match(SqlBaseParser.END)
-                pass
 
             elif la_ == 22:
                 localctx = SqlBaseParser.SearchedCaseContext(self, localctx)
@@ -13986,7 +13806,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1859
                 self.match(SqlBaseParser.END)
-                pass
 
             elif la_ == 23:
                 localctx = SqlBaseParser.CastContext(self, localctx)
@@ -14004,7 +13823,6 @@ class SqlBaseParser ( Parser ):
                 self.type_(0)
                 self.state = 1866
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 24:
                 localctx = SqlBaseParser.CastContext(self, localctx)
@@ -14022,7 +13840,6 @@ class SqlBaseParser ( Parser ):
                 self.type_(0)
                 self.state = 1873
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 25:
                 localctx = SqlBaseParser.ArrayConstructorContext(self, localctx)
@@ -14054,7 +13871,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1887
                 self.match(SqlBaseParser.T__7)
-                pass
 
             elif la_ == 26:
                 localctx = SqlBaseParser.ColumnReferenceContext(self, localctx)
@@ -14062,7 +13878,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1888
                 self.identifier()
-                pass
 
             elif la_ == 27:
                 localctx = SqlBaseParser.SpecialDateTimeFunctionContext(self, localctx)
@@ -14070,7 +13885,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1889
                 localctx.name = self.match(SqlBaseParser.CURRENT_DATE)
-                pass
 
             elif la_ == 28:
                 localctx = SqlBaseParser.SpecialDateTimeFunctionContext(self, localctx)
@@ -14090,7 +13904,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.T__2)
 
 
-                pass
 
             elif la_ == 29:
                 localctx = SqlBaseParser.SpecialDateTimeFunctionContext(self, localctx)
@@ -14110,7 +13923,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.T__2)
 
 
-                pass
 
             elif la_ == 30:
                 localctx = SqlBaseParser.SpecialDateTimeFunctionContext(self, localctx)
@@ -14130,7 +13942,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.T__2)
 
 
-                pass
 
             elif la_ == 31:
                 localctx = SqlBaseParser.SpecialDateTimeFunctionContext(self, localctx)
@@ -14150,7 +13961,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.T__2)
 
 
-                pass
 
             elif la_ == 32:
                 localctx = SqlBaseParser.CurrentUserContext(self, localctx)
@@ -14158,7 +13968,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1914
                 localctx.name = self.match(SqlBaseParser.CURRENT_USER)
-                pass
 
             elif la_ == 33:
                 localctx = SqlBaseParser.CurrentCatalogContext(self, localctx)
@@ -14166,7 +13975,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1915
                 localctx.name = self.match(SqlBaseParser.CURRENT_CATALOG)
-                pass
 
             elif la_ == 34:
                 localctx = SqlBaseParser.CurrentSchemaContext(self, localctx)
@@ -14174,7 +13982,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1916
                 localctx.name = self.match(SqlBaseParser.CURRENT_SCHEMA)
-                pass
 
             elif la_ == 35:
                 localctx = SqlBaseParser.CurrentPathContext(self, localctx)
@@ -14182,7 +13989,6 @@ class SqlBaseParser ( Parser ):
                 _prevctx = localctx
                 self.state = 1917
                 localctx.name = self.match(SqlBaseParser.CURRENT_PATH)
-                pass
 
             elif la_ == 36:
                 localctx = SqlBaseParser.SubstringContext(self, localctx)
@@ -14210,7 +14016,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1927
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 37:
                 localctx = SqlBaseParser.NormalizeContext(self, localctx)
@@ -14234,7 +14039,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1936
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 38:
                 localctx = SqlBaseParser.ExtractContext(self, localctx)
@@ -14252,7 +14056,6 @@ class SqlBaseParser ( Parser ):
                 self.valueExpression(0)
                 self.state = 1943
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 39:
                 localctx = SqlBaseParser.ParenthesizedExpressionContext(self, localctx)
@@ -14264,7 +14067,6 @@ class SqlBaseParser ( Parser ):
                 self.expression()
                 self.state = 1947
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 40:
                 localctx = SqlBaseParser.GroupingOperationContext(self, localctx)
@@ -14296,7 +14098,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 1961
                 self.match(SqlBaseParser.T__2)
-                pass
 
 
             self._ctx.stop = self._input.LT(-1)
@@ -14327,7 +14128,6 @@ class SqlBaseParser ( Parser ):
                         localctx.index = self.valueExpression(0)
                         self.state = 1967
                         self.match(SqlBaseParser.T__7)
-                        pass
 
                     elif la_ == 2:
                         localctx = SqlBaseParser.DereferenceContext(self, SqlBaseParser.PrimaryExpressionContext(self, _parentctx, _parentState))
@@ -14343,7 +14143,6 @@ class SqlBaseParser ( Parser ):
                         self.match(SqlBaseParser.T__0)
                         self.state = 1971
                         localctx.fieldName = self.identifier()
-                        pass
 
              
                 self.state = 1976
@@ -14465,14 +14264,12 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.IGNORE)
                 self.state = 1980
                 self.match(SqlBaseParser.NULLS)
-                pass
             elif token in [SqlBaseParser.RESPECT]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 1981
                 self.match(SqlBaseParser.RESPECT)
                 self.state = 1982
                 self.match(SqlBaseParser.NULLS)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -14568,7 +14365,6 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 1985
                 self.match(SqlBaseParser.STRING)
-                pass
             elif token in [SqlBaseParser.UNICODE_STRING]:
                 localctx = SqlBaseParser.UnicodeStringLiteralContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
@@ -14584,7 +14380,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.STRING)
 
 
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -14690,7 +14485,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.ZONE)
                 self.state = 1995
                 self.interval()
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.TimeZoneStringContext(self, localctx)
@@ -14701,7 +14495,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.ZONE)
                 self.state = 1998
                 self.string()
-                pass
 
 
         except RecognitionException as re:
@@ -15437,7 +15230,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 2032
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.IntervalTypeContext(self, localctx)
@@ -15457,7 +15249,6 @@ class SqlBaseParser ( Parser ):
                     localctx.to = self.intervalField()
 
 
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.DateTimeTypeContext(self, localctx)
@@ -15489,7 +15280,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.ZONE)
 
 
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.DateTimeTypeContext(self, localctx)
@@ -15515,7 +15305,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TIME)
                 self.state = 2061
                 self.match(SqlBaseParser.ZONE)
-                pass
 
             elif la_ == 5:
                 localctx = SqlBaseParser.DateTimeTypeContext(self, localctx)
@@ -15547,7 +15336,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.ZONE)
 
 
-                pass
 
             elif la_ == 6:
                 localctx = SqlBaseParser.DateTimeTypeContext(self, localctx)
@@ -15573,7 +15361,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.TIME)
                 self.state = 2083
                 self.match(SqlBaseParser.ZONE)
-                pass
 
             elif la_ == 7:
                 localctx = SqlBaseParser.DoublePrecisionTypeContext(self, localctx)
@@ -15583,7 +15370,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.DOUBLE)
                 self.state = 2085
                 self.match(SqlBaseParser.PRECISION)
-                pass
 
             elif la_ == 8:
                 localctx = SqlBaseParser.LegacyArrayTypeContext(self, localctx)
@@ -15597,7 +15383,6 @@ class SqlBaseParser ( Parser ):
                 self.type_(0)
                 self.state = 2089
                 self.match(SqlBaseParser.GT)
-                pass
 
             elif la_ == 9:
                 localctx = SqlBaseParser.LegacyMapTypeContext(self, localctx)
@@ -15615,7 +15400,6 @@ class SqlBaseParser ( Parser ):
                 localctx.valueType = self.type_(0)
                 self.state = 2096
                 self.match(SqlBaseParser.GT)
-                pass
 
             elif la_ == 10:
                 localctx = SqlBaseParser.GenericTypeContext(self, localctx)
@@ -15647,7 +15431,6 @@ class SqlBaseParser ( Parser ):
                     self.match(SqlBaseParser.T__2)
 
 
-                pass
 
 
             self._ctx.stop = self._input.LT(-1)
@@ -15739,7 +15522,6 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 2126
                 self.type_(0)
-                pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
@@ -15747,7 +15529,6 @@ class SqlBaseParser ( Parser ):
                 self.identifier()
                 self.state = 2128
                 self.type_(0)
-                pass
 
 
         except RecognitionException as re:
@@ -15805,12 +15586,10 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 2132
                 self.match(SqlBaseParser.INTEGER_VALUE)
-                pass
             elif token in [SqlBaseParser.ADD, SqlBaseParser.ADMIN, SqlBaseParser.AFTER, SqlBaseParser.ALL, SqlBaseParser.ANALYZE, SqlBaseParser.ANY, SqlBaseParser.ARRAY, SqlBaseParser.ASC, SqlBaseParser.AT, SqlBaseParser.AUTHORIZATION, SqlBaseParser.BERNOULLI, SqlBaseParser.CALL, SqlBaseParser.CASCADE, SqlBaseParser.CATALOGS, SqlBaseParser.COLUMN, SqlBaseParser.COLUMNS, SqlBaseParser.COMMENT, SqlBaseParser.COMMIT, SqlBaseParser.COMMITTED, SqlBaseParser.COUNT, SqlBaseParser.CURRENT, SqlBaseParser.DATA, SqlBaseParser.DATE, SqlBaseParser.DAY, SqlBaseParser.DEFINER, SqlBaseParser.DENY, SqlBaseParser.DESC, SqlBaseParser.DEFINE, SqlBaseParser.DISTRIBUTED, SqlBaseParser.DOUBLE, SqlBaseParser.EMPTY, SqlBaseParser.ERROR, SqlBaseParser.EXCLUDING, SqlBaseParser.EXPLAIN, SqlBaseParser.FETCH, SqlBaseParser.FILTER, SqlBaseParser.FINAL, SqlBaseParser.FIRST, SqlBaseParser.FOLLOWING, SqlBaseParser.FORMAT, SqlBaseParser.FUNCTIONS, SqlBaseParser.GRANT, SqlBaseParser.GRANTED, SqlBaseParser.GRANTS, SqlBaseParser.GRAPHVIZ, SqlBaseParser.GROUPS, SqlBaseParser.HOUR, SqlBaseParser.IF, SqlBaseParser.IGNORE, SqlBaseParser.INCLUDING, SqlBaseParser.INITIAL, SqlBaseParser.INPUT, SqlBaseParser.INTERVAL, SqlBaseParser.INVOKER, SqlBaseParser.IO, SqlBaseParser.ISOLATION, SqlBaseParser.JSON, SqlBaseParser.LAST, SqlBaseParser.LATERAL, SqlBaseParser.LEVEL, SqlBaseParser.LIMIT, SqlBaseParser.LOCAL, SqlBaseParser.LOGICAL, SqlBaseParser.MAP, SqlBaseParser.MATCH, SqlBaseParser.MATCHED, SqlBaseParser.MATCHES, SqlBaseParser.MATCH_RECOGNIZE, SqlBaseParser.MATERIALIZED, SqlBaseParser.MEASURES, SqlBaseParser.MERGE, SqlBaseParser.MINUTE, SqlBaseParser.MONTH, SqlBaseParser.NEXT, SqlBaseParser.NFC, SqlBaseParser.NFD, SqlBaseParser.NFKC, SqlBaseParser.NFKD, SqlBaseParser.NO, SqlBaseParser.NONE, SqlBaseParser.NULLIF, SqlBaseParser.NULLS, SqlBaseParser.OFFSET, SqlBaseParser.OMIT, SqlBaseParser.OF, SqlBaseParser.ONE, SqlBaseParser.ONLY, SqlBaseParser.OPTION, SqlBaseParser.ORDINALITY, SqlBaseParser.OUTPUT, SqlBaseParser.OVER, SqlBaseParser.OVERFLOW, SqlBaseParser.PARTITION, SqlBaseParser.PARTITIONS, SqlBaseParser.PAST, SqlBaseParser.PATH, SqlBaseParser.PATTERN, SqlBaseParser.PER, SqlBaseParser.PERMUTE, SqlBaseParser.POSITION, SqlBaseParser.PRECEDING, SqlBaseParser.PRECISION, SqlBaseParser.PRIVILEGES, SqlBaseParser.PROPERTIES, SqlBaseParser.RANGE, SqlBaseParser.READ, SqlBaseParser.REFRESH, SqlBaseParser.RENAME, SqlBaseParser.REPEATABLE, SqlBaseParser.REPLACE, SqlBaseParser.RESET, SqlBaseParser.RESPECT, SqlBaseParser.RESTRICT, SqlBaseParser.REVOKE, SqlBaseParser.ROLE, SqlBaseParser.ROLES, SqlBaseParser.ROLLBACK, SqlBaseParser.ROW, SqlBaseParser.ROWS, SqlBaseParser.RUNNING, SqlBaseParser.SCHEMA, SqlBaseParser.SCHEMAS, SqlBaseParser.SECOND, SqlBaseParser.SECURITY, SqlBaseParser.SEEK, SqlBaseParser.SERIALIZABLE, SqlBaseParser.SESSION, SqlBaseParser.SET, SqlBaseParser.SETS, SqlBaseParser.SHOW, SqlBaseParser.SOME, SqlBaseParser.START, SqlBaseParser.STATS, SqlBaseParser.SUBSET, SqlBaseParser.SUBSTRING, SqlBaseParser.SYSTEM, SqlBaseParser.TABLES, SqlBaseParser.TABLESAMPLE, SqlBaseParser.TEXT, SqlBaseParser.TIES, SqlBaseParser.TIME, SqlBaseParser.TIMESTAMP, SqlBaseParser.TO, SqlBaseParser.TRANSACTION, SqlBaseParser.TRUNCATE, SqlBaseParser.TRY_CAST, SqlBaseParser.TYPE, SqlBaseParser.UNBOUNDED, SqlBaseParser.UNCOMMITTED, SqlBaseParser.UNMATCHED, SqlBaseParser.UPDATE, SqlBaseParser.USE, SqlBaseParser.USER, SqlBaseParser.VALIDATE, SqlBaseParser.VERBOSE, SqlBaseParser.VERSION, SqlBaseParser.VIEW, SqlBaseParser.WINDOW, SqlBaseParser.WITHIN, SqlBaseParser.WITHOUT, SqlBaseParser.WORK, SqlBaseParser.WRITE, SqlBaseParser.YEAR, SqlBaseParser.ZONE, SqlBaseParser.IDENTIFIER, SqlBaseParser.DIGIT_IDENTIFIER, SqlBaseParser.QUOTED_IDENTIFIER, SqlBaseParser.BACKQUOTED_IDENTIFIER]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 2133
                 self.type_(0)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -16171,7 +15950,6 @@ class SqlBaseParser ( Parser ):
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
 
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.MergeDeleteContext(self, localctx)
@@ -16194,7 +15972,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.THEN)
                 self.state = 2176
                 self.match(SqlBaseParser.DELETE)
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.MergeInsertContext(self, localctx)
@@ -16267,7 +16044,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 2209
                 self.match(SqlBaseParser.T__2)
-                pass
 
 
         except RecognitionException as re:
@@ -16332,7 +16108,6 @@ class SqlBaseParser ( Parser ):
             if token in [SqlBaseParser.ADD, SqlBaseParser.ADMIN, SqlBaseParser.AFTER, SqlBaseParser.ALL, SqlBaseParser.ANALYZE, SqlBaseParser.ANY, SqlBaseParser.ARRAY, SqlBaseParser.ASC, SqlBaseParser.AT, SqlBaseParser.AUTHORIZATION, SqlBaseParser.BERNOULLI, SqlBaseParser.CALL, SqlBaseParser.CASCADE, SqlBaseParser.CATALOGS, SqlBaseParser.COLUMN, SqlBaseParser.COLUMNS, SqlBaseParser.COMMENT, SqlBaseParser.COMMIT, SqlBaseParser.COMMITTED, SqlBaseParser.COUNT, SqlBaseParser.CURRENT, SqlBaseParser.DATA, SqlBaseParser.DATE, SqlBaseParser.DAY, SqlBaseParser.DEFINER, SqlBaseParser.DENY, SqlBaseParser.DESC, SqlBaseParser.DEFINE, SqlBaseParser.DISTRIBUTED, SqlBaseParser.DOUBLE, SqlBaseParser.EMPTY, SqlBaseParser.ERROR, SqlBaseParser.EXCLUDING, SqlBaseParser.EXPLAIN, SqlBaseParser.FETCH, SqlBaseParser.FILTER, SqlBaseParser.FINAL, SqlBaseParser.FIRST, SqlBaseParser.FOLLOWING, SqlBaseParser.FORMAT, SqlBaseParser.FUNCTIONS, SqlBaseParser.GRANT, SqlBaseParser.GRANTED, SqlBaseParser.GRANTS, SqlBaseParser.GRAPHVIZ, SqlBaseParser.GROUPS, SqlBaseParser.HOUR, SqlBaseParser.IF, SqlBaseParser.IGNORE, SqlBaseParser.INCLUDING, SqlBaseParser.INITIAL, SqlBaseParser.INPUT, SqlBaseParser.INTERVAL, SqlBaseParser.INVOKER, SqlBaseParser.IO, SqlBaseParser.ISOLATION, SqlBaseParser.JSON, SqlBaseParser.LAST, SqlBaseParser.LATERAL, SqlBaseParser.LEVEL, SqlBaseParser.LIMIT, SqlBaseParser.LOCAL, SqlBaseParser.LOGICAL, SqlBaseParser.MAP, SqlBaseParser.MATCH, SqlBaseParser.MATCHED, SqlBaseParser.MATCHES, SqlBaseParser.MATCH_RECOGNIZE, SqlBaseParser.MATERIALIZED, SqlBaseParser.MEASURES, SqlBaseParser.MERGE, SqlBaseParser.MINUTE, SqlBaseParser.MONTH, SqlBaseParser.NEXT, SqlBaseParser.NFC, SqlBaseParser.NFD, SqlBaseParser.NFKC, SqlBaseParser.NFKD, SqlBaseParser.NO, SqlBaseParser.NONE, SqlBaseParser.NULLIF, SqlBaseParser.NULLS, SqlBaseParser.OFFSET, SqlBaseParser.OMIT, SqlBaseParser.OF, SqlBaseParser.ONE, SqlBaseParser.ONLY, SqlBaseParser.OPTION, SqlBaseParser.ORDINALITY, SqlBaseParser.OUTPUT, SqlBaseParser.OVER, SqlBaseParser.OVERFLOW, SqlBaseParser.PARTITION, SqlBaseParser.PARTITIONS, SqlBaseParser.PAST, SqlBaseParser.PATH, SqlBaseParser.PATTERN, SqlBaseParser.PER, SqlBaseParser.PERMUTE, SqlBaseParser.POSITION, SqlBaseParser.PRECEDING, SqlBaseParser.PRECISION, SqlBaseParser.PRIVILEGES, SqlBaseParser.PROPERTIES, SqlBaseParser.RANGE, SqlBaseParser.READ, SqlBaseParser.REFRESH, SqlBaseParser.RENAME, SqlBaseParser.REPEATABLE, SqlBaseParser.REPLACE, SqlBaseParser.RESET, SqlBaseParser.RESPECT, SqlBaseParser.RESTRICT, SqlBaseParser.REVOKE, SqlBaseParser.ROLE, SqlBaseParser.ROLES, SqlBaseParser.ROLLBACK, SqlBaseParser.ROW, SqlBaseParser.ROWS, SqlBaseParser.RUNNING, SqlBaseParser.SCHEMA, SqlBaseParser.SCHEMAS, SqlBaseParser.SECOND, SqlBaseParser.SECURITY, SqlBaseParser.SEEK, SqlBaseParser.SERIALIZABLE, SqlBaseParser.SESSION, SqlBaseParser.SET, SqlBaseParser.SETS, SqlBaseParser.SHOW, SqlBaseParser.SOME, SqlBaseParser.START, SqlBaseParser.STATS, SqlBaseParser.SUBSET, SqlBaseParser.SUBSTRING, SqlBaseParser.SYSTEM, SqlBaseParser.TABLES, SqlBaseParser.TABLESAMPLE, SqlBaseParser.TEXT, SqlBaseParser.TIES, SqlBaseParser.TIME, SqlBaseParser.TIMESTAMP, SqlBaseParser.TO, SqlBaseParser.TRANSACTION, SqlBaseParser.TRUNCATE, SqlBaseParser.TRY_CAST, SqlBaseParser.TYPE, SqlBaseParser.UNBOUNDED, SqlBaseParser.UNCOMMITTED, SqlBaseParser.UNMATCHED, SqlBaseParser.UPDATE, SqlBaseParser.USE, SqlBaseParser.USER, SqlBaseParser.VALIDATE, SqlBaseParser.VERBOSE, SqlBaseParser.VERSION, SqlBaseParser.VIEW, SqlBaseParser.WINDOW, SqlBaseParser.WITHIN, SqlBaseParser.WITHOUT, SqlBaseParser.WORK, SqlBaseParser.WRITE, SqlBaseParser.YEAR, SqlBaseParser.ZONE, SqlBaseParser.IDENTIFIER, SqlBaseParser.DIGIT_IDENTIFIER, SqlBaseParser.QUOTED_IDENTIFIER, SqlBaseParser.BACKQUOTED_IDENTIFIER]:
                 self.state = 2214
                 localctx.windowName = self.identifier()
-                pass
             elif token in [SqlBaseParser.T__1]:
                 self.state = 2215
                 self.match(SqlBaseParser.T__1)
@@ -16340,7 +16115,6 @@ class SqlBaseParser ( Parser ):
                 self.windowSpecification()
                 self.state = 2217
                 self.match(SqlBaseParser.T__2)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -16626,7 +16400,6 @@ class SqlBaseParser ( Parser ):
                 localctx.frameType = self.match(SqlBaseParser.RANGE)
                 self.state = 2271
                 localctx.start = self.frameBound()
-                pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
@@ -16634,7 +16407,6 @@ class SqlBaseParser ( Parser ):
                 localctx.frameType = self.match(SqlBaseParser.ROWS)
                 self.state = 2273
                 localctx.start = self.frameBound()
-                pass
 
             elif la_ == 3:
                 self.enterOuterAlt(localctx, 3)
@@ -16642,7 +16414,6 @@ class SqlBaseParser ( Parser ):
                 localctx.frameType = self.match(SqlBaseParser.GROUPS)
                 self.state = 2275
                 localctx.start = self.frameBound()
-                pass
 
             elif la_ == 4:
                 self.enterOuterAlt(localctx, 4)
@@ -16656,7 +16427,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.AND)
                 self.state = 2280
                 localctx.end = self.frameBound()
-                pass
 
             elif la_ == 5:
                 self.enterOuterAlt(localctx, 5)
@@ -16670,7 +16440,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.AND)
                 self.state = 2286
                 localctx.end = self.frameBound()
-                pass
 
             elif la_ == 6:
                 self.enterOuterAlt(localctx, 6)
@@ -16684,7 +16453,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.AND)
                 self.state = 2292
                 localctx.end = self.frameBound()
-                pass
 
 
         except RecognitionException as re:
@@ -16815,7 +16583,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.UNBOUNDED)
                 self.state = 2297
                 localctx.boundType = self.match(SqlBaseParser.PRECEDING)
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.UnboundedFrameContext(self, localctx)
@@ -16824,7 +16591,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.UNBOUNDED)
                 self.state = 2299
                 localctx.boundType = self.match(SqlBaseParser.FOLLOWING)
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.CurrentRowBoundContext(self, localctx)
@@ -16833,7 +16599,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.CURRENT)
                 self.state = 2301
                 self.match(SqlBaseParser.ROW)
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.BoundedFrameContext(self, localctx)
@@ -16848,7 +16613,6 @@ class SqlBaseParser ( Parser ):
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
-                pass
 
 
         except RecognitionException as re:
@@ -17007,7 +16771,6 @@ class SqlBaseParser ( Parser ):
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
                         self.state = 2313
                         self.rowPattern(3)
-                        pass
 
                     elif la_ == 2:
                         localctx = SqlBaseParser.PatternAlternationContext(self, SqlBaseParser.RowPatternContext(self, _parentctx, _parentState))
@@ -17022,7 +16785,6 @@ class SqlBaseParser ( Parser ):
                         self.match(SqlBaseParser.T__8)
                         self.state = 2316
                         self.rowPattern(2)
-                        pass
 
              
                 self.state = 2321
@@ -17241,7 +17003,6 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 2322
                 self.identifier()
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.EmptyPatternContext(self, localctx)
@@ -17250,7 +17011,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.T__1)
                 self.state = 2324
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.PatternPermutationContext(self, localctx)
@@ -17275,7 +17035,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 2335
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.GroupedPatternContext(self, localctx)
@@ -17286,21 +17045,18 @@ class SqlBaseParser ( Parser ):
                 self.rowPattern(0)
                 self.state = 2339
                 self.match(SqlBaseParser.T__2)
-                pass
 
             elif la_ == 5:
                 localctx = SqlBaseParser.PartitionStartAnchorContext(self, localctx)
                 self.enterOuterAlt(localctx, 5)
                 self.state = 2341
                 self.match(SqlBaseParser.T__9)
-                pass
 
             elif la_ == 6:
                 localctx = SqlBaseParser.PartitionEndAnchorContext(self, localctx)
                 self.enterOuterAlt(localctx, 6)
                 self.state = 2342
                 self.match(SqlBaseParser.T__10)
-                pass
 
             elif la_ == 7:
                 localctx = SqlBaseParser.ExcludedPatternContext(self, localctx)
@@ -17311,7 +17067,6 @@ class SqlBaseParser ( Parser ):
                 self.rowPattern(0)
                 self.state = 2345
                 self.match(SqlBaseParser.T__12)
-                pass
 
 
         except RecognitionException as re:
@@ -17478,7 +17233,6 @@ class SqlBaseParser ( Parser ):
                     localctx.reluctant = self.match(SqlBaseParser.QUESTION_MARK)
 
 
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.OneOrMoreQuantifierContext(self, localctx)
@@ -17493,7 +17247,6 @@ class SqlBaseParser ( Parser ):
                     localctx.reluctant = self.match(SqlBaseParser.QUESTION_MARK)
 
 
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.ZeroOrOneQuantifierContext(self, localctx)
@@ -17508,7 +17261,6 @@ class SqlBaseParser ( Parser ):
                     localctx.reluctant = self.match(SqlBaseParser.QUESTION_MARK)
 
 
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.RangeQuantifierContext(self, localctx)
@@ -17527,7 +17279,6 @@ class SqlBaseParser ( Parser ):
                     localctx.reluctant = self.match(SqlBaseParser.QUESTION_MARK)
 
 
-                pass
 
             elif la_ == 5:
                 localctx = SqlBaseParser.RangeQuantifierContext(self, localctx)
@@ -17562,7 +17313,6 @@ class SqlBaseParser ( Parser ):
                     localctx.reluctant = self.match(SqlBaseParser.QUESTION_MARK)
 
 
-                pass
 
 
         except RecognitionException as re:
@@ -17737,7 +17487,6 @@ class SqlBaseParser ( Parser ):
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
-                pass
             elif token in [SqlBaseParser.TYPE]:
                 localctx = SqlBaseParser.ExplainTypeContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
@@ -17751,7 +17500,6 @@ class SqlBaseParser ( Parser ):
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -17858,7 +17606,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.LEVEL)
                 self.state = 2393
                 self.levelOfIsolation()
-                pass
             elif token in [SqlBaseParser.READ]:
                 localctx = SqlBaseParser.TransactionAccessModeContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
@@ -17872,7 +17619,6 @@ class SqlBaseParser ( Parser ):
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -18020,7 +17766,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.READ)
                 self.state = 2399
                 self.match(SqlBaseParser.UNCOMMITTED)
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.ReadCommittedContext(self, localctx)
@@ -18029,7 +17774,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.READ)
                 self.state = 2401
                 self.match(SqlBaseParser.COMMITTED)
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.RepeatableReadContext(self, localctx)
@@ -18038,14 +17782,12 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.REPEATABLE)
                 self.state = 2403
                 self.match(SqlBaseParser.READ)
-                pass
 
             elif la_ == 4:
                 localctx = SqlBaseParser.SerializableContext(self, localctx)
                 self.enterOuterAlt(localctx, 4)
                 self.state = 2404
                 self.match(SqlBaseParser.SERIALIZABLE)
-                pass
 
 
         except RecognitionException as re:
@@ -18141,7 +17883,6 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 2407
                 self.expression()
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.NamedArgumentContext(self, localctx)
@@ -18152,7 +17893,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.T__15)
                 self.state = 2410
                 self.expression()
-                pass
 
 
         except RecognitionException as re:
@@ -18252,14 +17992,12 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.T__0)
                 self.state = 2416
                 self.identifier()
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.UnqualifiedArgumentContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
                 self.state = 2418
                 self.identifier()
-                pass
 
 
         except RecognitionException as re:
@@ -18694,19 +18432,16 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 2447
                 self.principal()
-                pass
             elif token in [SqlBaseParser.CURRENT_USER]:
                 localctx = SqlBaseParser.CurrentUserGrantorContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
                 self.state = 2448
                 self.match(SqlBaseParser.CURRENT_USER)
-                pass
             elif token in [SqlBaseParser.CURRENT_ROLE]:
                 localctx = SqlBaseParser.CurrentRoleGrantorContext(self, localctx)
                 self.enterOuterAlt(localctx, 3)
                 self.state = 2449
                 self.match(SqlBaseParser.CURRENT_ROLE)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -18829,7 +18564,6 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 2452
                 self.identifier()
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.UserPrincipalContext(self, localctx)
@@ -18838,7 +18572,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.USER)
                 self.state = 2454
                 self.identifier()
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.RolePrincipalContext(self, localctx)
@@ -18847,7 +18580,6 @@ class SqlBaseParser ( Parser ):
                 self.match(SqlBaseParser.ROLE)
                 self.state = 2456
                 self.identifier()
-                pass
 
 
         except RecognitionException as re:
@@ -19053,31 +18785,26 @@ class SqlBaseParser ( Parser ):
                 self.enterOuterAlt(localctx, 1)
                 self.state = 2467
                 self.match(SqlBaseParser.IDENTIFIER)
-                pass
             elif token in [SqlBaseParser.QUOTED_IDENTIFIER]:
                 localctx = SqlBaseParser.QuotedIdentifierContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
                 self.state = 2468
                 self.match(SqlBaseParser.QUOTED_IDENTIFIER)
-                pass
             elif token in [SqlBaseParser.ADD, SqlBaseParser.ADMIN, SqlBaseParser.AFTER, SqlBaseParser.ALL, SqlBaseParser.ANALYZE, SqlBaseParser.ANY, SqlBaseParser.ARRAY, SqlBaseParser.ASC, SqlBaseParser.AT, SqlBaseParser.AUTHORIZATION, SqlBaseParser.BERNOULLI, SqlBaseParser.CALL, SqlBaseParser.CASCADE, SqlBaseParser.CATALOGS, SqlBaseParser.COLUMN, SqlBaseParser.COLUMNS, SqlBaseParser.COMMENT, SqlBaseParser.COMMIT, SqlBaseParser.COMMITTED, SqlBaseParser.COUNT, SqlBaseParser.CURRENT, SqlBaseParser.DATA, SqlBaseParser.DATE, SqlBaseParser.DAY, SqlBaseParser.DEFINER, SqlBaseParser.DENY, SqlBaseParser.DESC, SqlBaseParser.DEFINE, SqlBaseParser.DISTRIBUTED, SqlBaseParser.DOUBLE, SqlBaseParser.EMPTY, SqlBaseParser.ERROR, SqlBaseParser.EXCLUDING, SqlBaseParser.EXPLAIN, SqlBaseParser.FETCH, SqlBaseParser.FILTER, SqlBaseParser.FINAL, SqlBaseParser.FIRST, SqlBaseParser.FOLLOWING, SqlBaseParser.FORMAT, SqlBaseParser.FUNCTIONS, SqlBaseParser.GRANT, SqlBaseParser.GRANTED, SqlBaseParser.GRANTS, SqlBaseParser.GRAPHVIZ, SqlBaseParser.GROUPS, SqlBaseParser.HOUR, SqlBaseParser.IF, SqlBaseParser.IGNORE, SqlBaseParser.INCLUDING, SqlBaseParser.INITIAL, SqlBaseParser.INPUT, SqlBaseParser.INTERVAL, SqlBaseParser.INVOKER, SqlBaseParser.IO, SqlBaseParser.ISOLATION, SqlBaseParser.JSON, SqlBaseParser.LAST, SqlBaseParser.LATERAL, SqlBaseParser.LEVEL, SqlBaseParser.LIMIT, SqlBaseParser.LOCAL, SqlBaseParser.LOGICAL, SqlBaseParser.MAP, SqlBaseParser.MATCH, SqlBaseParser.MATCHED, SqlBaseParser.MATCHES, SqlBaseParser.MATCH_RECOGNIZE, SqlBaseParser.MATERIALIZED, SqlBaseParser.MEASURES, SqlBaseParser.MERGE, SqlBaseParser.MINUTE, SqlBaseParser.MONTH, SqlBaseParser.NEXT, SqlBaseParser.NFC, SqlBaseParser.NFD, SqlBaseParser.NFKC, SqlBaseParser.NFKD, SqlBaseParser.NO, SqlBaseParser.NONE, SqlBaseParser.NULLIF, SqlBaseParser.NULLS, SqlBaseParser.OFFSET, SqlBaseParser.OMIT, SqlBaseParser.OF, SqlBaseParser.ONE, SqlBaseParser.ONLY, SqlBaseParser.OPTION, SqlBaseParser.ORDINALITY, SqlBaseParser.OUTPUT, SqlBaseParser.OVER, SqlBaseParser.OVERFLOW, SqlBaseParser.PARTITION, SqlBaseParser.PARTITIONS, SqlBaseParser.PAST, SqlBaseParser.PATH, SqlBaseParser.PATTERN, SqlBaseParser.PER, SqlBaseParser.PERMUTE, SqlBaseParser.POSITION, SqlBaseParser.PRECEDING, SqlBaseParser.PRECISION, SqlBaseParser.PRIVILEGES, SqlBaseParser.PROPERTIES, SqlBaseParser.RANGE, SqlBaseParser.READ, SqlBaseParser.REFRESH, SqlBaseParser.RENAME, SqlBaseParser.REPEATABLE, SqlBaseParser.REPLACE, SqlBaseParser.RESET, SqlBaseParser.RESPECT, SqlBaseParser.RESTRICT, SqlBaseParser.REVOKE, SqlBaseParser.ROLE, SqlBaseParser.ROLES, SqlBaseParser.ROLLBACK, SqlBaseParser.ROW, SqlBaseParser.ROWS, SqlBaseParser.RUNNING, SqlBaseParser.SCHEMA, SqlBaseParser.SCHEMAS, SqlBaseParser.SECOND, SqlBaseParser.SECURITY, SqlBaseParser.SEEK, SqlBaseParser.SERIALIZABLE, SqlBaseParser.SESSION, SqlBaseParser.SET, SqlBaseParser.SETS, SqlBaseParser.SHOW, SqlBaseParser.SOME, SqlBaseParser.START, SqlBaseParser.STATS, SqlBaseParser.SUBSET, SqlBaseParser.SUBSTRING, SqlBaseParser.SYSTEM, SqlBaseParser.TABLES, SqlBaseParser.TABLESAMPLE, SqlBaseParser.TEXT, SqlBaseParser.TIES, SqlBaseParser.TIME, SqlBaseParser.TIMESTAMP, SqlBaseParser.TO, SqlBaseParser.TRANSACTION, SqlBaseParser.TRUNCATE, SqlBaseParser.TRY_CAST, SqlBaseParser.TYPE, SqlBaseParser.UNBOUNDED, SqlBaseParser.UNCOMMITTED, SqlBaseParser.UNMATCHED, SqlBaseParser.UPDATE, SqlBaseParser.USE, SqlBaseParser.USER, SqlBaseParser.VALIDATE, SqlBaseParser.VERBOSE, SqlBaseParser.VERSION, SqlBaseParser.VIEW, SqlBaseParser.WINDOW, SqlBaseParser.WITHIN, SqlBaseParser.WITHOUT, SqlBaseParser.WORK, SqlBaseParser.WRITE, SqlBaseParser.YEAR, SqlBaseParser.ZONE]:
                 localctx = SqlBaseParser.UnquotedIdentifierContext(self, localctx)
                 self.enterOuterAlt(localctx, 3)
                 self.state = 2469
                 self.nonReserved()
-                pass
             elif token in [SqlBaseParser.BACKQUOTED_IDENTIFIER]:
                 localctx = SqlBaseParser.BackQuotedIdentifierContext(self, localctx)
                 self.enterOuterAlt(localctx, 4)
                 self.state = 2470
                 self.match(SqlBaseParser.BACKQUOTED_IDENTIFIER)
-                pass
             elif token in [SqlBaseParser.DIGIT_IDENTIFIER]:
                 localctx = SqlBaseParser.DigitIdentifierContext(self, localctx)
                 self.enterOuterAlt(localctx, 5)
                 self.state = 2471
                 self.match(SqlBaseParser.DIGIT_IDENTIFIER)
-                pass
             else:
                 raise NoViableAltException(self)
 
@@ -19208,7 +18935,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 2477
                 self.match(SqlBaseParser.DECIMAL_VALUE)
-                pass
 
             elif la_ == 2:
                 localctx = SqlBaseParser.DoubleLiteralContext(self, localctx)
@@ -19223,7 +18949,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 2481
                 self.match(SqlBaseParser.DOUBLE_VALUE)
-                pass
 
             elif la_ == 3:
                 localctx = SqlBaseParser.IntegerLiteralContext(self, localctx)
@@ -19238,7 +18963,6 @@ class SqlBaseParser ( Parser ):
 
                 self.state = 2485
                 self.match(SqlBaseParser.INTEGER_VALUE)
-                pass
 
 
         except RecognitionException as re:

@@ -35,7 +35,6 @@ from treeno.functions.aggregate import (
     RegrIntercept,
     RegrSlope,
     Skewness,
-    StdDev,
     StdDevPop,
     StdDevSamp,
     Sum,

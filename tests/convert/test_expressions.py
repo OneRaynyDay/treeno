@@ -21,7 +21,6 @@ from treeno.expression import (
     InList,
     Interval,
     IsNull,
-    Lambda,
     LessThan,
     LessThanOrEqual,
     Like,
