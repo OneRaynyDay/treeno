@@ -9,14 +9,6 @@ from treeno.functions.datetime import (
     LocalTimestamp,
 )
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
-from treeno.window import (
-    BoundedFrameBound,
-    BoundType,
-    CurrentFrameBound,
-    FrameType,
-    NullTreatment,
-    Window,
-)
 
 from .helpers import VisitorTest, get_parser
 
