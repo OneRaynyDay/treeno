@@ -30,7 +30,9 @@ class TestFunction(VisitorTest):
         self.visitor.visit(ast).assert_equals(CurrentTimestamp(9))
 
         ast = get_parser("CURRENT_TIMESTAMP(13)").primaryExpression()
-        with pytest.raises(AssertionError, match="Invalid precision 13"):
+        with pytest.raises(
+            AssertionError, match="Precision of 13 is not supported"
+        ):
             self.visitor.visit(ast)
 
         ast = get_parser("CURRENT_TIME").primaryExpression()

@@ -4,6 +4,7 @@ from typing import ClassVar
 import attr
 
 from treeno.base import PrintOptions
+from treeno.datatypes.builder import date, time, timestamp
 from treeno.expression import value_attr
 from treeno.functions.base import Function
 from treeno.util import parenthesize
@@ -17,19 +18,19 @@ DEFAULT_DATETIME_PRECISION: int = 3
 class CurrentDate(Function):
     FN_NAME: ClassVar[str] = "CURRENT_DATE"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = date()
+
     def sql(self, opts: PrintOptions) -> str:
         return self.FN_NAME
 
 
 @value_attr
-class ParametrizedTimestampFunction(Function, ABC):
+class ParametrizedDateTimeFunction(Function, ABC):
     """This class doesn't inherit from Function because it doesn't have to have parentheses when there's no arguments.
     """
 
     precision: int = attr.ib(default=DEFAULT_DATETIME_PRECISION)
-
-    def __attrs_post_init__(self) -> None:
-        assert 0 <= self.precision <= 12, f"Invalid precision {self.precision}"
 
     def sql(self, opts: PrintOptions) -> str:
         precision_str = ""
@@ -39,20 +40,32 @@ class ParametrizedTimestampFunction(Function, ABC):
 
 
 @value_attr
-class CurrentTimestamp(ParametrizedTimestampFunction):
-    FN_NAME: ClassVar[str] = "CURRENT_TIMESTAMP"
-
-
-@value_attr
-class CurrentTime(ParametrizedTimestampFunction):
+class CurrentTime(ParametrizedDateTimeFunction):
     FN_NAME: ClassVar[str] = "CURRENT_TIME"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = time(precision=self.precision)
+
 
 @value_attr
-class LocalTime(ParametrizedTimestampFunction):
+class CurrentTimestamp(ParametrizedDateTimeFunction):
+    FN_NAME: ClassVar[str] = "CURRENT_TIMESTAMP"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = timestamp(precision=self.precision)
+
+
+@value_attr
+class LocalTime(ParametrizedDateTimeFunction):
     FN_NAME: ClassVar[str] = "LOCALTIME"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = time(precision=self.precision)
+
 
 @value_attr
-class LocalTimestamp(ParametrizedTimestampFunction):
+class LocalTimestamp(ParametrizedDateTimeFunction):
     FN_NAME: ClassVar[str] = "LOCALTIMESTAMP"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = timestamp(precision=self.precision)
