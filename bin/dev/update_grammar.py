@@ -176,7 +176,7 @@ def monkeypatch_letter(content_lines):
 def allow_lowercase_keywords(content_lines, fromfile, tofile):
     lines = []
     for line in content_lines:
-        match = re.match(r"^([A-Z]*): '\1';$", line)
+        match = re.match(r"^([A-Z_]*): '\1';$", line)
         if not match:
             lines.append(line)
         else:

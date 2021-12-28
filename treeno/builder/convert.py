@@ -51,6 +51,12 @@ from treeno.functions.aggregate import (
     OverflowFiller,
 )
 from treeno.functions.base import NAMES_TO_FUNCTIONS, Function
+from treeno.functions.session import (
+    CurrentCatalog,
+    CurrentPath,
+    CurrentSchema,
+    CurrentUser,
+)
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
 from treeno.grammar.parse import AST
@@ -567,6 +573,44 @@ class ConvertVisitor(SqlBaseVisitor):
             else primary_expr
         )
         return Field(self.visit(ctx.fieldName), table)
+
+    @overrides
+    def visitSpecialDateTimeFunction(
+        self, ctx: SqlBaseParser.SpecialDateTimeFunctionContext
+    ) -> Function:
+        fn_name = ctx.name.text.upper()
+        assert (
+            fn_name in NAMES_TO_FUNCTIONS
+        ), f"Function name {fn_name} not registered in treeno.functions"
+        fn = NAMES_TO_FUNCTIONS[fn_name]
+        args = []
+        if ctx.precision:
+            args.append(int(ctx.precision.text))
+        return fn(*args)
+
+    @overrides
+    def visitCurrentUser(
+        self, ctx: SqlBaseParser.CurrentUserContext
+    ) -> CurrentUser:
+        return CurrentUser()
+
+    @overrides
+    def visitCurrentCatalog(
+        self, ctx: SqlBaseParser.CurrentCatalogContext
+    ) -> CurrentCatalog:
+        return CurrentCatalog()
+
+    @overrides
+    def visitCurrentSchema(
+        self, ctx: SqlBaseParser.CurrentSchemaContext
+    ) -> CurrentSchema:
+        return CurrentSchema()
+
+    @overrides
+    def visitCurrentPath(
+        self, ctx: SqlBaseParser.CurrentPathContext
+    ) -> CurrentPath:
+        return CurrentPath()
 
     @overrides
     def visitNullLiteral(
