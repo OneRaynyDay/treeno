@@ -13,9 +13,11 @@ from treeno.expression import (
     Add,
     And,
     Between,
+    Case,
     Cast,
     DistinctFrom,
     Divide,
+    Else,
     Equal,
     Field,
     GreaterThan,
@@ -40,6 +42,7 @@ from treeno.expression import (
     Subscript,
     TryCast,
     TypeConstructor,
+    When,
     wrap_literal,
 )
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
@@ -390,5 +393,32 @@ class TestConstructorExprs(VisitorTest):
             Lambda(
                 inputs=[Lambda.Variable("b"), Lambda.Variable("c")],
                 expr=Lambda.Variable("b") != Lambda.Variable("c"),
+            )
+        )
+
+
+class TestConditionalFunctions(VisitorTest):
+    def test_case(self):
+        ast = get_parser(
+            "CASE 1 WHEN 1 THEN 2 WHEN a THEN b ELSE c END"
+        ).primaryExpression()
+        assert isinstance(ast, SqlBaseParser.SimpleCaseContext)
+        self.visitor.visit(ast).assert_equals(
+            Case(
+                value=1,
+                branches=[When(1, 2), When(Field("a"), Field("b"))],
+                else_=Else(Field("c")),
+            )
+        )
+
+        ast = get_parser(
+            "CASE WHEN 1 THEN 2 WHEN a THEN b ELSE c END"
+        ).primaryExpression()
+        assert isinstance(ast, SqlBaseParser.SearchedCaseContext)
+        self.visitor.visit(ast).assert_equals(
+            Case(
+                value=None,
+                branches=[When(1, 2), When(Field("a"), Field("b"))],
+                else_=Else(Field("c")),
             )
         )

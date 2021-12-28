@@ -24,8 +24,10 @@ from treeno.expression import (
     And,
     Array,
     Between,
+    Case,
     Cast,
     DistinctFrom,
+    Else,
     Field,
     InList,
     Interval,
@@ -40,6 +42,7 @@ from treeno.expression import (
     TryCast,
     TypeConstructor,
     Value,
+    When,
 )
 from treeno.functions.aggregate import (
     AggregateFunction,
@@ -409,6 +412,29 @@ class ConvertVisitor(SqlBaseVisitor):
     ) -> Value:
         return apply_operator(
             ctx.operator.text, self.visit(ctx.valueExpression())
+        )
+
+    @overrides
+    def visitSimpleCase(self, ctx: SqlBaseParser.SimpleCaseContext) -> Case:
+        whens = [self.visit(when_) for when_ in ctx.whenClause()]
+        value = self.visit(ctx.operand)
+        else_ = (
+            Else(self.visit(ctx.elseExpression)) if ctx.elseExpression else None
+        )
+        return Case(branches=whens, else_=else_, value=value)
+
+    @overrides
+    def visitSearchedCase(self, ctx: SqlBaseParser.SearchedCaseContext) -> Case:
+        whens = [self.visit(when_) for when_ in ctx.whenClause()]
+        else_ = (
+            Else(self.visit(ctx.elseExpression)) if ctx.elseExpression else None
+        )
+        return Case(branches=whens, else_=else_)
+
+    @overrides
+    def visitWhenClause(self, ctx: SqlBaseParser.WhenClauseContext) -> When:
+        return When(
+            condition=self.visit(ctx.condition), value=self.visit(ctx.result)
         )
 
     @overrides

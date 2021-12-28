@@ -9,7 +9,7 @@ from treeno.base import PrintMode, PrintOptions, Sql
 from treeno.datatypes.builder import unknown
 from treeno.datatypes.inference import infer_type
 from treeno.datatypes.types import DataType
-from treeno.printer import join_stmts
+from treeno.printer import join_stmts, pad
 from treeno.util import (
     chain_identifiers,
     children,
@@ -608,6 +608,45 @@ class Subscript(Expression):
 
     def sql(self, opts: PrintOptions) -> str:
         return f"{self.value.sql(opts)}[{self.index.sql(opts)}]"
+
+
+# These are not values by themselves and must be used in the context of `Case`.
+@attr.s
+class When(Sql):
+    condition: GenericValue = attr.ib(converter=wrap_literal)
+    value: GenericValue = attr.ib(converter=wrap_literal)
+
+    def sql(self, opts: PrintOptions):
+        return f"WHEN {self.condition.sql(opts)} THEN {self.value.sql(opts)}"
+
+
+@attr.s
+class Else(Sql):
+    value: GenericValue = attr.ib(converter=wrap_literal)
+
+    def sql(self, opts: PrintOptions):
+        return f"ELSE {self.value.sql(opts)}"
+
+
+@value_attr
+class Case(Expression):
+    branches: List[When] = attr.ib()
+    else_: Optional[Else] = attr.ib(default=None)
+    value: Optional[GenericValue] = attr.ib(
+        default=None, converter=attr.converters.optional(wrap_literal)
+    )
+
+    def sql(self, opts: PrintOptions) -> str:
+        spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
+        conds = self.branches
+        if self.else_:
+            conds = conds + [self.else_]
+        branches_string = pad(
+            spacing + spacing.join([cond.sql(opts) for cond in conds]), 4
+        )
+        end_string = spacing + "END"
+        value_string = self.value.sql(opts) if self.value is not None else ""
+        return f"CASE {value_string}{branches_string}{end_string}"
 
 
 # Operator precedence according to:
