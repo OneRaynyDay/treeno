@@ -107,8 +107,8 @@ def p4hll() -> types.DataType:
     return types.DataType(types.P4HLL)
 
 
-def qdigest() -> types.DataType:
-    return types.DataType(types.QDIGEST)
+def qdigest(**kwargs) -> types.DataType:
+    return types.DataType(types.QDIGEST, parameters=kwargs)
 
 
 def tdigest() -> types.DataType:

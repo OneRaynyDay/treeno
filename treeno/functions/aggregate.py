@@ -5,6 +5,20 @@ from typing import Any, ClassVar, List, Optional
 import attr
 
 from treeno.base import PrintMode, PrintOptions, Sql
+from treeno.datatypes import types as type_consts
+from treeno.datatypes.builder import (
+    array,
+    bigint,
+    boolean,
+    double,
+    hll,
+    map_,
+    qdigest,
+    tdigest,
+    unknown,
+    varbinary,
+    varchar,
+)
 from treeno.expression import (
     GenericValue,
     Star,
@@ -85,36 +99,67 @@ class BinaryStatsFunction(AggregateFunction, ABC):
     y: GenericValue = attr.ib(converter=wrap_literal)
     x: GenericValue = attr.ib(converter=wrap_literal)
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = double()
+
     def sql(self: GenericFunction, opts: PrintOptions) -> str:
         return self.to_string([self.y, self.x], opts)
 
 
+@value_attr
 class Sum(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "SUM"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
 
+
+@value_attr
 class Arbitrary(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "ARBITRARY"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
 
+
+@value_attr
 class ArrayAgg(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "ARRAY_AGG"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = array(dtype=self.value.data_type)
 
+
+@value_attr
 class Avg(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "AVG"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = double()
 
+
+@value_attr
 class BoolAnd(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "BOOL_AND"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
 
+
+@value_attr
 class BoolOr(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "BOOL_OR"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
 
+
+@value_attr
 class Checksum(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "CHECKSUM"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = varbinary()
 
 
 @value_attr
@@ -128,18 +173,31 @@ class Count(UnaryAggregateFunction):
                 not self.orderby
                 and self.null_treatment == NullTreatment.default()
             ), "COUNT(*) cannot be used with orderby and null treatment."
+        self.data_type = bigint()
 
 
+@value_attr
 class CountIf(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "COUNT_IF"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = bigint()
 
+
+@value_attr
 class Every(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "EVERY"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
 
+
+@value_attr
 class GeometricMean(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "GEOMETRIC_MEAN"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = double()
 
 
 class CountIndication(Enum):
@@ -178,6 +236,7 @@ class ListAgg(AggregateFunction):
         assert (
             self.orderby
         ), "LISTAGG requires the WITHIN GROUP(ORDER BY ...) clause"
+        self.data_type = varchar()
 
     def sql(self, opts: PrintOptions) -> str:
         value_string = self.value.sql(opts)
@@ -206,6 +265,9 @@ class Max(AggregateFunction):
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
+
     def sql(self, opts: PrintOptions) -> str:
         values = [self.value]
         if self.num_values:
@@ -222,6 +284,9 @@ class MaxBy(AggregateFunction):
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
+
     def sql(self, opts: PrintOptions) -> str:
         values = [self.value, self.max_by]
         if self.num_values:
@@ -236,6 +301,9 @@ class Min(AggregateFunction):
     num_values: Optional[GenericValue] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
 
     def sql(self, opts: PrintOptions) -> str:
         values = [self.value]
@@ -253,6 +321,9 @@ class MinBy(AggregateFunction):
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
+
     def sql(self, opts: PrintOptions) -> str:
         values = [self.value, self.max_by]
         if self.num_values:
@@ -264,15 +335,26 @@ class MinBy(AggregateFunction):
 class BitwiseAndAgg(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "BITWISE_AND_AGG"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = bigint()
+
 
 @value_attr
 class BitwiseOrAgg(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "BITWISE_OR_AGG"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = bigint()
+
 
 @value_attr
 class Histogram(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "HISTOGRAM"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = map_(
+            from_dtype=self.value.data_type, to_dtype=bigint()
+        )
 
 
 @value_attr
@@ -280,6 +362,11 @@ class MapAgg(AggregateFunction):
     FN_NAME: ClassVar[str] = "MAP_AGG"
     key: GenericValue = attr.ib(converter=wrap_literal)
     value: GenericValue = attr.ib(converter=wrap_literal)
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = map_(
+            from_dtype=self.key.data_type, to_dtype=self.value.data_type
+        )
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.key, self.value], opts)
@@ -289,12 +376,21 @@ class MapAgg(AggregateFunction):
 class MapUnion(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "MAP_UNION"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
+
 
 @value_attr
 class MultiMapAgg(AggregateFunction):
     FN_NAME: ClassVar[str] = "MULTIMAP_AGG"
     key: GenericValue = attr.ib(converter=wrap_literal)
     value: GenericValue = attr.ib(converter=wrap_literal)
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = map_(
+            from_dtype=self.key.data_type,
+            to_dtype=array(dtype=self.value.data_type),
+        )
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.key, self.value], opts)
@@ -307,6 +403,9 @@ class ApproxDistinct(AggregateFunction):
     epsilon: Optional[GenericValue] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = bigint()
 
     def sql(self, opts: PrintOptions) -> str:
         values = [self.key]
@@ -321,6 +420,11 @@ class ApproxMostFrequent(AggregateFunction):
     buckets: GenericValue = attr.ib(converter=wrap_literal)
     value: GenericValue = attr.ib(converter=wrap_literal)
     capacity: GenericValue = attr.ib(converter=wrap_literal)
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = map_(
+            from_dtype=self.value.data_type, to_dtype=bigint()
+        )
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.buckets, self.value, self.capacity], opts)
@@ -342,6 +446,16 @@ class ApproxPercentile(AggregateFunction):
             args = (args[1], args[0])
         self.__attrs_init__(value, *args, **kwargs)
 
+        # If percentage is an array, then we can be sure the output type is array
+        # otherwise if it's a scalar not-unknown type, then we know the output type is scalar.
+        # If we just don't know about the underlying data type then this should return unknown.
+        if self.percentage.data_type.type_name == type_consts.ARRAY:
+            self.data_type = array(dtype=self.value.data_type)
+        elif self.percentage.data_type != unknown():
+            self.data_type = self.value.data_type
+        else:
+            self.data_type = unknown()
+
     def sql(self, opts: PrintOptions) -> str:
         values = [self.value, self.percentage]
         if self.weight:
@@ -353,10 +467,22 @@ class ApproxPercentile(AggregateFunction):
 class ApproxSet(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "APPROX_SET"
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = hll()
+
 
 @value_attr
 class Merge(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "MERGE"
+
+    def __attrs_post_init__(self) -> None:
+        if (
+            self.value.data_type.type_name == type_consts.TDIGEST
+            or self.value.data_type.type_name == type_consts.QDIGEST
+        ):
+            self.data_type = self.value.data_type
+        else:
+            self.data_type = hll()
 
 
 @value_attr
@@ -367,6 +493,9 @@ class NumericHistogram(AggregateFunction):
     weight: Optional[GenericValue] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = map_(from_dtype=double(), to_dtype=double())
 
     def sql(self, opts: PrintOptions) -> str:
         values = [self.buckets, self.value]
@@ -386,6 +515,9 @@ class QDigestAgg(AggregateFunction):
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = qdigest(dtype=self.value.data_type)
+
     def sql(self, opts: PrintOptions) -> str:
         values = [self.value]
         if self.weight:
@@ -402,6 +534,9 @@ class TDigestAgg(AggregateFunction):
     weight: Optional[GenericValue] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = tdigest()
 
     def sql(self, opts: PrintOptions) -> str:
         values = [self.value]
@@ -473,3 +608,6 @@ class VarPop(UnaryAggregateFunction):
 @value_attr
 class VarSamp(UnaryAggregateFunction):
     FN_NAME: ClassVar[str] = "VAR_SAMP"
+
+
+# TODO: Add reduce()

@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Type, TypeVar, Union
 import attr
 
 from treeno.base import PrintMode, PrintOptions, Sql
-from treeno.datatypes.builder import boolean, unknown
+from treeno.datatypes.builder import array, boolean, interval, row, unknown
 from treeno.datatypes.inference import infer_type
 from treeno.datatypes.types import DataType
 from treeno.printer import join_stmts, pad
@@ -565,6 +565,10 @@ class Between(Expression):
 class Array(Expression):
     values: List[GenericValue] = attr.ib(converter=wrap_literal_list)
 
+    def __attrs_post_init__(self) -> None:
+        assert len(self.values), "values must be a non-empty list for Array"
+        self.data_type = array(dtype=self.values[0].data_type)
+
     @classmethod
     def from_values(cls, *vals: Any) -> "Array":
         return cls(vals)
@@ -623,6 +627,11 @@ class Like(Expression):
 class TypeConstructor(Expression):
     value: str = attr.ib()
 
+    def __attrs_post_init__(self) -> None:
+        assert (
+            self.data_type != unknown()
+        ), "data_type must be defined for TypeConstructor"
+
     def sql(self, opts: PrintOptions) -> str:
         # We aren't allowed to parametrize the types here.
         # There's an edge case where parametrizing timestamp with timezone=True is not in the parens notation
@@ -634,6 +643,9 @@ class TypeConstructor(Expression):
 @value_attr
 class RowConstructor(Expression):
     values: List[Value] = attr.ib()
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = row(dtypes=[value.data_type for value in self.values])
 
     def sql(self, opts: PrintOptions) -> str:
         values_string = join_stmts(
@@ -648,6 +660,18 @@ class Interval(Expression):
     from_interval: str = attr.ib()
     to_interval: Optional[str] = attr.ib(default=None)
 
+    def __attrs_post_init__(self) -> None:
+        if self.from_interval in ("YEAR", "MONTH"):
+            self.data_type = interval(from_interval="YEAR", to_interval="MONTH")
+        else:
+            assert self.from_interval in (
+                "DAY",
+                "HOUR",
+                "MINUTE",
+                "SECOND",
+            ), f"Unknown interval type {self.from_interval}"
+            self.data_type = interval(from_interval="DAY", to_interval="SECOND")
+
     def sql(self, opts: PrintOptions) -> str:
         to_interval_str = f" TO {self.to_interval}" if self.to_interval else ""
         return f"INTERVAL {self.value} {self.from_interval}" + to_interval_str
@@ -657,6 +681,11 @@ class Interval(Expression):
 class Cast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
 
+    def __attrs_post_init__(self) -> None:
+        # TODO: We should probably just set init=False to attr.s and force them to input the data type as a positional
+        # argument. This is a temporary workaround.
+        assert self.data_type != unknown(), "data_type must be defined for Cast"
+
     def sql(self, opts: PrintOptions) -> str:
         return f"CAST({self.expr.sql(opts)} AS {self.data_type.sql(opts)})"
 
@@ -664,6 +693,11 @@ class Cast(Expression):
 @value_attr
 class TryCast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
+
+    def __attrs_post_init__(self):
+        assert (
+            self.data_type != unknown()
+        ), "data_type must be defined for TryCast"
 
     def sql(self, opts: PrintOptions) -> str:
         return f"TRY_CAST({self.expr.sql(opts)} AS {self.data_type.sql(opts)})"

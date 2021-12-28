@@ -1,7 +1,9 @@
-from typing import List, Any, Optional, Callable, Dict
 from collections import defaultdict
-from treeno.base import Sql, PrintOptions
+from typing import Any, Callable, Dict, List, Optional
+
 import attr
+
+from treeno.base import PrintOptions, Sql
 
 (
     BOOLEAN,
@@ -180,7 +182,7 @@ def validate_timelike(timelike: DataType) -> None:
         ), f"Precision of {precision} is not supported"
 
 
-def validate_array(row: DataType) -> None:
+def validate_single_dtype_parameter(row: DataType) -> None:
     data_type = row.parameters["dtype"]
     assert isinstance(data_type, DataType)
 
@@ -266,6 +268,7 @@ FIELDS: Dict[str, List[TypeParameter]] = defaultdict(
             TypeParameter("from_interval", required=True, type=str),
             TypeParameter("to_interval", required=True, type=str),
         ],
+        QDIGEST: [TypeParameter("dtype", required=True, type=DataType)],
     },
 )
 
@@ -284,12 +287,12 @@ VALIDATORS: Dict[str, Callable[[DataType], None]] = {
     UUID: validate_nonparametric,
     HLL: validate_nonparametric,
     P4HLL: validate_nonparametric,
-    QDIGEST: validate_nonparametric,
     TDIGEST: validate_nonparametric,
     UNKNOWN: validate_nonparametric,
     TIME: validate_timelike,
     TIMESTAMP: validate_timelike,
-    ARRAY: validate_array,
+    QDIGEST: validate_single_dtype_parameter,
+    ARRAY: validate_single_dtype_parameter,
     MAP: validate_map,
     ROW: validate_row,
     INTERVAL: validate_interval,

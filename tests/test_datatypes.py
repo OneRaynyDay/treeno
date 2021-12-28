@@ -1,5 +1,7 @@
 import unittest
+
 import pytest
+
 from treeno.datatypes.builder import (
     array,
     bigint,
@@ -46,8 +48,11 @@ class TestNonparametricTypes(unittest.TestCase):
         assert str(uuid()) == "UUID"
         assert str(hll()) == "HYPERLOGLOG"
         assert str(p4hll()) == "P4HYPERLOGLOG"
-        assert str(qdigest()) == "QDIGEST"
         assert str(tdigest()) == "TDIGEST"
+
+    def test_qdigest(self):
+        # TODO: Add limitations on what qdigest types can actually be (I know it can't be varchar nor bigint)
+        assert str(qdigest(dtype=double())) == "QDIGEST(DOUBLE)"
 
     def test_decimal(self):
         assert str(decimal()) == "DECIMAL(38,0)"
