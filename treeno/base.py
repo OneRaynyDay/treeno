@@ -21,6 +21,7 @@ class PrintOptions:
         return PrintOptions(pretty=self.pretty, spaces=self.spaces + 4)
 
 
+@attr.s
 class Sql(ABC):
     @abstractmethod
     def sql(self, print_options: PrintOptions):
@@ -32,7 +33,7 @@ class Sql(ABC):
         # Default print options
         return self.sql(PrintOptions())
 
-    def equals(self, other):
+    def assert_equals(self, other):
         """Because we've overridden __eq__, we can no longer use that to test equality on objects. We use attr.asdict
         to make sure the fields are completely collapsed.
         TODO: However, this doesn't completely test equality as the type of the class doesn't show up, so we have to
@@ -40,10 +41,7 @@ class Sql(ABC):
         """
         self_dict = attr.asdict(self)
         other_dict = attr.asdict(other)
-        if self_dict != other_dict:
-            print(self_dict)
-            print(other_dict)
-        return self_dict == other_dict
+        assert self_dict == other_dict
 
 
 class SetQuantifier(Enum):

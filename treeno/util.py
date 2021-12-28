@@ -1,5 +1,9 @@
 import itertools
-from typing import Optional, Any, Iterable, TypeVar
+from typing import Any, Dict, Iterable, Optional, TypeVar
+
+import attr
+
+from treeno.base import Sql
 
 T = TypeVar("T")
 
@@ -31,3 +35,20 @@ def quote_literal(literal: str) -> str:
 def nth(iterable: Iterable[T], n: int, default: Optional[T] = None) -> T:
     "Returns the nth item or a default value"
     return next(itertools.islice(iterable, n, None), default)
+
+
+def is_listlike(var: Any) -> bool:
+    return isinstance(var, (tuple, list, set, frozenset))
+
+
+def is_dictlike(var: Any) -> bool:
+    return isinstance(var, dict)
+
+
+def construct_type(var: T, it: Iterable[Any]) -> T:
+    return type(var)(it)
+
+
+def children(sql: Sql, recursive: bool = False) -> Dict[str, Any]:
+    fields_dict = attr.fields_dict(type(sql))
+    return {field_name: getattr(sql, field_name) for field_name in fields_dict}

@@ -10,7 +10,15 @@ from treeno.datatypes.builder import unknown
 from treeno.datatypes.inference import infer_type
 from treeno.datatypes.types import DataType
 from treeno.printer import join_stmts
-from treeno.util import chain_identifiers, parenthesize, quote_literal
+from treeno.util import (
+    chain_identifiers,
+    children,
+    construct_type,
+    is_dictlike,
+    is_listlike,
+    parenthesize,
+    quote_literal,
+)
 
 GenericValue = TypeVar("GenericValue", bound="Value")
 
@@ -213,8 +221,39 @@ class Lambda(Expression):
     def __attrs_post_init__(self):
         assert len(set(input.name for input in self.inputs)) == len(self.inputs)
 
+    @classmethod
+    def from_generic_expr(
+        cls, inputs: List[Variable], expr: GenericValue
+    ) -> "Lambda":
+        input_set = set(input.name for input in inputs)
+
+        def _from_expr(node: Any) -> Any:
+            if is_listlike(node):
+                return construct_type(
+                    node, iter(_from_expr(child) for child in node)
+                )
+            if is_dictlike(node):
+                return construct_type(
+                    node,
+                    iter((k, _from_expr(child)) for k, child in node.items()),
+                )
+            if not isinstance(node, Sql):
+                return node
+            if (
+                isinstance(node, Field)
+                and node.table is None
+                and node.name in input_set
+            ):
+                return cls.Variable(node.name)
+            changes = {}
+            for k, v in children(node).items():
+                changes[k] = _from_expr(v)
+            return attr.evolve(node, **changes)
+
+        return cls(inputs, _from_expr(expr))
+
     def sql(self, opts: PrintOptions) -> str:
-        input_string = join_stmts(self.inputs, opts)
+        input_string = join_stmts([var.sql(opts) for var in self.inputs], opts)
         if len(self.inputs) > 1:
             input_string = parenthesize(input_string)
         return f"{input_string} -> {self.expr.sql(opts)}"

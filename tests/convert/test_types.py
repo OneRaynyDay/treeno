@@ -37,7 +37,7 @@ class TestDataTypes(VisitorTest):
             ast = get_parser(t).type_()
             assert isinstance(ast, SqlBaseParser.Type_Context)
             type_obj = DataType(t)
-            assert self.visitor.visit(ast) == type_obj
+            self.visitor.visit(ast).assert_equals(type_obj)
 
     def test_decimal_type(self):
         # Decimal is a bit of a special case - DECIMAL is syntactic sugar for DECIMAL(38, 0), which is max precision
@@ -45,34 +45,34 @@ class TestDataTypes(VisitorTest):
         ast = get_parser("DECIMAL").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = decimal(precision=38, scale=0)
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
         ast = get_parser("DECIMAL(30)").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = decimal(precision=30, scale=0)
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
         ast = get_parser("DECIMAL(30, 10)").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = decimal(precision=30, scale=10)
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
     def test_row_type(self):
         ast = get_parser("ROW(BIGINT, DECIMAL(30), VARCHAR)").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = row(dtypes=[bigint(), decimal(precision=30), varchar()])
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
     def test_interval_type(self):
         ast = get_parser("INTERVAL YEAR TO MONTH").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = interval(from_interval="YEAR", to_interval="MONTH")
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
         ast = get_parser("INTERVAL DAY TO SECOND").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = interval(from_interval="DAY", to_interval="SECOND")
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
         # some intervals aren't available right now in Trino:
         ast = get_parser("INTERVAL MONTH TO SECOND").type_()
@@ -86,37 +86,37 @@ class TestDataTypes(VisitorTest):
         ast = get_parser("ARRAY(BIGINT)").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = array(dtype=bigint())
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
     def test_map_type(self):
         ast = get_parser("MAP(BIGINT, VARCHAR)").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = map_(from_dtype=bigint(), to_dtype=varchar())
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
     def test_datetime_type(self):
         ast = get_parser("TIMESTAMP").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = timestamp(timezone=False)
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
         ast = get_parser("TIMESTAMP(9)").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = timestamp(precision=9, timezone=False)
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
         ast = get_parser("TIMESTAMP WITH TIME ZONE").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = timestamp(timezone=True)
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
         ast = get_parser("TIMESTAMP(9) WITH TIME ZONE").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = timestamp(precision=9, timezone=True)
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)
 
     def test_double_precision_type(self):
         ast = get_parser("DOUBLE PRECISION").type_()
         assert isinstance(ast, SqlBaseParser.Type_Context)
         type_obj = double()
-        assert self.visitor.visit(ast) == type_obj
+        self.visitor.visit(ast).assert_equals(type_obj)

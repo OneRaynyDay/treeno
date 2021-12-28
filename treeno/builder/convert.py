@@ -718,10 +718,11 @@ class ConvertVisitor(SqlBaseVisitor):
     @overrides
     def visitLambda_(self, ctx: SqlBaseParser.Lambda_Context) -> Lambda:
         # TODO: We have to implement better tree traversal to get this to work.
-        # variables = [Lambda.Variable(self.visit(identifier)) for identifier in ctx.identifier()]
-        # lambda_expression = Lambda.reassign(variables, self.visit(ctx.expression()))
-        # return Lambda(variables, lambda_expression)
-        raise NotImplementedError()
+        variables = [
+            Lambda.Variable(self.visit(identifier))
+            for identifier in ctx.identifier()
+        ]
+        return Lambda.from_generic_expr(variables, self.visit(ctx.expression()))
 
     @overrides
     def visitNullTreatment(

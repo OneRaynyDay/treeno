@@ -14,7 +14,7 @@ class TestOrderTerms(VisitorTest):
             order_type=OrderType.ASC,
             null_order=NullOrder.LAST,
         )
-        assert self.visitor.visit(ast) == order_term
+        self.visitor.visit(ast).assert_equals(order_term)
 
     def test_order_term_specified(self):
         ast = get_parser("a ASC").sortItem()
@@ -24,7 +24,7 @@ class TestOrderTerms(VisitorTest):
             order_type=OrderType.ASC,
             null_order=NullOrder.LAST,
         )
-        assert self.visitor.visit(ast) == order_term
+        self.visitor.visit(ast).assert_equals(order_term)
 
         ast = get_parser("a DESC").sortItem()
         assert isinstance(ast, SqlBaseParser.SortItemContext)
@@ -33,7 +33,7 @@ class TestOrderTerms(VisitorTest):
             order_type=OrderType.DESC,
             null_order=NullOrder.LAST,
         )
-        assert self.visitor.visit(ast) == order_term
+        self.visitor.visit(ast).assert_equals(order_term)
 
     def test_order_term_nulls(self):
         ast = get_parser("a NULLS FIRST").sortItem()
@@ -43,7 +43,7 @@ class TestOrderTerms(VisitorTest):
             order_type=OrderType.ASC,
             null_order=NullOrder.FIRST,
         )
-        assert self.visitor.visit(ast) == order_term
+        self.visitor.visit(ast).assert_equals(order_term)
 
         ast = get_parser("a DESC NULLS LAST").sortItem()
         assert isinstance(ast, SqlBaseParser.SortItemContext)
@@ -52,4 +52,4 @@ class TestOrderTerms(VisitorTest):
             order_type=OrderType.DESC,
             null_order=NullOrder.LAST,
         )
-        assert self.visitor.visit(ast) == order_term
+        self.visitor.visit(ast).assert_equals(order_term)
