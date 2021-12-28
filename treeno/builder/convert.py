@@ -448,9 +448,9 @@ class ConvertVisitor(SqlBaseVisitor):
         expr = self.visit(ctx.expression())
         output_type = self.visit(ctx.type_())
         if ctx.CAST():
-            return Cast(expr=expr, type=output_type)
+            return Cast(expr=expr, data_type=output_type)
         if ctx.TRY_CAST():
-            return TryCast(expr=expr, type=output_type)
+            return TryCast(expr=expr, data_type=output_type)
 
     @overrides
     def visitGenericType(
@@ -722,7 +722,7 @@ class ConvertVisitor(SqlBaseVisitor):
         # which means we can assume it's a generic nonparametrized data type.
         return TypeConstructor(
             self.visit(ctx.string()),
-            type=DataType(self.visit(ctx.identifier())),
+            data_type=DataType(self.visit(ctx.identifier())),
         )
 
     @overrides

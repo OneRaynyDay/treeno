@@ -115,12 +115,14 @@ class TestFunctions(VisitorTest):
     def test_cast(self):
         ast = get_parser("CAST(1 AS BIGINT)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.CastContext)
-        cast_expr = Cast(Literal(1, data_type=integer()), bigint())
+        cast_expr = Cast(Literal(1, data_type=integer()), data_type=bigint())
         self.visitor.visit(ast).assert_equals(cast_expr)
 
         ast = get_parser("TRY_CAST(1 AS BIGINT)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.CastContext)
-        try_cast_expr = TryCast(Literal(1, data_type=integer()), bigint())
+        try_cast_expr = TryCast(
+            Literal(1, data_type=integer()), data_type=bigint()
+        )
         self.visitor.visit(ast).assert_equals(try_cast_expr)
 
     def test_subscript(self):
@@ -297,17 +299,21 @@ class TestConstructorExprs(VisitorTest):
     def test_type_constructor(self):
         ast = get_parser("DECIMAL '3.0'").primaryExpression()
         assert isinstance(ast, SqlBaseParser.TypeConstructorContext)
-        self.visitor.visit(ast).assert_equals(TypeConstructor("3.0", decimal()))
+        self.visitor.visit(ast).assert_equals(
+            TypeConstructor("3.0", data_type=decimal())
+        )
 
         ast = get_parser("TIMESTAMP '2021-01-01 00:00:01'").primaryExpression()
         assert isinstance(ast, SqlBaseParser.TypeConstructorContext)
         self.visitor.visit(ast).assert_equals(
-            TypeConstructor("2021-01-01 00:00:01", timestamp())
+            TypeConstructor("2021-01-01 00:00:01", data_type=timestamp())
         )
 
         ast = get_parser("BIGINT '3'").primaryExpression()
         assert isinstance(ast, SqlBaseParser.TypeConstructorContext)
-        self.visitor.visit(ast).assert_equals(TypeConstructor("3", bigint()))
+        self.visitor.visit(ast).assert_equals(
+            TypeConstructor("3", data_type=bigint())
+        )
 
         ast_double = get_parser("DOUBLE '3'").primaryExpression()
         assert isinstance(ast_double, SqlBaseParser.TypeConstructorContext)
@@ -321,7 +327,7 @@ class TestConstructorExprs(VisitorTest):
             self.visitor.visit(ast_double)
         )
         self.visitor.visit(ast_double).assert_equals(
-            TypeConstructor("3", double())
+            TypeConstructor("3", data_type=double())
         )
 
     def test_row_constructor(self):

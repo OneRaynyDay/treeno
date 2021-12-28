@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Type, TypeVar, Union
 import attr
 
 from treeno.base import PrintMode, PrintOptions, Sql
-from treeno.datatypes.builder import unknown
+from treeno.datatypes.builder import boolean, unknown
 from treeno.datatypes.inference import infer_type
 from treeno.datatypes.types import DataType
 from treeno.printer import join_stmts, pad
@@ -157,6 +157,7 @@ class AliasedValue(Value):
         assert not isinstance(
             self.value, Star
         ), "Stars cannot have aliases. Consider using AliasedStar"
+        self.data_type = self.value.data_type
 
     def sql(self, opts: PrintOptions) -> str:
         return f'{self.value.sql(opts)} "{self.alias}"'
@@ -196,6 +197,9 @@ class AliasedStar(Value):
 
     star: Star = attr.ib()
     aliases: List[str] = attr.ib()
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.star.data_type
 
     def sql(self, opts: PrintOptions) -> str:
         alias_str = join_stmts(self.aliases, opts)
@@ -348,37 +352,53 @@ class UnaryExpression(Expression, ABC):
     value: GenericValue = attr.ib(converter=wrap_literal)
 
 
+@value_attr
 class Positive(UnaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_unary_str(self, "+{value}", opts)
 
 
+@value_attr
 class Negative(UnaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_unary_str(self, "-{value}", opts)
 
 
+@value_attr
 class Add(BinaryExpression):
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} + {right}", opts)
 
 
+@value_attr
 class Minus(BinaryExpression):
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} - {right}", opts)
 
 
+@value_attr
 class Multiply(BinaryExpression):
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} * {right}", opts)
 
 
+@value_attr
 class Divide(BinaryExpression):
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} / {right}", opts)
 
 
+@value_attr
 class Not(UnaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def sql(self, opts: PrintOptions) -> str:
         # Specializations on Not
         if isinstance(
@@ -390,17 +410,23 @@ class Not(UnaryExpression):
         return builtin_unary_str(self, "NOT {value}", opts)
 
 
+@value_attr
 class Power(BinaryExpression):
     def sql(self, opts: PrintOptions) -> str:
         return call_str("POWER", self.left, self.right)
 
 
+@value_attr
 class Modulus(BinaryExpression):
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} % {right}", opts)
 
 
+@value_attr
 class Equal(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def to_string(self, opts: PrintOptions, negate: bool = False) -> str:
         if negate:
             return NotEqual(self.left, self.right).sql(opts)
@@ -410,7 +436,11 @@ class Equal(BinaryExpression):
         return self.to_string(opts, negate=False)
 
 
+@value_attr
 class NotEqual(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def to_string(self, opts: PrintOptions, negate: bool = False) -> str:
         if negate:
             return str(Equal(self.left, self.right))
@@ -420,27 +450,47 @@ class NotEqual(BinaryExpression):
         return self.to_string(opts, negate=False)
 
 
+@value_attr
 class GreaterThan(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} > {right}", opts)
 
 
+@value_attr
 class GreaterThanOrEqual(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} >= {right}", opts)
 
 
+@value_attr
 class LessThan(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} < {right}", opts)
 
 
+@value_attr
 class LessThanOrEqual(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} <= {right}", opts)
 
 
+@value_attr
 class And(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def sql(self, opts: PrintOptions) -> str:
         # According to the specifications, AND and OR should be on the next line if we're in pretty mode
         spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
@@ -449,13 +499,21 @@ class And(BinaryExpression):
         )
 
 
+@value_attr
 class Or(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def sql(self, opts: PrintOptions) -> str:
         spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
         return builtin_binary_str(self, "{left}" + spacing + "OR {right}", opts)
 
 
+@value_attr
 class IsNull(UnaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def to_string(self, opts: PrintOptions, negate: bool = False):
         return builtin_unary_str(
             self, "{value} IS NOT NULL" if negate else "{value} IS NULL", opts
@@ -465,7 +523,11 @@ class IsNull(UnaryExpression):
         return self.to_string(opts, negate=False)
 
 
+@value_attr
 class DistinctFrom(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def to_string(self, opts: PrintOptions, negate: bool = False):
         return builtin_unary_str(
             self,
@@ -484,6 +546,9 @@ class Between(Expression):
     value: GenericValue = attr.ib(converter=wrap_literal)
     lower: GenericValue = attr.ib(converter=wrap_literal)
     upper: GenericValue = attr.ib(converter=wrap_literal)
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
 
     def to_string(self, opts: PrintOptions, negate: bool = False) -> str:
         between_string = pemdas_str(type(self), self.value, opts)
@@ -514,6 +579,9 @@ class InList(Expression):
     value: GenericValue = attr.ib(converter=wrap_literal)
     exprs: List[GenericValue] = attr.ib(converter=wrap_literal_list)
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def to_string(self, opts: PrintOptions, negate: bool = False) -> str:
         expr_list = join_stmts([expr.sql(opts) for expr in self.exprs], opts)
         in_list_string = pemdas_str(type(self), self.value, opts)
@@ -534,6 +602,9 @@ class Like(Expression):
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
     def to_string(self, opts: PrintOptions, negate: bool = False) -> str:
         like_str = pemdas_str(type(self), self.value, opts)
         if negate:
@@ -551,14 +622,13 @@ class Like(Expression):
 @value_attr
 class TypeConstructor(Expression):
     value: str = attr.ib()
-    type: DataType = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
         # We aren't allowed to parametrize the types here.
         # There's an edge case where parametrizing timestamp with timezone=True is not in the parens notation
         # but that also fails for this(since the parser recognizes a single string as the type) which means we
         # can just take the type name.
-        return f"{self.type.type_name} {quote_literal(self.value)}"
+        return f"{self.data_type.type_name} {quote_literal(self.value)}"
 
 
 @value_attr
@@ -586,19 +656,17 @@ class Interval(Expression):
 @value_attr
 class Cast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
-    type: DataType = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        return f"CAST({self.expr.sql(opts)} AS {self.type.sql(opts)})"
+        return f"CAST({self.expr.sql(opts)} AS {self.data_type.sql(opts)})"
 
 
 @value_attr
 class TryCast(Expression):
     expr: GenericValue = attr.ib(converter=wrap_literal)
-    type: DataType = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        return f"TRY_CAST({self.expr.sql(opts)} AS {self.type.sql(opts)})"
+        return f"TRY_CAST({self.expr.sql(opts)} AS {self.data_type.sql(opts)})"
 
 
 @value_attr
@@ -616,6 +684,9 @@ class When(Sql):
     condition: GenericValue = attr.ib(converter=wrap_literal)
     value: GenericValue = attr.ib(converter=wrap_literal)
 
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
+
     def sql(self, opts: PrintOptions):
         return f"WHEN {self.condition.sql(opts)} THEN {self.value.sql(opts)}"
 
@@ -623,6 +694,9 @@ class When(Sql):
 @attr.s
 class Else(Sql):
     value: GenericValue = attr.ib(converter=wrap_literal)
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
 
     def sql(self, opts: PrintOptions):
         return f"ELSE {self.value.sql(opts)}"
@@ -635,6 +709,12 @@ class Case(Expression):
     value: Optional[GenericValue] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
+
+    def __attrs_post_init__(self) -> None:
+        assert len(
+            self.branches
+        ), "There must be at least one WHEN condition in a CASE"
+        self.data_type = self.branches[0].data_type
 
     def sql(self, opts: PrintOptions) -> str:
         spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
