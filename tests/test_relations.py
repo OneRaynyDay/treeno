@@ -1,8 +1,17 @@
 import unittest
-from treeno.base import PrintOptions, PrintMode
-from treeno.relation import Table, TableQuery, ValuesQuery
+
+from treeno.base import PrintMode, PrintOptions
+from treeno.expression import Array, Field, wrap_literal
 from treeno.orderby import OrderTerm, OrderType
-from treeno.expression import Field, wrap_literal
+from treeno.relation import (
+    Lateral,
+    SampleType,
+    Table,
+    TableQuery,
+    TableSample,
+    Unnest,
+    ValuesQuery,
+)
 
 
 class TestRelations(unittest.TestCase):
@@ -56,6 +65,32 @@ class TestRelations(unittest.TestCase):
             '  WITH "foo" AS (\n       TABLE "foo")\n'
             "VALUES 1,2,3\n"
             "OFFSET 3"
+        )
+
+    def test_tablesample(self):
+        table_sample = TableSample(
+            Table(name="table"), SampleType.BERNOULLI, wrap_literal(0.3)
+        )
+        assert (
+            table_sample.sql(PrintOptions(mode=PrintMode.DEFAULT))
+            == table_sample.sql(PrintOptions(mode=PrintMode.PRETTY))
+            == '"table" TABLESAMPLE BERNOULLI(0.3)'
+        )
+
+    def test_lateral(self):
+        lateral = Lateral(TableQuery(Table(name="table")))
+        assert (
+            lateral.sql(PrintOptions(mode=PrintMode.DEFAULT))
+            == lateral.sql(PrintOptions(mode=PrintMode.PRETTY))
+            == 'LATERAL(TABLE "table")'
+        )
+
+    def test_unnest(self):
+        unnest = Unnest([Array([wrap_literal(1)])])
+        assert (
+            unnest.sql(PrintOptions(mode=PrintMode.DEFAULT))
+            == unnest.sql(PrintOptions(mode=PrintMode.PRETTY))
+            == "UNNEST(ARRAY[1])"
         )
 
 

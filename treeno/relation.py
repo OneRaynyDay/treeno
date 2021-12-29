@@ -300,4 +300,23 @@ class Lateral(Relation):
     subquery: Query = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        return f"LATERAL ({self.subquery.sql(opts)})"
+        return f"LATERAL({self.subquery.sql(opts)})"
+
+
+class SampleType(Enum):
+    BERNOULLI = "BERNOULLI"
+    SYSTEM = "SYSTEM"
+
+
+@attr.s
+class TableSample(Relation):
+    """Represents a sampled table/subquery
+    TODO: We should do some checks that a TableSample can't contain a Join relation for example.
+    """
+
+    relation: Relation = attr.ib()
+    sample_type: SampleType = attr.ib()
+    percentage: Value = attr.ib()
+
+    def sql(self, opts: PrintOptions) -> str:
+        return f"{self.relation.sql(opts)} TABLESAMPLE {self.sample_type.value}({self.percentage.sql(opts)})"

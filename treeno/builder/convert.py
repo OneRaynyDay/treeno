@@ -73,10 +73,12 @@ from treeno.relation import (
     Lateral,
     Query,
     Relation,
+    SampleType,
     SelectQuery,
     SetQuantifier,
     Table,
     TableQuery,
+    TableSample,
     Unnest,
     ValuesQuery,
 )
@@ -1022,10 +1024,19 @@ class ConvertVisitor(SqlBaseVisitor):
         self, ctx: SqlBaseParser.SampledRelationContext
     ) -> Relation:
         relation = self.visit(ctx.patternRecognition())
-        # TODO: Implement table sample
-        table_sample = ctx.sampleType()
-        assert not table_sample, "Tample samples are not supported"
+        if ctx.TABLESAMPLE():
+            return TableSample(
+                relation,
+                self.visit(ctx.sampleType()),
+                self.visit(ctx.percentage),
+            )
         return relation
+
+    @overrides
+    def visitSampleType(
+        self, ctx: SqlBaseParser.SampleTypeContext
+    ) -> SampleType:
+        return SampleType[ctx.getText()]
 
     @overrides
     def visitPatternRecognition(
