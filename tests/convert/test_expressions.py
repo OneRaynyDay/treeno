@@ -300,19 +300,19 @@ class TestConstructorExprs(VisitorTest):
         ast = get_parser("DECIMAL '3.0'").primaryExpression()
         assert isinstance(ast, SqlBaseParser.TypeConstructorContext)
         self.visitor.visit(ast).assert_equals(
-            TypeConstructor("3.0", data_type=decimal())
+            TypeConstructor("3.0", type_name="DECIMAL")
         )
 
         ast = get_parser("TIMESTAMP '2021-01-01 00:00:01'").primaryExpression()
         assert isinstance(ast, SqlBaseParser.TypeConstructorContext)
         self.visitor.visit(ast).assert_equals(
-            TypeConstructor("2021-01-01 00:00:01", data_type=timestamp())
+            TypeConstructor("2021-01-01 00:00:01", type_name="TIMESTAMP")
         )
 
         ast = get_parser("BIGINT '3'").primaryExpression()
         assert isinstance(ast, SqlBaseParser.TypeConstructorContext)
         self.visitor.visit(ast).assert_equals(
-            TypeConstructor("3", data_type=bigint())
+            TypeConstructor("3", type_name="BIGINT")
         )
 
         ast_double = get_parser("DOUBLE '3'").primaryExpression()
@@ -327,7 +327,7 @@ class TestConstructorExprs(VisitorTest):
             self.visitor.visit(ast_double)
         )
         self.visitor.visit(ast_double).assert_equals(
-            TypeConstructor("3", data_type=double())
+            TypeConstructor("3", type_name="DOUBLE")
         )
 
     def test_row_constructor(self):

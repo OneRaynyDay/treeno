@@ -6,8 +6,23 @@ from typing import Any, List, Optional, Type, TypeVar, Union
 import attr
 
 from treeno.base import PrintMode, PrintOptions, Sql
-from treeno.datatypes.builder import array, boolean, interval, row, unknown
-from treeno.datatypes.inference import infer_type
+from treeno.datatypes import types as type_consts
+from treeno.datatypes.builder import (
+    array,
+    boolean,
+    double,
+    interval,
+    row,
+    time,
+    timestamp,
+    unknown,
+)
+from treeno.datatypes.conversions import get_arithmetic_type
+from treeno.datatypes.inference import (
+    infer_decimal,
+    infer_timelike_precision,
+    infer_type,
+)
 from treeno.datatypes.types import DataType
 from treeno.printer import join_stmts, pad
 from treeno.util import (
@@ -372,24 +387,53 @@ class Negative(UnaryExpression):
 
 @value_attr
 class Add(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = get_arithmetic_type(
+            self.left.data_type, self.right.data_type
+        )
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} + {right}", opts)
 
 
 @value_attr
 class Minus(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = get_arithmetic_type(
+            self.left.data_type, self.right.data_type
+        )
+        # Special minus operators for datetimes
+        left_name, right_name = (
+            self.left.data_type.type_name,
+            self.right.data_type.type_name,
+        )
+        if {left_name, right_name}.issubset(
+            {type_consts.TIMESTAMP, type_consts.DATE}
+        ) or left_name == right_name == type_consts.TIME:
+            self.data_type = interval(from_interval="DAY", to_interval="SECOND")
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} - {right}", opts)
 
 
 @value_attr
 class Multiply(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = get_arithmetic_type(
+            self.left.data_type, self.right.data_type
+        )
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} * {right}", opts)
 
 
 @value_attr
 class Divide(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = get_arithmetic_type(
+            self.left.data_type, self.right.data_type
+        )
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} / {right}", opts)
 
@@ -412,12 +456,20 @@ class Not(UnaryExpression):
 
 @value_attr
 class Power(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = double()
+
     def sql(self, opts: PrintOptions) -> str:
         return call_str("POWER", self.left, self.right)
 
 
 @value_attr
 class Modulus(BinaryExpression):
+    def __attrs_post_init__(self) -> None:
+        self.data_type = get_arithmetic_type(
+            self.left.data_type, self.right.data_type
+        )
+
     def sql(self, opts: PrintOptions) -> str:
         return builtin_binary_str(self, "{left} % {right}", opts)
 
@@ -626,18 +678,29 @@ class Like(Expression):
 @value_attr
 class TypeConstructor(Expression):
     value: str = attr.ib()
+    type_name: str = attr.ib(converter=str.upper)
 
     def __attrs_post_init__(self) -> None:
-        assert (
-            self.data_type != unknown()
-        ), "data_type must be defined for TypeConstructor"
+        # This can't be timezoned, so we ignore that
+        if self.type_name == type_consts.TIMESTAMP:
+            self.data_type = timestamp(
+                precision=infer_timelike_precision(self.value)
+            )
+        if self.type_name == type_consts.TIME:
+            self.data_type = time(
+                precision=infer_timelike_precision(self.value)
+            )
+        elif self.type_name == type_consts.DECIMAL:
+            self.data_type = infer_decimal(Decimal(self.value))
+        else:
+            self.data_type = DataType(self.type_name)
 
     def sql(self, opts: PrintOptions) -> str:
         # We aren't allowed to parametrize the types here.
         # There's an edge case where parametrizing timestamp with timezone=True is not in the parens notation
         # but that also fails for this(since the parser recognizes a single string as the type) which means we
         # can just take the type name.
-        return f"{self.data_type.type_name} {quote_literal(self.value)}"
+        return f"{self.type_name} {quote_literal(self.value)}"
 
 
 @value_attr

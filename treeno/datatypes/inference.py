@@ -3,16 +3,17 @@
 Should not be used in datatypes.types to prevent circular imports
 """
 from decimal import Decimal
-from treeno.datatypes.types import DataType
+from typing import Any
+
 from treeno.datatypes.builder import (
-    boolean,
-    integer,
     bigint,
+    boolean,
     decimal,
     double,
+    integer,
     varchar,
 )
-from typing import Any
+from treeno.datatypes.types import DataType
 
 
 def infer_type(value: Any) -> DataType:
@@ -55,3 +56,12 @@ def infer_decimal(decimal_value: Decimal) -> DataType:
             precision=len(str_val) - 1,
             scale=len(str_val) - decimal_point_pos - 1,
         )
+
+
+def infer_timelike_precision(value: str) -> 0:
+    # TODO: Use a datetime util for this at some point. Currently datetime in python only supports microseconds :(
+    # Number of digits past the dot is its precision
+    if "." not in value:
+        return 0
+    # In case we have timezone
+    return len(value.rsplit(".")[-1].split(" ")[0])

@@ -717,15 +717,14 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitTypeConstructor(
         self, ctx: SqlBaseParser.TypeConstructorContext
     ) -> Literal:
+        value = self.visit(ctx.string())
         if ctx.DOUBLE() and ctx.PRECISION():
-            return TypeConstructor(self.visit(ctx.string(), type=double()))
+            return TypeConstructor(value, data_type=double())
         # It appears the type constructor is fairly primitive in that it doesn't allow parametrized types, like
         # SELECT DECIMAL(30) '3'
-        # which means we can assume it's a generic nonparametrized data type.
-        return TypeConstructor(
-            self.visit(ctx.string()),
-            data_type=DataType(self.visit(ctx.identifier())),
-        )
+        # which means we can assume it's a generic(but inferred) nonparametrized data type.
+        type_name = self.visit(ctx.identifier())
+        return TypeConstructor(value=value, type_name=type_name)
 
     @overrides
     def visitFunctionCall(
