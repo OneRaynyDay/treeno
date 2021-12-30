@@ -1,14 +1,6 @@
 import pytest
 
-from treeno.datatypes.builder import (
-    bigint,
-    boolean,
-    decimal,
-    double,
-    integer,
-    timestamp,
-    varchar,
-)
+from treeno.datatypes.builder import bigint, boolean, integer, varchar
 from treeno.expression import (
     Add,
     And,
