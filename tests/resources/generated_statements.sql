@@ -25,3 +25,4 @@ SELECT SUM("a") OVER (PARTITION BY "date" ORDER BY "timestamp" ROWS BETWEEN 5 PR
 SELECT "a" FROM (SELECT "a","b" FROM (SELECT "a","b","c" FROM "t"));
 WITH "foo" AS (SELECT "a","b" FROM "t") SELECT "foo"."a","t"."b" FROM "t" INNER JOIN "foo" ON "foo"."a" = "t"."b";
 SELECT SUM("a" ORDER BY "b","c" NULLS FIRST) FILTER (WHERE "a" IS NULL) OVER (RANGE BETWEEN 5 PRECEDING AND CURRENT ROW) FROM "t";
+WITH "foo" AS (SELECT "a","b" FROM "t1" INNER JOIN (SELECT * FROM "t2") ON "t1"."x" <> "t2"."y" AND "t1"."a" IS NOT NULL OR "t1"."b" IS NULL) SELECT SUM("foo"."a" ORDER BY "foo"."b") FILTER (WHERE "foo"."a" > 5) IGNORE NULLS OVER (PARTITION BY "date" RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) "sum",COUNT(*) "count";

@@ -84,6 +84,7 @@ class StatementPrinter:
 
     # Buffer is a logical per-statement buffer which tries to right-adjust the keywords and left-adjust the sql entities
     stmt_mapping: Dict[str, str] = attr.ib(factory=dict)
+    river: bool = attr.ib(default=True)
 
     def add_entry(self, key: str, value: str) -> None:
         """Adds an entry to the statement.
@@ -107,10 +108,12 @@ class StatementPrinter:
         lines = []
         for keyword, sql_str in self.stmt_mapping.items():
             if opts.mode == PrintMode.PRETTY:
-                keyword = keyword.rjust(rpad)
-                # If sql_str is empty, then no need to pad.
-                if sql_str:
-                    sql_str = pad(sql_str, rpad + 1)
+                # If we don't care about the river, then don't pad anything.
+                if self.river:
+                    keyword = keyword.rjust(rpad)
+                    # If sql_str is empty, then no need to pad.
+                    if sql_str:
+                        sql_str = pad(sql_str, rpad + 1)
             elif opts.mode != PrintMode.DEFAULT:
                 raise NotImplementedError(
                     f"to_string not implemented for mode {opts.mode}"

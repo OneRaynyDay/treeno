@@ -34,3 +34,11 @@ SELECT SUM(a ORDER BY b, c ASC NULLS FIRST)
            FILTER (WHERE a IS NULL)
            OVER (RANGE BETWEEN 5 PRECEDING AND CURRENT ROW)
 FROM t;
+WITH foo AS (
+    SELECT a,b FROM t1
+        INNER JOIN (SELECT * FROM t2)
+            ON t1.x <> t2.y
+                AND t1.a IS NOT NULL
+                OR t1.b IS NULL)
+SELECT SUM(foo.a ORDER BY foo.b ASC) FILTER (WHERE foo.a > 5) IGNORE NULLS OVER (PARTITION BY date) AS "sum",
+       COUNT(*) AS "count";

@@ -1,6 +1,6 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import attr
 
@@ -179,7 +179,7 @@ class AliasedRelation(Relation):
 
     def sql(self, opts: PrintOptions) -> str:
         # TODO: Keep the "AS"?
-        alias_str = f'{self.relation} "{self.alias}"'
+        alias_str = f'{relation_string(self.relation, opts)} "{self.alias}"'
         if self.column_aliases:
             alias_str += f" ({join_stmts(self.column_aliases, opts)})"
         return alias_str
@@ -193,8 +193,12 @@ class JoinType(Enum):
     CROSS = "CROSS"
 
 
-class JoinCriteria(Sql, ABC):
+class JoinCriteria(ABC):
     """Join criterias are complex expressions that describe exactly how a JOIN is done."""
+
+    @abstractmethod
+    def build_sql(self, opts: PrintOptions) -> Dict[str, Any]:
+        ...
 
 
 @attr.s
@@ -222,8 +226,8 @@ class JoinUsingCriteria(JoinCriteria):
     # both the left and right relations of the join.
     column_names: List[str] = attr.ib()
 
-    def sql(self, opts: PrintOptions):
-        return f"USING({join_stmts(self.column_names, opts)})"
+    def build_sql(self, opts: PrintOptions):
+        return {"USING": parenthesize(join_stmts(self.column_names, opts))}
 
 
 @attr.s
@@ -233,8 +237,10 @@ class JoinOnCriteria(JoinCriteria):
 
     relation: Value = attr.ib()
 
-    def sql(self, opts: PrintOptions):
-        return f"ON {self.relation}"
+    def build_sql(self, opts: PrintOptions):
+        # For complex boolean expressions i.e. conjunctions and disjunctions we have a new line, so we have to
+        # indent it here for readability
+        return {"ON": pad(self.relation.sql(opts), 4)}
 
 
 @attr.s
@@ -265,14 +271,17 @@ class Join(Relation):
     config: JoinConfig = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        join_config_string = self.left_relation.sql(opts)
+        builder = StatementPrinter(river=False)
+        # No value to the key, which is just the relation itself
+        builder.add_entry(relation_string(self.left_relation, opts), None)
+        join_type = ""
         if self.config.natural:
-            join_config_string += " NATURAL"
-        join_config_string += f" {self.config.join_type.value} JOIN "
-        join_config_string += self.right_relation.sql(opts)
+            join_type += "NATURAL "
+        join_type += f"{self.config.join_type.value} JOIN"
+        builder.add_entry(join_type, relation_string(self.right_relation, opts))
         if self.config.criteria is not None:
-            join_config_string += f" {self.config.criteria.sql(opts)}"
-        return join_config_string
+            builder.update(self.config.criteria.build_sql(opts))
+        return builder.to_string(opts)
 
 
 @attr.s
@@ -319,4 +328,16 @@ class TableSample(Relation):
     percentage: Value = attr.ib()
 
     def sql(self, opts: PrintOptions) -> str:
-        return f"{self.relation.sql(opts)} TABLESAMPLE {self.sample_type.value}({self.percentage.sql(opts)})"
+        # Queries need to be parenthesized to be considered relations
+        relation_sql = relation_string(self.relation, opts)
+        return f"{relation_sql} TABLESAMPLE {self.sample_type.value}({self.percentage.sql(opts)})"
+
+
+def relation_string(relation: Relation, opts: PrintOptions) -> str:
+    relation_str = relation.sql(opts)
+    if isinstance(relation, Query):
+        if opts.mode == PrintMode.PRETTY:
+            relation_str = "\n" + relation_str
+        return parenthesize(relation_str)
+    else:
+        return relation_str
