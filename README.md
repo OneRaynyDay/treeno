@@ -55,6 +55,30 @@ SELECT "a","b"
 <EOF>  +                          1                2
 ```
 
+`treeno tree` allows you to view the SQL syntax as `treeno`'s native objects which provide a partially typed and compressed alternative to that of the raw ANTLR grammar:
+
+```
+❯ treeno tree query "SELECT COUNT(*) FROM t LIMIT 10"
+                              SelectQuery
+   ________________________________|_______________________________
+  |        |                     select                 |          |
+  |        |                       |                    |          |
+  |        |                     Count                  |          |
+  |        |            ___________|____________        |          |
+  |        |           |           |          value   from_        |
+  |        |           |           |            |       |          |
+limit with_queries data_type null_treatment data_type  name select_quantifie
+  |        |           |           |            |       |          r
+  |        |           |           |            |       |          |
+  10      ...        BIGINT  NullTreatment.  UNKNOWN    t    SetQuantifier.
+                                RESPECT                           ALL
+```
+
+Try it with the `--draw` flag!
+
+<img width="601" alt="tree" src="https://user-images.githubusercontent.com/7191678/147792245-d2f5dfe4-3bb1-4013-a038-92b273ccdc5a.png">
+
+
 ## Library
 
 `treeno.builder.convert` supplies three useful functions `query_from_sql`, `expression_from_sql` and `type_from_sql`,
