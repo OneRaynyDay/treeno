@@ -193,12 +193,17 @@ class JoinType(Enum):
     CROSS = "CROSS"
 
 
-class JoinCriteria(ABC):
+class JoinCriteria(Sql, ABC):
     """Join criterias are complex expressions that describe exactly how a JOIN is done."""
 
     @abstractmethod
     def build_sql(self, opts: PrintOptions) -> Dict[str, Any]:
         ...
+
+    def sql(self, opts: PrintOptions) -> str:
+        return StatementPrinter(stmt_mapping=self.build_sql(opts)).to_string(
+            opts
+        )
 
 
 @attr.s
@@ -244,7 +249,7 @@ class JoinOnCriteria(JoinCriteria):
 
 
 @attr.s
-class JoinConfig:
+class JoinConfig(Sql):
     join_type: JoinType = attr.ib()
     # Natural joins are dangerous and should be avoided, but since
     # it's valid Trino grammar we'll allow it for now.
@@ -259,6 +264,11 @@ class JoinConfig:
             assert (
                 not self.natural
             ), "If criteria is specified, the join cannot be natural"
+
+    def sql(self, opts: PrintOptions) -> str:
+        raise NotImplementedError(
+            "JoinConfig.sql should not be used. Refer to Join"
+        )
 
 
 @attr.s

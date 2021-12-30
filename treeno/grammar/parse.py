@@ -1,8 +1,10 @@
+from io import StringIO
+
+import nltk
 from antlr4 import CommonTokenStream
 from antlr4.InputStream import InputStream
-from antlr4.tree.Trees import Trees
 from antlr4.ParserRuleContext import ParserRuleContext
-import nltk
+from antlr4.tree.Trees import Trees
 
 try:
     from treeno.grammar.gen.SqlBaseLexer import SqlBaseLexer
@@ -45,4 +47,6 @@ def tree(ast: AST, node: ParserRuleContext) -> str:
     parenthetical_tree = nltk.Tree.fromstring(
         Trees.toStringTree(node, None, ast.parser())
     )
-    return parenthetical_tree.pretty_print()
+    sio = StringIO()
+    parenthetical_tree.pretty_print(stream=sio)
+    return sio.getvalue()

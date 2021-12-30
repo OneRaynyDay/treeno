@@ -31,10 +31,10 @@ SELECT "a","b"
  LIMIT 3
 ```
 
-`treeno tree` allows you to view the SQL syntax as a tree to better understand your query structure:
+`treeno antlr-tree` allows you to view the SQL syntax as a raw antlr tree to better understand your query structure:
 
 ```shell
-❯ treeno tree expression "1+2"
+❯ treeno antlr-tree expression "1+2"
           standaloneExpres
                 sion
    ______________|________________
