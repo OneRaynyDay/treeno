@@ -1,6 +1,7 @@
 import unittest
-from treeno.printer import StatementPrinter, JoinPrinter
-from treeno.base import PrintOptions, PrintMode
+
+from treeno.base import PrintMode, PrintOptions
+from treeno.printer import JoinPrinter, StatementPrinter
 
 
 class TestPrinter(unittest.TestCase):
@@ -27,19 +28,19 @@ class TestPrinter(unittest.TestCase):
         printer.add_entry("456")
         printer.add_entry("789")
         assert (
-            printer.to_string(PrintOptions(mode=PrintMode.PRETTY))
+            printer.to_string(PrintOptions(mode=PrintMode.PRETTY, spaces=0))
             == "123,456,\n789"
         )
         assert (
-            printer.to_string(PrintOptions(mode=PrintMode.DEFAULT))
+            printer.to_string(PrintOptions(mode=PrintMode.DEFAULT, spaces=0))
             == "123,456,789"
         )
 
         printer = JoinPrinter(delimiter=",", max_length=10)
         printer.add_entry("1234567890")
         assert (
-            printer.to_string(PrintOptions(mode=PrintMode.PRETTY))
-            == printer.to_string(PrintOptions(mode=PrintMode.DEFAULT))
+            printer.to_string(PrintOptions(mode=PrintMode.PRETTY, spaces=0))
+            == printer.to_string(PrintOptions(mode=PrintMode.DEFAULT, spaces=0))
             == "1234567890"
         )
 
@@ -60,7 +61,7 @@ class TestPrinter(unittest.TestCase):
         printer = JoinPrinter(delimiter=",", max_length=10)
         printer.add_entry("12345678901")
         assert (
-            printer.to_string(PrintOptions(mode=PrintMode.PRETTY))
+            printer.to_string(PrintOptions(mode=PrintMode.PRETTY, spaces=0))
             == "12345678901"
         )
 

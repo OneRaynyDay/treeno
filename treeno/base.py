@@ -12,13 +12,7 @@ class PrintMode(Enum):
 @attr.s
 class PrintOptions:
     mode: PrintMode = attr.ib(default=PrintMode.DEFAULT)
-    spaces: int = attr.ib(default=0)
-
-    def indent(self) -> "PrintOptions":
-        """Create a copy of print options with deeper nested level.
-        We create a copy here instead of mutating the state to keep it simple and less bug-prone.
-        """
-        return PrintOptions(pretty=self.pretty, spaces=self.spaces + 4)
+    spaces: int = attr.ib(default=4)
 
 
 @attr.s
@@ -29,7 +23,7 @@ class Sql(ABC):
             f"All {self.__class__.__name__} must implement sql"
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         # Default print options
         return self.sql(PrintOptions())
 

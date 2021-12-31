@@ -6,8 +6,8 @@ import attr
 from treeno.base import PrintOptions
 from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import date, time, timestamp
-from treeno.expression import GenericValue, value_attr, wrap_literal
-from treeno.functions.base import Function, UnaryFunction
+from treeno.expression import Value, value_attr, wrap_literal
+from treeno.functions.base import FUNCTIONS_TO_NAMES, Function, UnaryFunction
 from treeno.util import parenthesize
 
 # I tried even setting hive.timestamp_precision=NANOSECONDS in session properties
@@ -37,7 +37,7 @@ class ParametrizedDateTimeFunction(Function, ABC):
         precision_str = ""
         if self.precision != DEFAULT_DATETIME_PRECISION:
             precision_str = parenthesize(str(self.precision))
-        return f"{self.FN_NAME}{precision_str}"
+        return f"{FUNCTIONS_TO_NAMES[type(self)]}{precision_str}"
 
 
 @value_attr
@@ -115,8 +115,8 @@ class FromISO8601Date(UnaryFunction):
 @value_attr
 class AtTimezone(Function):
     FN_NAME: ClassVar[str] = "AT_TIMEZONE"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    zone: GenericValue = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
+    zone: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         # If it's something else like unknown, then we just keep the data type unknown
@@ -133,8 +133,8 @@ class AtTimezone(Function):
 @value_attr
 class WithTimezone(Function):
     FN_NAME: ClassVar[str] = "WITH_TIMEZONE"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    zone: GenericValue = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
+    zone: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         dtype = self.value.data_type
@@ -150,14 +150,14 @@ class WithTimezone(Function):
 @value_attr
 class FromUnixtime(Function):
     FN_NAME: ClassVar[str] = "FROM_UNIXTIME"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    zone: Optional[GenericValue] = attr.ib(
+    value: Value = attr.ib(converter=wrap_literal)
+    zone: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
-    hours: Optional[GenericValue] = attr.ib(
+    hours: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
-    minutes: Optional[GenericValue] = attr.ib(
+    minutes: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -167,9 +167,9 @@ class FromUnixtime(Function):
             not kwargs
         ), "No keyword arguments allowed for FromUnixTime.from_args"
         if len(args) == 2:
-            return FromUnixtime(value=args[0], zone=args[1])
+            return FromUnixtime(args[0], zone=args[1])
         if len(args) == 3:
-            return FromUnixtime(value=args[0], hours=args[1], minutes=args[2])
+            return FromUnixtime(args[0], hours=args[1], minutes=args[2])
         raise ValueError(f"Unrecognized arguments {args} and {kwargs}")
 
     def __attrs_post_init__(self) -> None:
@@ -193,6 +193,7 @@ class FromUnixtime(Function):
         if self.zone:
             values.append(self.zone)
         if self.hours:
+            assert self.minutes is not None
             values += [self.hours, self.minutes]
         return self.to_string(values, opts)
 
@@ -200,4 +201,4 @@ class FromUnixtime(Function):
 @value_attr
 class FromUnixtimeNanos(UnaryFunction):
     FN_NAME: ClassVar[str] = "FROM_UNIXTIME_NANOS"
-    value: GenericValue = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)

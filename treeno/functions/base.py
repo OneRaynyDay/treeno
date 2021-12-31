@@ -5,13 +5,7 @@ from typing import Any, Dict, List, Type, TypeVar
 import attr
 
 from treeno.base import PrintOptions
-from treeno.expression import (
-    Expression,
-    GenericValue,
-    Value,
-    value_attr,
-    wrap_literal,
-)
+from treeno.expression import Expression, Value, value_attr, wrap_literal
 from treeno.printer import join_stmts
 
 GenericFunction = TypeVar("GenericFunction", bound="Function")
@@ -48,7 +42,7 @@ class Function(Expression, ABC):
 
     @classmethod
     def from_args(
-        cls: GenericFunction, *values: Any, **kwargs: Any
+        cls: Type[GenericFunction], *values: Any, **kwargs: Any
     ) -> GenericFunction:
         """This positional-only args constructor is required because there is no easy way to perform function overloading
         in python, so each Function class that has strange inputs should be constructed this way (and have this function
@@ -71,7 +65,7 @@ class Function(Expression, ABC):
 
 @value_attr
 class UnaryFunction(Function, ABC):
-    value: GenericValue = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
 
-    def sql(self: GenericFunction, opts: PrintOptions) -> str:
+    def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.value], opts)

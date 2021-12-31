@@ -87,6 +87,7 @@ def common_supertype(dtype1: DataType, dtype2: DataType) -> DataType:
         return common_hll(dtype1, dtype2)
     elif dtype1.type_name in DATETIME_TYPES:
         return common_datetime(dtype1, dtype2)
+    raise TypeError(f"No common supertypes between {dtype1} and {dtype2}")
 
 
 def common_same_type(dtype1: DataType, dtype2: DataType) -> DataType:

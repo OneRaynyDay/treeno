@@ -19,14 +19,8 @@ from treeno.datatypes.builder import (
     varbinary,
     varchar,
 )
-from treeno.expression import (
-    GenericValue,
-    Star,
-    Value,
-    value_attr,
-    wrap_literal,
-)
-from treeno.functions.base import FUNCTIONS_TO_NAMES, Function, GenericFunction
+from treeno.expression import Star, Value, value_attr, wrap_literal
+from treeno.functions.base import FUNCTIONS_TO_NAMES, Function
 from treeno.orderby import OrderTerm
 from treeno.printer import StatementPrinter, join_stmts, pad
 from treeno.util import parenthesize, quote_literal
@@ -42,7 +36,7 @@ class AggregateFunction(Function, ABC):
     """
 
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
-    filter_: Optional[GenericValue] = attr.ib(default=None, kw_only=True)
+    filter_: Optional[Value] = attr.ib(default=None, kw_only=True)
     window: Optional[Window] = attr.ib(default=None, kw_only=True)
     null_treatment: NullTreatment = attr.ib(
         factory=NullTreatment.default, kw_only=True
@@ -63,6 +57,7 @@ class AggregateFunction(Function, ABC):
         return constraint_builder.to_string(opts)
 
     def get_orderby_string(self, opts: PrintOptions) -> str:
+        assert self.orderby, "Orderby must be defined"
         return "ORDER BY " + join_stmts(
             [order.sql(opts) for order in self.orderby], opts
         )
@@ -81,28 +76,28 @@ class AggregateFunction(Function, ABC):
         constraint_string = self.get_constraint_string(opts)
         if constraint_string:
             spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
-            constraint_string = pad(spacing + constraint_string, 4)
+            constraint_string = pad(spacing + constraint_string, opts.spaces)
             return call_str + constraint_string
         return call_str
 
 
 @value_attr
 class UnaryAggregateFunction(AggregateFunction, ABC):
-    value: GenericValue = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
 
-    def sql(self: GenericFunction, opts: PrintOptions) -> str:
+    def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.value], opts)
 
 
 @value_attr
 class BinaryStatsFunction(AggregateFunction, ABC):
-    y: GenericValue = attr.ib(converter=wrap_literal)
-    x: GenericValue = attr.ib(converter=wrap_literal)
+    y: Value = attr.ib(converter=wrap_literal)
+    x: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         self.data_type = double()
 
-    def sql(self: GenericFunction, opts: PrintOptions) -> str:
+    def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.y, self.x], opts)
 
 
@@ -219,7 +214,7 @@ class OverflowFiller(Sql):
 class ListAgg(AggregateFunction):
     DEFAULT_SEPARATOR: ClassVar[str] = " "
     FN_NAME: ClassVar[str] = "LISTAGG"
-    value: GenericValue = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
     separator: str = attr.ib(default=" ")
     # If overflow filler is None, then raise an error. Otherwise truncate
     # with the appropriate filler string.
@@ -253,15 +248,15 @@ class ListAgg(AggregateFunction):
             )
         constraint_string = f"WITHIN GROUP ({self.get_orderby_string(opts)})"
         spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
-        constraint_string = pad(spacing + constraint_string, 4)
+        constraint_string = pad(spacing + constraint_string, opts.spaces)
         return f"{FUNCTIONS_TO_NAMES[type(self)]}({value_string}){constraint_string}"
 
 
 @value_attr
 class Max(AggregateFunction):
     FN_NAME: ClassVar[str] = "MAX"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    num_values: Optional[GenericValue] = attr.ib(
+    value: Value = attr.ib(converter=wrap_literal)
+    num_values: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -278,9 +273,9 @@ class Max(AggregateFunction):
 @value_attr
 class MaxBy(AggregateFunction):
     FN_NAME: ClassVar[str] = "MAX_BY"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    max_by: GenericValue = attr.ib(converter=wrap_literal)
-    num_values: Optional[GenericValue] = attr.ib(
+    value: Value = attr.ib(converter=wrap_literal)
+    max_by: Value = attr.ib(converter=wrap_literal)
+    num_values: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -297,8 +292,8 @@ class MaxBy(AggregateFunction):
 @value_attr
 class Min(AggregateFunction):
     FN_NAME: ClassVar[str] = "MIN"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    num_values: Optional[GenericValue] = attr.ib(
+    value: Value = attr.ib(converter=wrap_literal)
+    num_values: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -315,9 +310,9 @@ class Min(AggregateFunction):
 @value_attr
 class MinBy(AggregateFunction):
     FN_NAME: ClassVar[str] = "MIN_BY"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    max_by: GenericValue = attr.ib(converter=wrap_literal)
-    num_values: Optional[GenericValue] = attr.ib(
+    value: Value = attr.ib(converter=wrap_literal)
+    max_by: Value = attr.ib(converter=wrap_literal)
+    num_values: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -360,8 +355,8 @@ class Histogram(UnaryAggregateFunction):
 @value_attr
 class MapAgg(AggregateFunction):
     FN_NAME: ClassVar[str] = "MAP_AGG"
-    key: GenericValue = attr.ib(converter=wrap_literal)
-    value: GenericValue = attr.ib(converter=wrap_literal)
+    key: Value = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         self.data_type = map_(
@@ -383,8 +378,8 @@ class MapUnion(UnaryAggregateFunction):
 @value_attr
 class MultiMapAgg(AggregateFunction):
     FN_NAME: ClassVar[str] = "MULTIMAP_AGG"
-    key: GenericValue = attr.ib(converter=wrap_literal)
-    value: GenericValue = attr.ib(converter=wrap_literal)
+    key: Value = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         self.data_type = map_(
@@ -399,8 +394,8 @@ class MultiMapAgg(AggregateFunction):
 @value_attr
 class ApproxDistinct(AggregateFunction):
     FN_NAME: ClassVar[str] = "APPROX_DISTINCT"
-    key: GenericValue = attr.ib(converter=wrap_literal)
-    epsilon: Optional[GenericValue] = attr.ib(
+    key: Value = attr.ib(converter=wrap_literal)
+    epsilon: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -417,9 +412,9 @@ class ApproxDistinct(AggregateFunction):
 @value_attr
 class ApproxMostFrequent(AggregateFunction):
     FN_NAME: ClassVar[str] = "APPROX_MOST_FREQUENT"
-    buckets: GenericValue = attr.ib(converter=wrap_literal)
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    capacity: GenericValue = attr.ib(converter=wrap_literal)
+    buckets: Value = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
+    capacity: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         self.data_type = map_(
@@ -433,13 +428,13 @@ class ApproxMostFrequent(AggregateFunction):
 @value_attr(init=False)
 class ApproxPercentile(AggregateFunction):
     FN_NAME: ClassVar[str] = "APPROX_PERCENTILE"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    percentage: GenericValue = attr.ib(converter=wrap_literal)
-    weight: Optional[GenericValue] = attr.ib(
+    value: Value = attr.ib(converter=wrap_literal)
+    percentage: Value = attr.ib(converter=wrap_literal)
+    weight: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
-    def __init__(self, value: GenericValue, *args: Any, **kwargs: Any):
+    def __init__(self, value: Value, *args: Any, **kwargs: Any):
         # This function is strange in that the overloads causes positional arguments to mean different things.
         # We have to swap weight and percentage if they're both specified.
         if len(args) == 2:
@@ -488,9 +483,9 @@ class Merge(UnaryAggregateFunction):
 @value_attr
 class NumericHistogram(AggregateFunction):
     FN_NAME: ClassVar[str] = "NUMERIC_HISTOGRAM"
-    buckets: GenericValue = attr.ib(converter=wrap_literal)
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    weight: Optional[GenericValue] = attr.ib(
+    buckets: Value = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
+    weight: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -507,11 +502,11 @@ class NumericHistogram(AggregateFunction):
 @value_attr
 class QDigestAgg(AggregateFunction):
     FN_NAME: ClassVar[str] = "QDIGEST_AGG"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    weight: Optional[GenericValue] = attr.ib(
+    value: Value = attr.ib(converter=wrap_literal)
+    weight: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
-    accuracy: Optional[GenericValue] = attr.ib(
+    accuracy: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -530,8 +525,8 @@ class QDigestAgg(AggregateFunction):
 @value_attr
 class TDigestAgg(AggregateFunction):
     FN_NAME: ClassVar[str] = "TDIGEST_AGG"
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    weight: Optional[GenericValue] = attr.ib(
+    value: Value = attr.ib(converter=wrap_literal)
+    weight: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 

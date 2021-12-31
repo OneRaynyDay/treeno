@@ -7,8 +7,8 @@ from antlr4.ParserRuleContext import ParserRuleContext
 from antlr4.tree.Trees import Trees
 
 try:
-    from treeno.grammar.gen.SqlBaseLexer import SqlBaseLexer
-    from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
+    from treeno.grammar.gen.SqlBaseLexer import SqlBaseLexer  # type: ignore
+    from treeno.grammar.gen.SqlBaseParser import SqlBaseParser  # type: ignore
 except ImportError:
     print(
         "SqlBaseLexer and SqlBaseParser not found. Did you run `python setup.py install` or `python setup.py "

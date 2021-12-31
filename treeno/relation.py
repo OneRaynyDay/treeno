@@ -109,7 +109,14 @@ class SelectQuery(Query):
         if self.having:
             builder.add_entry("HAVING", self.having.sql(opts))
         if self.window:
-            builder.add_entry("WINDOW", self.window.sql(opts))
+            window_string = join_stmts(
+                [
+                    f"{window_name} AS {parenthesize(window.sql(opts))}"
+                    for window_name, window in self.window.items()
+                ],
+                opts,
+            )
+            builder.add_entry("WINDOW", window_string)
         builder.update(self.constraint_string_builder(opts))
         return builder.to_string(opts)
 
@@ -245,7 +252,7 @@ class JoinOnCriteria(JoinCriteria):
     def build_sql(self, opts: PrintOptions):
         # For complex boolean expressions i.e. conjunctions and disjunctions we have a new line, so we have to
         # indent it here for readability
-        return {"ON": pad(self.relation.sql(opts), 4)}
+        return {"ON": pad(self.relation.sql(opts), opts.spaces)}
 
 
 @attr.s
@@ -283,7 +290,7 @@ class Join(Relation):
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter(river=False)
         # No value to the key, which is just the relation itself
-        builder.add_entry(relation_string(self.left_relation, opts), None)
+        builder.add_entry(relation_string(self.left_relation, opts), "")
         join_type = ""
         if self.config.natural:
             join_type += "NATURAL "

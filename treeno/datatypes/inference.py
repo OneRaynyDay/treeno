@@ -58,7 +58,7 @@ def infer_decimal(decimal_value: Decimal) -> DataType:
         )
 
 
-def infer_timelike_precision(value: str) -> 0:
+def infer_timelike_precision(value: str) -> int:
     # TODO: Use a datetime util for this at some point. Currently datetime in python only supports microseconds :(
     # Number of digits past the dot is its precision
     if "." not in value:

@@ -453,6 +453,7 @@ class ConvertVisitor(SqlBaseVisitor):
             return Cast(expr=expr, data_type=output_type)
         if ctx.TRY_CAST():
             return TryCast(expr=expr, data_type=output_type)
+        raise ValueError(f"Unepxected cast expression {ctx.getText()}")
 
     @overrides
     def visitGenericType(
@@ -953,7 +954,7 @@ class ConvertVisitor(SqlBaseVisitor):
         if ctx.getText() == "*":
             return Star()
         primary_expr = ctx.primaryExpression()
-        table: Optional[Value] = None
+        table: Optional[Union[str, Value]] = None
         if primary_expr:
             expr = self.visit(primary_expr)
             table = expr.name if isinstance(expr, Field) else expr

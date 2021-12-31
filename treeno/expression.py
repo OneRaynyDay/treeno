@@ -1,7 +1,7 @@
 import functools
 from abc import ABC
 from decimal import Decimal
-from typing import Any, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 import attr
 
@@ -10,7 +10,6 @@ from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import (
     array,
     boolean,
-    double,
     interval,
     row,
     time,
@@ -28,7 +27,7 @@ from treeno.printer import join_stmts, pad
 from treeno.util import (
     chain_identifiers,
     children,
-    construct_type,
+    construct_container,
     is_dictlike,
     is_listlike,
     parenthesize,
@@ -78,6 +77,8 @@ class Value(Sql, ABC):
         return Divide(self, other)
 
     def __pow__(self, other):
+        from treeno.functions.math import Power
+
         return Power(self, other)
 
     def __mod__(self, other):
@@ -133,7 +134,7 @@ class Literal(Value):
             s = quote_literal(self.value)
         if isinstance(self.value, Decimal):
             # Literal decimals can only be directly convertible through cast via string representation
-            s = Cast(s, self.data_type).sql(opts)
+            s = Cast(s, data_type=self.data_type).sql(opts)
         return s
 
 
@@ -218,7 +219,7 @@ class AliasedStar(Value):
 
     def sql(self, opts: PrintOptions) -> str:
         alias_str = join_stmts(self.aliases, opts)
-        return f"{self.star(opts)} ({alias_str})"
+        return f"{self.star.sql(opts)} ({alias_str})"
 
 
 @value_attr
@@ -248,11 +249,11 @@ class Lambda(Expression):
 
         def _from_expr(node: Any) -> Any:
             if is_listlike(node):
-                return construct_type(
+                return construct_container(
                     node, iter(_from_expr(child) for child in node)
                 )
             if is_dictlike(node):
-                return construct_type(
+                return construct_container(
                     node,
                     iter((k, _from_expr(child)) for k, child in node.items()),
                 )
@@ -298,7 +299,7 @@ def wrap_literal_list(vals: List[Any]) -> List[Value]:
 def pemdas_str(
     current_type: Type[Value],
     val: Value,
-    opts: [PrintOptions],
+    opts: PrintOptions,
     is_left: bool = True,
 ) -> str:
     """Apply parenthesization onto the nested expression if required for pemdas.
@@ -332,8 +333,19 @@ def pemdas_str(
     return val.sql(opts)
 
 
+@value_attr
+class BinaryExpression(Expression, ABC):
+    left: Value = attr.ib(converter=wrap_literal)
+    right: Value = attr.ib(converter=wrap_literal)
+
+
+@value_attr
+class UnaryExpression(Expression, ABC):
+    value: Value = attr.ib(converter=wrap_literal)
+
+
 def builtin_binary_str(
-    val: Value, string_format: str, opts: PrintOptions
+    val: BinaryExpression, string_format: str, opts: PrintOptions
 ) -> str:
     return string_format.format(
         left=pemdas_str(type(val), val.left, opts, is_left=True),
@@ -342,29 +354,11 @@ def builtin_binary_str(
 
 
 def builtin_unary_str(
-    val: Value, string_format: str, opts: PrintOptions
+    val: UnaryExpression, string_format: str, opts: PrintOptions
 ) -> str:
     return string_format.format(
         value=pemdas_str(type(val), val.value, opts, is_left=True)
     )
-
-
-def call_str(
-    function_name: str, opts: PrintOptions, *expressions: GenericValue
-):
-    arg_str = ", ".join([expr.sql(opts) for expr in expressions])
-    return f"{function_name}{parenthesize(arg_str)}"
-
-
-@value_attr
-class BinaryExpression(Expression, ABC):
-    left: GenericValue = attr.ib(converter=wrap_literal)
-    right: GenericValue = attr.ib(converter=wrap_literal)
-
-
-@value_attr
-class UnaryExpression(Expression, ABC):
-    value: GenericValue = attr.ib(converter=wrap_literal)
 
 
 @value_attr
@@ -452,15 +446,6 @@ class Not(UnaryExpression):
             return self.value.to_string(opts, negate=True)
 
         return builtin_unary_str(self, "NOT {value}", opts)
-
-
-@value_attr
-class Power(BinaryExpression):
-    def __attrs_post_init__(self) -> None:
-        self.data_type = double()
-
-    def sql(self, opts: PrintOptions) -> str:
-        return call_str("POWER", self.left, self.right)
 
 
 @value_attr
@@ -581,7 +566,7 @@ class DistinctFrom(BinaryExpression):
         self.data_type = boolean()
 
     def to_string(self, opts: PrintOptions, negate: bool = False):
-        return builtin_unary_str(
+        return builtin_binary_str(
             self,
             "{left} IS NOT DISTINCT FROM {right}"
             if negate
@@ -595,9 +580,9 @@ class DistinctFrom(BinaryExpression):
 
 @value_attr
 class Between(Expression):
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    lower: GenericValue = attr.ib(converter=wrap_literal)
-    upper: GenericValue = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
+    lower: Value = attr.ib(converter=wrap_literal)
+    upper: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         self.data_type = boolean()
@@ -615,7 +600,7 @@ class Between(Expression):
 
 @value_attr
 class Array(Expression):
-    values: List[GenericValue] = attr.ib(converter=wrap_literal_list)
+    values: List[Value] = attr.ib(converter=wrap_literal_list)
 
     def __attrs_post_init__(self) -> None:
         assert len(self.values), "values must be a non-empty list for Array"
@@ -632,8 +617,8 @@ class Array(Expression):
 
 @value_attr
 class InList(Expression):
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    exprs: List[GenericValue] = attr.ib(converter=wrap_literal_list)
+    value: Value = attr.ib(converter=wrap_literal)
+    exprs: List[Value] = attr.ib(converter=wrap_literal_list)
 
     def __attrs_post_init__(self) -> None:
         self.data_type = boolean()
@@ -652,9 +637,9 @@ class InList(Expression):
 
 @value_attr
 class Like(Expression):
-    value: GenericValue = attr.ib(converter=wrap_literal)
-    pattern: GenericValue = attr.ib(converter=wrap_literal)
-    escape: Optional[GenericValue] = attr.ib(
+    value: Value = attr.ib(converter=wrap_literal)
+    pattern: Value = attr.ib(converter=wrap_literal)
+    escape: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -742,7 +727,7 @@ class Interval(Expression):
 
 @value_attr
 class Cast(Expression):
-    expr: GenericValue = attr.ib(converter=wrap_literal)
+    expr: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         # TODO: We should probably just set init=False to attr.s and force them to input the data type as a positional
@@ -755,7 +740,7 @@ class Cast(Expression):
 
 @value_attr
 class TryCast(Expression):
-    expr: GenericValue = attr.ib(converter=wrap_literal)
+    expr: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self):
         assert (
@@ -768,8 +753,8 @@ class TryCast(Expression):
 
 @value_attr
 class Subscript(Expression):
-    value: GenericValue = attr.ib()
-    index: GenericValue = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib()
+    index: Value = attr.ib(converter=wrap_literal)
 
     def sql(self, opts: PrintOptions) -> str:
         return f"{self.value.sql(opts)}[{self.index.sql(opts)}]"
@@ -778,8 +763,8 @@ class Subscript(Expression):
 # These are not values by themselves and must be used in the context of `Case`.
 @attr.s
 class When(Sql):
-    condition: GenericValue = attr.ib(converter=wrap_literal)
-    value: GenericValue = attr.ib(converter=wrap_literal)
+    condition: Value = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         self.data_type = self.value.data_type
@@ -790,7 +775,7 @@ class When(Sql):
 
 @attr.s
 class Else(Sql):
-    value: GenericValue = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
 
     def __attrs_post_init__(self) -> None:
         self.data_type = self.value.data_type
@@ -803,7 +788,7 @@ class Else(Sql):
 class Case(Expression):
     branches: List[When] = attr.ib()
     else_: Optional[Else] = attr.ib(default=None)
-    value: Optional[GenericValue] = attr.ib(
+    value: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
 
@@ -831,7 +816,7 @@ class Case(Expression):
 # https://docs.oracle.com/cd/B19306_01/server.102/b14200/conditions001.htm#i1034834
 # Still waiting to hear back about Trino's custom precedence:
 # https://trinodb.slack.com/archives/CFLB9AMBN/p1637528834018300
-OPERATOR_PRECEDENCE = {
+OPERATOR_PRECEDENCE: Dict[Type[Value], int] = {
     Positive: 7,
     Negative: 7,
     Multiply: 6,

@@ -5,7 +5,7 @@ from typing import List, Optional
 import attr
 
 from treeno.base import PrintOptions, Sql
-from treeno.expression import GenericValue, Value, wrap_literal
+from treeno.expression import Value, wrap_literal
 from treeno.orderby import OrderTerm
 from treeno.printer import StatementPrinter, join_stmts
 
@@ -43,7 +43,7 @@ class FrameBound(Sql, ABC):
 @attr.s
 class BoundedFrameBound(FrameBound):
     bound_type: BoundType = attr.ib()
-    offset: GenericValue = attr.ib(converter=wrap_literal)
+    offset: Value = attr.ib(converter=wrap_literal)
 
     def sql(self, opts: PrintOptions) -> str:
         return f"{self.offset.sql(opts)} {self.bound_type.value}"
