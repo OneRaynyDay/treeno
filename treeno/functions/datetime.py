@@ -5,7 +5,15 @@ import attr
 
 from treeno.base import PrintOptions
 from treeno.datatypes import types as type_consts
-from treeno.datatypes.builder import date, time, timestamp
+from treeno.datatypes.builder import (
+    bigint,
+    date,
+    double,
+    interval,
+    time,
+    timestamp,
+    varchar,
+)
 from treeno.expression import Value, value_attr, wrap_literal
 from treeno.functions.base import FUNCTIONS_TO_NAMES, Function, UnaryFunction
 from treeno.util import parenthesize
@@ -93,7 +101,7 @@ class FromISO8601Timestamp(UnaryFunction):
     FN_NAME: ClassVar[str] = "FROM_ISO8601_TIMESTAMP"
 
     def __attrs_post_init__(self) -> None:
-        self.data_type = timestamp(precision=3, timezoned=True)
+        self.data_type = timestamp(precision=3, timezone=True)
 
 
 @value_attr
@@ -101,7 +109,7 @@ class FromISO8601TimestampNanos(UnaryFunction):
     FN_NAME: ClassVar[str] = "FROM_ISO8601_TIMESTAMP_NANOS"
 
     def __attrs_post_init__(self) -> None:
-        self.data_type = timestamp(precision=9, timezoned=True)
+        self.data_type = timestamp(precision=9, timezone=True)
 
 
 @value_attr
@@ -123,7 +131,7 @@ class AtTimezone(Function):
         dtype = self.value.data_type
         if dtype.type_name == type_consts.TIMESTAMP:
             self.data_type = timestamp(
-                precision=dtype.parameters["precision"], timezoned=True
+                precision=dtype.parameters["precision"], timezone=True
             )
 
     def sql(self, opts: PrintOptions) -> str:
@@ -140,7 +148,7 @@ class WithTimezone(Function):
         dtype = self.value.data_type
         if dtype.type_name == type_consts.TIMESTAMP:
             self.data_type = timestamp(
-                precision=dtype.parameters["precision"], timezoned=True
+                precision=dtype.parameters["precision"], timezone=True
             )
 
     def sql(self, opts: PrintOptions) -> str:
@@ -176,7 +184,7 @@ class FromUnixtime(Function):
         dtype = self.value.data_type
         if dtype.type_name == type_consts.TIMESTAMP:
             self.data_type = timestamp(
-                precision=dtype.parameters["precision"], timezoned=True
+                precision=dtype.parameters["precision"], timezone=True
             )
 
         if self.zone:
@@ -201,4 +209,103 @@ class FromUnixtime(Function):
 @value_attr
 class FromUnixtimeNanos(UnaryFunction):
     FN_NAME: ClassVar[str] = "FROM_UNIXTIME_NANOS"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = timestamp(precision=9, timezone=True)
+
+
+@value_attr
+class Now(Function):
+    FN_NAME: ClassVar[str] = "NOW"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = timestamp(precision=3, timezone=True)
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string([], opts)
+
+
+@value_attr
+class ToISO8601(UnaryFunction):
+    FN_NAME: ClassVar[str] = "TO_ISO8601"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = varchar()
+
+
+@value_attr
+class ToMilliseconds(UnaryFunction):
+    FN_NAME: ClassVar[str] = "TO_MILLISECONDS"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = bigint()
+
+
+@value_attr
+class ToUnixtime(UnaryFunction):
+    FN_NAME: ClassVar[str] = "TO_UNIXTIME"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = double()
+
+
+@value_attr
+class DateTrunc(Function):
+    FN_NAME: ClassVar[str] = "DATE_TRUNC"
+    unit: Value = attr.ib(converter=wrap_literal)
     value: Value = attr.ib(converter=wrap_literal)
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.value.data_type
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string([self.unit, self.value], opts)
+
+
+@value_attr
+class DateAdd(Function):
+    FN_NAME: ClassVar[str] = "DATE_ADD"
+    unit: Value = attr.ib(converter=wrap_literal)
+    value: Value = attr.ib(converter=wrap_literal)
+    timestamp: Value = attr.ib(converter=wrap_literal)
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self.timestamp.data_type
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string([self.unit, self.value, self.timestamp], opts)
+
+
+@value_attr
+class DateDiff(Function):
+    FN_NAME: ClassVar[str] = "DATE_DIFF"
+    unit: Value = attr.ib(converter=wrap_literal)
+    timestamp1: Value = attr.ib(converter=wrap_literal)
+    timestamp2: Value = attr.ib(converter=wrap_literal)
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = bigint()
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string(
+            [self.unit, self.timestamp1, self.timestamp2], opts
+        )
+
+
+@value_attr
+class ParseDuration(UnaryFunction):
+    FN_NAME: ClassVar[str] = "PARSE_DURATION"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = interval(from_interval="DAY", to_interval="SECOND")
+
+
+@value_attr
+class HumanReadableSeconds(UnaryFunction):
+    FN_NAME: ClassVar[str] = "HUMAN_READABLE_SECONDS"
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = varchar()
+
+
+# TODO: This isn't the exhaustive list of datetime functions yet.
