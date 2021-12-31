@@ -132,9 +132,8 @@ class Literal(Value):
         if isinstance(self.value, str):
             # Single quotes to mean literal string
             s = quote_literal(self.value)
-        if isinstance(self.value, Decimal):
-            # Literal decimals can only be directly convertible through cast via string representation
-            s = Cast(s, data_type=self.data_type).sql(opts)
+        # NOTE: Literal decimals can be directly convertible
+        # through string representation, i.e. 3.14 is DECIMAL(3,2)
         return s
 
 

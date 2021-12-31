@@ -439,7 +439,7 @@ class ApproxPercentile(AggregateFunction):
         # We have to swap weight and percentage if they're both specified.
         if len(args) == 2:
             args = (args[1], args[0])
-        self.__attrs_init__(value, *args, **kwargs)
+        self.__attrs_init__(value, *args, **kwargs)  # type: ignore
 
         # If percentage is an array, then we can be sure the output type is array
         # otherwise if it's a scalar not-unknown type, then we know the output type is scalar.

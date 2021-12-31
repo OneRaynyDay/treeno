@@ -2,7 +2,7 @@
 Converts from our grammar into a buildable query tree.
 """
 from decimal import Decimal
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from overrides import overrides
 
@@ -717,7 +717,7 @@ class ConvertVisitor(SqlBaseVisitor):
     @overrides
     def visitTypeConstructor(
         self, ctx: SqlBaseParser.TypeConstructorContext
-    ) -> Literal:
+    ) -> TypeConstructor:
         value = self.visit(ctx.string())
         if ctx.DOUBLE() and ctx.PRECISION():
             return TypeConstructor(value, data_type=double())
@@ -1106,7 +1106,7 @@ class ConvertVisitor(SqlBaseVisitor):
 
     @overrides
     def visitGroupBy(self, ctx: SqlBaseParser.GroupByContext) -> GroupBy:
-        kwargs = {
+        kwargs: Dict[str, Any] = {
             "groups": [self.visit(group) for group in ctx.groupingElement()]
         }
         quantifier = ctx.setQuantifier()
