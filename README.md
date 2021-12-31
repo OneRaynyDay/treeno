@@ -76,8 +76,7 @@ limit with_queries data_type null_treatment data_type  name select_quantifie
 
 Try it with the `--draw` flag!
 
-<img width="601" alt="tree" src="https://user-images.githubusercontent.com/7191678/147792245-d2f5dfe4-3bb1-4013-a038-92b273ccdc5a.png">
-
+<img width="600" alt="tree2" src="https://user-images.githubusercontent.com/7191678/147796213-b0ea2d31-5e2c-4f1e-8b1a-c1b9eaad152f.png">
 
 ## Library
 
