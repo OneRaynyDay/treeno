@@ -784,7 +784,7 @@ class ConvertVisitor(SqlBaseVisitor):
             # TODO: Are we missing the empty args case?
             expressions = [self.visit(expr) for expr in ctx.expression()]
 
-        return fn(*expressions, **kwargs)
+        return fn.from_args(*expressions, **kwargs)
 
     @overrides
     def visitLambda_(self, ctx: SqlBaseParser.Lambda_Context) -> Lambda:

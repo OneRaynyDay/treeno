@@ -1,10 +1,12 @@
 import pytest
 
+from treeno.expression import Field
 from treeno.functions.datetime import (
     DEFAULT_DATETIME_PRECISION,
     CurrentDate,
     CurrentTime,
     CurrentTimestamp,
+    FromUnixtime,
     LocalTime,
     LocalTimestamp,
 )
@@ -64,3 +66,18 @@ class TestFunction(VisitorTest):
         ast = get_parser("LOCALTIMESTAMP(9)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.SpecialDateTimeFunctionContext)
         self.visitor.visit(ast).assert_equals(LocalTimestamp(9))
+
+    def test_from_unix_time(self):
+        ast = get_parser("FROM_UNIXTIME(a, zone)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        self.visitor.visit(ast).assert_equals(
+            FromUnixtime(value=Field("a"), zone=Field("zone"))
+        )
+
+        ast = get_parser("FROM_UNIXTIME(a, hrs, mins)").primaryExpression()
+        assert isinstance(ast, SqlBaseParser.FunctionCallContext)
+        self.visitor.visit(ast).assert_equals(
+            FromUnixtime(
+                value=Field("a"), hours=Field("hrs"), minutes=Field("mins")
+            )
+        )
