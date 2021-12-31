@@ -60,16 +60,18 @@ def antlr_tree(construct_type: SqlConstruct, sql: str) -> None:
 
 def treeify(node: Any) -> Any:
     if is_listlike(node):
-        return Tree("list", [treeify(item) for item in node])
+        return Tree("<list>", [treeify(item) for item in node])
     if is_dictlike(node):
-        return Tree("dict", [Tree(k, treeify(v)) for k, v in node.items()])
+        return Tree("<dict>", [Tree(k, treeify(v)) for k, v in node.items()])
     if not isinstance(node, Sql):
-        return Tree("terminal", [str(node)])
+        return str(node)
     # Data types are terminal and we don't want to print out the parameters when there is none
     if isinstance(node, DataType):
-        return Tree("type", [str(node)])
+        return str(node)
     child_nodes = [
-        Tree(k, treeify(v)) for k, v in children(node).items() if v is not None
+        Tree(k, [treeify(v)])
+        for k, v in children(node).items()
+        if v is not None
     ]
     return Tree(node.__class__.__name__, child_nodes)
 
