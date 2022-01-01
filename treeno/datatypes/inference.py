@@ -32,7 +32,7 @@ def infer_type(value: Any) -> DataType:
     if isinstance(value, str):
         # NOTE: We opt for varchar type with no length limit here because the max char limit can be any
         # integer greater than len(value)
-        return varchar()
+        return varchar(max_chars=len(value))
     raise NotImplementedError(
         f"Value {value} with type {type(value).__name__} can't be inferred"
     )

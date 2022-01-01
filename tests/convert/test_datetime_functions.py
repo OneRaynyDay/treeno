@@ -1,7 +1,6 @@
 import pytest
 
-from treeno.datatypes.builder import varchar
-from treeno.expression import Field, Literal, wrap_literal
+from treeno.expression import Field, wrap_literal
 from treeno.functions.datetime import (
     DEFAULT_DATETIME_PRECISION,
     AtTimezone,
@@ -125,12 +124,7 @@ class TestFunction(VisitorTest):
         ).primaryExpression()
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
         self.visitor.visit(ast).assert_equals(
-            AtTimezone(
-                value=Field("x"),
-                zone=Literal(
-                    "America/New_York", data_type=varchar(max_chars=16)
-                ),
-            )
+            AtTimezone(value=Field("x"), zone=wrap_literal("America/New_York"))
         )
         ast = get_parser(
             "WITH_TIMEZONE(x, 'America/New_York'"
@@ -138,10 +132,7 @@ class TestFunction(VisitorTest):
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
         self.visitor.visit(ast).assert_equals(
             WithTimezone(
-                value=Field("x"),
-                zone=Literal(
-                    "America/New_York", data_type=varchar(max_chars=16)
-                ),
+                value=Field("x"), zone=wrap_literal("America/New_York")
             )
         )
         ast = get_parser("FROM_UNIXTIME_NANOS(x)").primaryExpression()
@@ -164,16 +155,13 @@ class TestFunction(VisitorTest):
         ast = get_parser("DATE_TRUNC('quarter', x)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
         self.visitor.visit(ast).assert_equals(
-            DateTrunc(
-                unit=Literal("quarter", data_type=varchar(max_chars=7)),
-                value=Field("x"),
-            )
+            DateTrunc(unit=wrap_literal("quarter"), value=Field("x"))
         )
         ast = get_parser("DATE_ADD('second', 12, x)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
         self.visitor.visit(ast).assert_equals(
             DateAdd(
-                unit=Literal("second", data_type=varchar(max_chars=6)),
+                unit=wrap_literal("second"),
                 value=wrap_literal(12),
                 timestamp=Field("x"),
             )
@@ -182,7 +170,7 @@ class TestFunction(VisitorTest):
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
         self.visitor.visit(ast).assert_equals(
             DateDiff(
-                unit=Literal("second", data_type=varchar(max_chars=6)),
+                unit=wrap_literal("second"),
                 timestamp1=Field("x"),
                 timestamp2=Field("y"),
             )
