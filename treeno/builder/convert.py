@@ -30,6 +30,7 @@ from treeno.expression import (
     Else,
     Field,
     InList,
+    InQuery,
     Interval,
     IsNull,
     Lambda,
@@ -51,6 +52,7 @@ from treeno.functions.aggregate import (
     OverflowFiller,
 )
 from treeno.functions.base import NAMES_TO_FUNCTIONS, Function
+from treeno.functions.common import Concatenate
 from treeno.functions.session import (
     CurrentCatalog,
     CurrentPath,
@@ -349,10 +351,11 @@ class ConvertVisitor(SqlBaseVisitor):
         raise NotImplementedError("Quantified comparison is not yet supported")
 
     @overrides
-    def visitInSubquery(self, ctx: SqlBaseParser.InSubqueryContext) -> None:
-        raise NotImplementedError(
-            "In subquery boolean predicate is not yet supported"
-        )
+    def visitInSubquery(self, ctx: SqlBaseParser.InSubqueryContext) -> Value:
+        in_query = InQuery(value=ctx.left_value, query=self.visit(ctx.query()))
+        if ctx.NOT():
+            return ~in_query
+        return in_query
 
     @overrides
     def visitBetween(self, ctx: SqlBaseParser.BetweenContext) -> Value:
@@ -421,6 +424,12 @@ class ConvertVisitor(SqlBaseVisitor):
         return apply_operator(
             ctx.operator.text, self.visit(ctx.valueExpression())
         )
+
+    @overrides
+    def visitConcatenation(
+        self, ctx: SqlBaseParser.ConcatenationContext
+    ) -> Concatenate:
+        return Concatenate(values=[self.visit(ctx.left), self.visit(ctx.right)])
 
     @overrides
     def visitSimpleCase(self, ctx: SqlBaseParser.SimpleCaseContext) -> Case:

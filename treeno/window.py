@@ -4,30 +4,30 @@ from typing import List, Optional
 
 import attr
 
-from treeno.base import PrintOptions, Sql
+from treeno.base import DefaultableEnum, GenericEnum, PrintOptions, Sql
 from treeno.expression import Value, wrap_literal
 from treeno.orderby import OrderTerm
 from treeno.printer import StatementPrinter, join_stmts
 
 
-class NullTreatment(Enum):
+class NullTreatment(DefaultableEnum):
     """Used in conjunction with window functions in primary expressions"""
 
     IGNORE = "IGNORE"
     RESPECT = "RESPECT"
 
-    @staticmethod
-    def default() -> "NullTreatment":
+    @classmethod
+    def default(cls: GenericEnum) -> GenericEnum:
         return NullTreatment.RESPECT
 
 
-class FrameType(Enum):
+class FrameType(DefaultableEnum):
     RANGE = "RANGE"
     ROWS = "ROWS"
     GROUPS = "GROUPS"
 
-    @staticmethod
-    def default() -> "FrameType":
+    @classmethod
+    def default(cls: GenericEnum) -> GenericEnum:
         return FrameType.RANGE
 
 

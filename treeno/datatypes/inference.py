@@ -8,6 +8,7 @@ from typing import Any
 from treeno.datatypes.builder import (
     bigint,
     boolean,
+    char,
     decimal,
     double,
     integer,
@@ -36,6 +37,10 @@ def infer_type(value: Any) -> DataType:
     raise NotImplementedError(
         f"Value {value} with type {type(value).__name__} can't be inferred"
     )
+
+
+def infer_char(value: str) -> DataType:
+    return char(max_chars=len(value))
 
 
 def infer_integral(value: int) -> DataType:

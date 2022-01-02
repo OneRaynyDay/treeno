@@ -1,7 +1,16 @@
 import functools
 from abc import ABC
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import attr
 
@@ -18,6 +27,7 @@ from treeno.datatypes.builder import (
 )
 from treeno.datatypes.conversions import get_arithmetic_type
 from treeno.datatypes.inference import (
+    infer_char,
     infer_decimal,
     infer_timelike_precision,
     infer_type,
@@ -33,6 +43,9 @@ from treeno.util import (
     parenthesize,
     quote_literal,
 )
+
+if TYPE_CHECKING:
+    from treeno.relation import Query
 
 GenericValue = TypeVar("GenericValue", bound="Value")
 
@@ -440,7 +453,16 @@ class Not(UnaryExpression):
         # Specializations on Not
         if isinstance(
             self.value,
-            (DistinctFrom, IsNull, Like, InList, Between, Equal, NotEqual),
+            (
+                DistinctFrom,
+                IsNull,
+                Like,
+                InList,
+                InQuery,
+                Between,
+                Equal,
+                NotEqual,
+            ),
         ):
             return self.value.to_string(opts, negate=True)
 
@@ -603,6 +625,8 @@ class Array(Expression):
 
     def __attrs_post_init__(self) -> None:
         assert len(self.values), "values must be a non-empty list for Array"
+        # TODO: This is currently incorrect. We have to widen the data type depending on the largest precision we have
+        # i.e. TYPEOF(ARRAY[CHAR '3'] || '345') yields array(char(3))
         self.data_type = array(dtype=self.values[0].data_type)
 
     @classmethod
@@ -612,6 +636,25 @@ class Array(Expression):
     def sql(self, opts: PrintOptions) -> str:
         values_str = join_stmts([val.sql(opts) for val in self.values], opts)
         return f"ARRAY[{values_str}]"
+
+
+@value_attr
+class InQuery(Expression):
+    value: Value = attr.ib(converter=wrap_literal)
+    query: "Query" = attr.ib()
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = boolean()
+
+    def to_string(self, opts: PrintOptions, negate: bool = False) -> str:
+        in_list_string = pemdas_str(type(self), self.value, opts)
+        if negate:
+            in_list_string += " NOT"
+        in_list_string += f" IN ({self.query.sql(opts)})"
+        return in_list_string
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string(opts, negate=False)
 
 
 @value_attr
@@ -676,6 +719,8 @@ class TypeConstructor(Expression):
             )
         elif self.type_name == type_consts.DECIMAL:
             self.data_type = infer_decimal(Decimal(self.value))
+        elif self.type_name == type_consts.CHAR:
+            self.data_type = infer_char(self.value)
         else:
             self.data_type = DataType(self.type_name)
 
@@ -816,13 +861,14 @@ class Case(Expression):
 # Still waiting to hear back about Trino's custom precedence:
 # https://trinodb.slack.com/archives/CFLB9AMBN/p1637528834018300
 OPERATOR_PRECEDENCE: Dict[Type[Value], int] = {
-    Positive: 7,
-    Negative: 7,
-    Multiply: 6,
-    Divide: 6,
-    Modulus: 6,
-    Add: 5,
-    Minus: 5,
+    Positive: 8,
+    Negative: 8,
+    Multiply: 7,
+    Divide: 7,
+    Modulus: 7,
+    Add: 6,
+    Minus: 6,
+    # TODO: Currently we run into an import loop trying to add Concatenate here, so we add it at the end in functions.common
     Equal: 4,
     NotEqual: 4,
     GreaterThan: 4,
@@ -833,6 +879,7 @@ OPERATOR_PRECEDENCE: Dict[Type[Value], int] = {
     Like: 3,
     Between: 3,
     InList: 3,
+    InQuery: 3,
     Not: 2,
     And: 1,
     Or: 0,

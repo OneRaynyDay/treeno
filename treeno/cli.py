@@ -5,7 +5,7 @@ from typing import Any
 import typer
 from nltk.tree import Tree
 
-from treeno.base import PrintMode, PrintOptions, Sql
+from treeno.base import DefaultableEnum, PrintMode, PrintOptions, Sql
 from treeno.builder.convert import (
     expression_from_sql,
     query_from_sql,
@@ -58,11 +58,26 @@ def antlr_tree(construct_type: SqlConstruct, sql: str) -> None:
     typer.echo(print_tree(ast, node))
 
 
+def _should_skip(key: str, node: Any) -> bool:
+    if node is None:
+        return True
+    if isinstance(node, DefaultableEnum) and node == type(node).default():
+        return True
+    if (is_listlike(node) or is_dictlike(node)) and not len(node):
+        return True
+    return False
+
+
 def treeify(node: Any) -> Any:
     if is_listlike(node):
-        return Tree("<list>", [treeify(item) for item in node])
+        return Tree(
+            f"<{type(node).__name__}>", [treeify(item) for item in node]
+        )
     if is_dictlike(node):
-        return Tree("<dict>", [Tree(k, treeify(v)) for k, v in node.items()])
+        return Tree(
+            f"<{type(node).__name__}>",
+            [Tree(k, treeify(v)) for k, v in node.items()],
+        )
     if not isinstance(node, Sql):
         return str(node)
     # Data types are terminal and we don't want to print out the parameters when there is none
@@ -71,7 +86,7 @@ def treeify(node: Any) -> Any:
     child_nodes = [
         Tree(k, [treeify(v)])
         for k, v in children(node).items()
-        if v is not None
+        if not _should_skip(k, v)
     ]
     return Tree(node.__class__.__name__, child_nodes)
 

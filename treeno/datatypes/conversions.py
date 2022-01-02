@@ -127,11 +127,21 @@ def common_string(dtype1: DataType, dtype2: DataType) -> DataType:
     ), f"common_numeric must be called with types in {STRING_TYPES}"
     # Refer to https://github.com/trinodb/trino/blob/5450e782ca4b764f17465c1a40b914ad6743bd6c/core/trino-main/src/main/java/io/trino/type/TypeCoercion.java#L501
     # for why CHAR can't be convertible to VARCHAR.
-    varchar_dtype = dtype1 if dtype1.type_name == VARCHAR else dtype2
-    char_dtype = dtype1 if dtype1.type_name == CHAR else dtype2
-    return COMMON_CONVERSION_MAP[CHAR](
-        promote_varchar_to_char(varchar_dtype), char_dtype
-    )
+    has_char = CHAR in {dtype1.type_name, dtype2.type_name}
+    if has_char:
+        dtype1 = (
+            promote_varchar_to_char(dtype1)
+            if dtype1.type_name != CHAR
+            else dtype1
+        )
+        dtype2 = (
+            promote_varchar_to_char(dtype2)
+            if dtype2.type_name != CHAR
+            else dtype2
+        )
+        return COMMON_CONVERSION_MAP[CHAR](dtype1, dtype2)
+    else:
+        return COMMON_CONVERSION_MAP[VARCHAR](dtype1, dtype2)
 
 
 def common_numeric(dtype1: DataType, dtype2: DataType) -> DataType:

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 import attr
 
 from treeno.base import PrintMode, PrintOptions, SetQuantifier, Sql
+from treeno.datatypes.builder import row
 from treeno.expression import Value
 from treeno.groupby import GroupBy
 from treeno.orderby import OrderTerm
@@ -29,8 +30,8 @@ class Relation(Sql, ABC):
 
 
 @attr.s
-class Query(Relation, ABC):
-    """Represents a query with filtered outputs
+class Query(Relation, Value, ABC):
+    """Represents a query with filtered outputs. Queries are also values, in that they yield row types
     """
 
     # TODO: Technically, an offset can either be an integer or a question mark(as a parameter).
@@ -79,19 +80,20 @@ class SelectQuery(Query):
     where: Optional[Value] = attr.ib(default=None)
     groupby: Optional[GroupBy] = attr.ib(default=None)
     having: Optional[Value] = attr.ib(default=None)
-    select_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
+    select_quantifier: SetQuantifier = attr.ib(factory=SetQuantifier.default)
     window: Optional[Dict[str, Window]] = attr.ib(default=None, kw_only=True)
 
     def __attrs_post_init__(self) -> None:
         assert not self.offset, "Offset isn't supported"
         assert not self.window, "Window isn't supported"
+        self.data_type = row(dtypes=[val.data_type for val in self.select])
 
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter()
         builder.update(self.with_query_string_builder(opts))
         select_value = join_stmts([val.sql(opts) for val in self.select], opts)
         # All is the default, so we don't need to mention it
-        if self.select_quantifier != SetQuantifier.ALL:
+        if self.select_quantifier != SetQuantifier.default():
             select_value = self.select_quantifier.name + " " + select_value
         builder.add_entry("SELECT", select_value)
 
@@ -164,6 +166,9 @@ class ValuesQuery(Query):
     """
 
     exprs: List[Value] = attr.ib()
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = row(dtypes=[val.data_type for val in self.exprs])
 
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter()

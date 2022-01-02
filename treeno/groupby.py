@@ -1,9 +1,11 @@
-import attr
 from abc import ABC
+from typing import List
+
+import attr
+
+from treeno.base import PrintOptions, SetQuantifier, Sql
 from treeno.expression import Value
 from treeno.printer import join_stmts
-from treeno.base import Sql, SetQuantifier, PrintOptions
-from typing import List
 
 
 class Group(Sql, ABC):
@@ -17,10 +19,15 @@ class GroupBy(Sql):
     """
 
     groups: List[Group] = attr.ib()
-    groupby_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.ALL)
+    groupby_quantifier: SetQuantifier = attr.ib(factory=SetQuantifier.default)
 
     def sql(self, opts: PrintOptions) -> str:
-        return f"{self.groupby_quantifier.name} {join_stmts([group.sql(opts) for group in self.groups], opts)}"
+        groupby_string = join_stmts(
+            [group.sql(opts) for group in self.groups], opts
+        )
+        if self.groupby_quantifier != SetQuantifier.default():
+            groupby_string = f"{self.groupby_quantifier.name} {groupby_string}"
+        return groupby_string
 
 
 @attr.s
