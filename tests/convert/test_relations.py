@@ -64,7 +64,7 @@ class TestRelation(VisitorTest):
         assert isinstance(ast, SqlBaseParser.UnnestContext)
         self.visitor.visit(ast).assert_equals(
             Unnest(
-                array=[
+                arrays=[
                     Array.from_values(
                         Literal(1, data_type=integer()),
                         Literal(2, data_type=integer()),
@@ -85,7 +85,7 @@ class TestRelation(VisitorTest):
         ).relationPrimary()
         assert isinstance(ast, SqlBaseParser.UnnestContext)
         self.visitor.visit(ast).assert_equals(
-            Unnest(array=[Field("some_column")], with_ordinality=True)
+            Unnest(arrays=[Field("some_column")], with_ordinality=True)
         )
 
     def test_lateral(self):

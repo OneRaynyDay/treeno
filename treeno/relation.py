@@ -1,17 +1,21 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import attr
 
 from treeno.base import PrintMode, PrintOptions, SetQuantifier, Sql
-from treeno.datatypes.builder import row
-from treeno.expression import Value
+from treeno.datatypes import types as type_consts
+from treeno.datatypes.builder import row, unknown
+from treeno.datatypes.types import DataType
+from treeno.expression import Field, Value
 from treeno.groupby import GroupBy
 from treeno.orderby import OrderTerm
 from treeno.printer import StatementPrinter, join_stmts, pad
 from treeno.util import chain_identifiers, parenthesize, quote_identifier
 from treeno.window import Window
+
+Schema = List[Tuple[Optional[Field], DataType]]
 
 
 class Relation(Sql, ABC):
@@ -27,6 +31,12 @@ class Relation(Sql, ABC):
     In the case of 1), they can be reinterpreted as standalone queries, which are also relations
     but belong to 2). We have SelectQuery, TablesQuery, and ValuesQuery for this purpose.
     """
+
+    @abstractmethod
+    def get_schema(self) -> Optional[Schema]:
+        raise NotImplementedError(
+            "All Relations must implement a get_schema method"
+        )
 
 
 @attr.s
@@ -122,6 +132,14 @@ class SelectQuery(Query):
         builder.update(self.constraint_string_builder(opts))
         return builder.to_string(opts)
 
+    def get_schema(self) -> Optional[Schema]:
+        schema = []
+        for value in self.select:
+            identifier = value.identifier()
+            field = Field(identifier) if identifier else None
+            schema.append((field, value.data_type))
+        return schema
+
 
 @attr.s
 class Table(Relation):
@@ -135,6 +153,8 @@ class Table(Relation):
     schema: Optional[str] = attr.ib(default=None)
     catalog: Optional[str] = attr.ib(default=None)
 
+    _column_schema: Optional[Schema] = attr.ib(default=None)
+
     def __attrs_post_init__(self) -> None:
         if self.catalog:
             assert (
@@ -143,6 +163,9 @@ class Table(Relation):
 
     def sql(self, opts: PrintOptions) -> str:
         return chain_identifiers(self.catalog, self.schema, self.name)
+
+    def get_schema(self) -> Optional[Schema]:
+        return self._column_schema
 
 
 @attr.s
@@ -155,6 +178,9 @@ class TableQuery(Query):
         builder.add_entry("TABLE", self.table.sql(opts))
         builder.update(self.constraint_string_builder(opts))
         return builder.to_string(opts)
+
+    def get_schema(self) -> Optional[Schema]:
+        return self.table.get_schema()
 
 
 @attr.s
@@ -179,6 +205,9 @@ class ValuesQuery(Query):
         builder.update(self.constraint_string_builder(opts))
         return builder.to_string(opts)
 
+    def get_schema(self) -> Optional[Schema]:
+        return [(None, val.data_type) for val in self.exprs]
+
 
 @attr.s
 class AliasedRelation(Relation):
@@ -195,6 +224,26 @@ class AliasedRelation(Relation):
         if self.column_aliases:
             alias_str += f" ({join_stmts(self.column_aliases, opts)})"
         return alias_str
+
+    def get_schema(self) -> Optional[Schema]:
+        old_schema = self.relation.get_schema()
+        if not old_schema:
+            return None
+        else:
+            new_schema = []
+            for idx, tpl in enumerate(old_schema):
+                field, dtype = tpl
+                if field is not None:
+                    field_name = (
+                        self.column_aliases[idx]
+                        if self.column_aliases
+                        else field.name
+                    )
+                    field = attr.evolve(
+                        field, table=self.alias, name=field_name
+                    )
+                new_schema.append((field, dtype))
+            return new_schema
 
 
 class JoinType(Enum):
@@ -305,22 +354,39 @@ class Join(Relation):
             builder.update(self.config.criteria.build_sql(opts))
         return builder.to_string(opts)
 
+    def get_schema(self) -> Optional[Schema]:
+        return (
+            self.left_relation.get_schema() + self.right_relation.get_schema()
+        )
+
 
 @attr.s
 class Unnest(Relation):
     """Represents an unnested set of arrays representing a table
     """
 
-    array: List[Value] = attr.ib()
+    arrays: List[Value] = attr.ib()
     with_ordinality: bool = attr.ib(default=False, kw_only=True)
+
+    def __attrs_post_init__(self) -> None:
+        dtypes = []
+        for val in self.arrays:
+            if val.data_type.type_name != type_consts.ARRAY:
+                dtypes.append(unknown())
+            else:
+                dtypes.append(val.data_type.parameters["dtype"])
+        self.data_type = row(dtypes=dtypes)
 
     def sql(self, opts: PrintOptions) -> str:
         str_builder = [
-            f"UNNEST({join_stmts([arr.sql(opts) for arr in self.array], opts)})"
+            f"UNNEST({join_stmts([arr.sql(opts) for arr in self.arrays], opts)})"
         ]
         if self.with_ordinality:
             str_builder += " WITH ORDINALITY"
         return " ".join(str_builder)
+
+    def get_schema(self) -> Optional[Schema]:
+        return [(None, dtype) for dtype in self.data_type.parameters["dtypes"]]
 
 
 @attr.s
@@ -332,6 +398,9 @@ class Lateral(Relation):
 
     def sql(self, opts: PrintOptions) -> str:
         return f"LATERAL({self.subquery.sql(opts)})"
+
+    def get_schema(self) -> Optional[Schema]:
+        return self.subquery.get_schema()
 
 
 class SampleType(Enum):
@@ -353,6 +422,9 @@ class TableSample(Relation):
         # Queries need to be parenthesized to be considered relations
         relation_sql = relation_string(self.relation, opts)
         return f"{relation_sql} TABLESAMPLE {self.sample_type.value}({self.percentage.sql(opts)})"
+
+    def get_schema(self) -> Optional[Schema]:
+        return self.relation.get_schema()
 
 
 def relation_string(relation: Relation, opts: PrintOptions) -> str:

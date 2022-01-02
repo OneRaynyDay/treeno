@@ -11,6 +11,7 @@ from treeno.builder.convert import (
     query_from_sql,
     type_from_sql,
 )
+from treeno.datatypes.builder import unknown
 from treeno.datatypes.types import DataType
 from treeno.grammar.parse import AST
 from treeno.grammar.parse import tree as print_tree
@@ -59,6 +60,9 @@ def antlr_tree(construct_type: SqlConstruct, sql: str) -> None:
 
 
 def _should_skip(key: str, node: Any) -> bool:
+    # Ignore hidden members
+    if key.startswith("_"):
+        return True
     if node is None:
         return True
     if isinstance(node, DefaultableEnum) and node == type(node).default():
@@ -101,3 +105,24 @@ def tree(construct_type: SqlConstruct, sql: str, draw: bool = False) -> None:
         typer.echo(sio.getvalue())
     else:
         tree.draw()
+
+
+@app.command()
+def schema(sql: str) -> None:
+    sql_obj = get_sql_object(SqlConstruct.QUERY, sql)
+    schema = sql_obj.get_schema()
+    lines = []
+    for idx, entry in enumerate(schema):
+        field, dtype = entry
+        field_string = (
+            typer.style("<none>", fg=typer.colors.RED, bold=True)
+            if field is None
+            else str(field)
+        )
+        dtype_string = (
+            typer.style("<unknown>", fg=typer.colors.RED, bold=True)
+            if dtype == unknown()
+            else str(dtype)
+        )
+        lines.append(f"{field_string} - {dtype_string}")
+    typer.echo("\n".join(lines))

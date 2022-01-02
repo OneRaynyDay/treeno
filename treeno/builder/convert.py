@@ -1090,7 +1090,7 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitUnnest(self, ctx: SqlBaseParser.UnnestContext) -> Unnest:
         array_values = [self.visit(expr) for expr in ctx.expression()]
         with_ordinality = ctx.ORDINALITY() is not None
-        return Unnest(array=array_values, with_ordinality=with_ordinality)
+        return Unnest(arrays=array_values, with_ordinality=with_ordinality)
 
     @overrides
     def visitLateral(self, ctx: SqlBaseParser.LateralContext) -> Lateral:

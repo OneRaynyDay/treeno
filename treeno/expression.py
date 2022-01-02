@@ -121,6 +121,9 @@ class Value(Sql, ABC):
     def __or__(self, other):
         return Or(self, other)
 
+    def identifier(self) -> Optional[str]:
+        return None
+
 
 @value_attr
 class Expression(Value, ABC):
@@ -162,6 +165,9 @@ class Field(Value):
             self.table, Field
         ), "Table must be either a complex expression or a string representing the table, not a field"
 
+    def identifier(self) -> Optional[str]:
+        return self.name
+
     def sql(self, opts: PrintOptions) -> str:
         table_sql = None
         if self.table:
@@ -186,6 +192,9 @@ class AliasedValue(Value):
             self.value, Star
         ), "Stars cannot have aliases. Consider using AliasedStar"
         self.data_type = self.value.data_type
+
+    def identifier(self) -> Optional[str]:
+        return self.alias
 
     def sql(self, opts: PrintOptions) -> str:
         return f'{self.value.sql(opts)} "{self.alias}"'
@@ -247,6 +256,9 @@ class Lambda(Expression):
         def sql(self, opts: PrintOptions) -> str:
             return self.name
 
+        def identifier(self) -> Optional[str]:
+            return self.name
+
     inputs: List[Variable] = attr.ib()
     expr: Value = attr.ib()
 
@@ -296,8 +308,9 @@ def wrap_literal(val: Any) -> Value:
     if isinstance(val, Value):
         return val
     if val is None:
-        # return NullValue()
-        raise NotImplementedError("Null type not supported yet")
+        raise ValueError(
+            "Treeno explicitly disallows creating a None literal to avoid ambiguity. Please use treeno.expression.NULL instead."
+        )
     assert not isinstance(
         val, (list, tuple, set, dict)
     ), "wrap_literal should not be used with composable types like ARRAY/MAP/ROW"
@@ -884,3 +897,6 @@ OPERATOR_PRECEDENCE: Dict[Type[Value], int] = {
     And: 1,
     Or: 0,
 }
+
+# Use this instead of wrap_literal(None), which we explicitly disallow
+NULL = Literal(None, data_type=unknown())
