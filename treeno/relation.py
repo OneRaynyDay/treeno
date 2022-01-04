@@ -94,8 +94,20 @@ class SelectQuery(Query):
     window: Optional[Dict[str, Window]] = attr.ib(default=None, kw_only=True)
 
     def __attrs_post_init__(self) -> None:
-        assert not self.offset, "Offset isn't supported"
-        assert not self.window, "Window isn't supported"
+        self.data_type = row(dtypes=[val.data_type for val in self.select])
+
+    def resolve(self) -> None:
+        from treeno.datatypes.resolve import resolve_fields
+
+        # TODO: Currently resolve only handles a single layer. We should make this a common function across all
+        # relations so we can recursively call resolve before performing resolve on this query.
+        # Also, it's probably worth allowing table inputs.
+        schema = self.from_.get_schema()
+        assert (
+            schema is not None
+        ), "Can't resolve fields with no defined schema."
+        self.select = [resolve_fields(val, schema) for val in self.select]
+        # Update data type as well after recursively building back up the tree
         self.data_type = row(dtypes=[val.data_type for val in self.select])
 
     def sql(self, opts: PrintOptions) -> str:

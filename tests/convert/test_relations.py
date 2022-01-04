@@ -26,6 +26,7 @@ from treeno.relation import (
     Unnest,
     ValuesQuery,
 )
+from treeno.window import Window
 
 from .helpers import VisitorTest, get_parser
 
@@ -236,6 +237,13 @@ class TestSelect(VisitorTest):
         ).query()
         assert isinstance(ast, SqlBaseParser.QueryContext)
         query.orderby = [OrderTerm(field, order_type=OrderType.ASC)]
+        self.visitor.visit(ast).assert_equals(query)
+
+        ast = get_parser(
+            "SELECT tbl.a FROM tbl WHERE tbl.a > 5 GROUP BY date WINDOW w AS (PARTITION BY tbl.a) ORDER BY tbl.a ASC"
+        ).query()
+        assert isinstance(ast, SqlBaseParser.QueryContext)
+        query.window = {"w": Window(partitions=[field])}
         self.visitor.visit(ast).assert_equals(query)
 
 

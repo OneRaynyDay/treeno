@@ -111,6 +111,11 @@ def tree(construct_type: SqlConstruct, sql: str, draw: bool = False) -> None:
 def schema(sql: str) -> None:
     sql_obj = get_sql_object(SqlConstruct.QUERY, sql)
     schema = sql_obj.get_schema()
+    if not schema:
+        typer.echo(
+            typer.style("Unknown schema", fg=typer.colors.RED, bold=True)
+        )
+        return
     lines = []
     for idx, entry in enumerate(schema):
         field, dtype = entry
