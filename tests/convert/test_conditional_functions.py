@@ -1,5 +1,5 @@
 from treeno.expression import NULL, wrap_literal
-from treeno.functions.conditional import *
+from treeno.functions.conditional import Coalesce, If, NullIf, Try
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 
 from .helpers import VisitorTest, get_parser
