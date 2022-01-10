@@ -193,24 +193,30 @@ class ConvertVisitor(SqlBaseVisitor):
         with_ = ctx.with_()
         if with_:
             named_queries = self.visit(with_)
-            query.with_queries = named_queries
+            query.with_ = named_queries
         return query
 
     @overrides
-    def visitWith_(self, ctx: SqlBaseParser.With_Context) -> Dict[str, Query]:
+    def visitWith_(
+        self, ctx: SqlBaseParser.With_Context
+    ) -> List[AliasedRelation]:
         assert (
             not ctx.RECURSIVE()
         ), "Recursive with queries currently not supported"
-        return dict(self.visit(named_query) for named_query in ctx.namedQuery())
+        return [self.visit(named_query) for named_query in ctx.namedQuery()]
 
     @overrides
     def visitNamedQuery(
         self, ctx: SqlBaseParser.NamedQueryContext
-    ) -> Tuple[str, Query]:
-        assert (
-            not ctx.columnAliases()
-        ), "Column aliases currently not supported in WITH clause"
-        return (self.visit(ctx.name), self.visit(ctx.query()))
+    ) -> AliasedRelation:
+        column_aliases = None
+        if ctx.columnAliases():
+            column_aliases = self.visit(ctx.columnAliases())
+        return AliasedRelation(
+            relation=self.visit(ctx.query()),
+            alias=self.visit(ctx.name),
+            column_aliases=column_aliases,
+        )
 
     @overrides
     def visitQueryNoWith(self, ctx: SqlBaseParser.QueryNoWithContext) -> Query:
@@ -579,11 +585,13 @@ class ConvertVisitor(SqlBaseVisitor):
     @overrides
     def visitDereference(self, ctx: SqlBaseParser.DereferenceContext) -> Field:
         primary_expr = self.visit(ctx.primaryExpression())
-        table = (
-            primary_expr.name
-            if isinstance(primary_expr, Field)
-            else primary_expr
-        )
+        if isinstance(primary_expr, Field):
+            table = primary_expr.name
+            assert (
+                not primary_expr.table
+            ), "Treeno currently only supports dereference in the form x or y.x"
+        else:
+            table = primary_expr
         return Field(self.visit(ctx.fieldName), table)
 
     @overrides

@@ -4,6 +4,7 @@ from treeno.base import PrintMode, PrintOptions
 from treeno.expression import Array, Field, wrap_literal
 from treeno.orderby import OrderTerm, OrderType
 from treeno.relation import (
+    AliasedRelation,
     Lateral,
     SampleType,
     Table,
@@ -55,7 +56,7 @@ class TestRelations(unittest.TestCase):
         v = ValuesQuery(
             [wrap_literal(1), wrap_literal(2), wrap_literal(3)],
             offset=3,
-            with_queries={"foo": TableQuery(Table(name="foo"))},
+            with_=[AliasedRelation(TableQuery(Table(name="foo")), "foo")],
         )
         assert (
             v.sql(PrintOptions(mode=PrintMode.DEFAULT))

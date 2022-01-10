@@ -6,6 +6,7 @@ from treeno.datatypes.builder import bigint, unknown
 from treeno.datatypes.resolve import resolve_fields
 from treeno.expression import Field, wrap_literal
 from treeno.functions.common import Concatenate
+from treeno.relation import Schema, SchemaField, Table
 
 
 class TestConvertFields(unittest.TestCase):
@@ -14,7 +15,14 @@ class TestConvertFields(unittest.TestCase):
         f2 = Field("y", table="a")
         f3 = Field("z", table="b")
         f4 = Field("w", table="c")
-        schema = [(f1, bigint()), (f2, bigint()), (f3, bigint())]
+        schema = Schema(
+            fields=[
+                SchemaField("x", Table(name="a"), bigint()),
+                SchemaField("y", Table(name="b"), bigint()),
+                SchemaField("z", Table(name="c"), bigint()),
+            ],
+            relation_ids={"a", "b", "c"},
+        )
         expr = (
             Concatenate([wrap_literal(3) + f1, wrap_literal(2) - f2]) + f3 / f4
         )

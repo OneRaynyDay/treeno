@@ -15,6 +15,7 @@ from treeno.datatypes.builder import unknown
 from treeno.datatypes.types import DataType
 from treeno.grammar.parse import AST
 from treeno.grammar.parse import tree as print_tree
+from treeno.relation import Schema
 from treeno.util import children, is_dictlike, is_listlike
 
 app = typer.Typer()
@@ -30,6 +31,8 @@ def get_sql_object(construct_type: SqlConstruct, sql: str) -> Sql:
     sql_object: Sql
     if construct_type == SqlConstruct.QUERY:
         sql_object = query_from_sql(sql)
+        # Resolve a query since it is much more complicated
+        sql_object.resolve(Schema.empty_schema())
     elif construct_type == SqlConstruct.EXPRESSION:
         sql_object = expression_from_sql(sql)
     elif construct_type == SqlConstruct.TYPE:
@@ -110,24 +113,23 @@ def tree(construct_type: SqlConstruct, sql: str, draw: bool = False) -> None:
 @app.command()
 def schema(sql: str) -> None:
     sql_obj = get_sql_object(SqlConstruct.QUERY, sql)
-    schema = sql_obj.get_schema()
-    if not schema:
+    schema = sql_obj.resolve(Schema.empty_schema())
+    if not schema.fields:
         typer.echo(
             typer.style("Unknown schema", fg=typer.colors.RED, bold=True)
         )
         return
     lines = []
-    for idx, entry in enumerate(schema):
-        field, dtype = entry
+    for idx, field in enumerate(schema.fields):
         field_string = (
             typer.style("<none>", fg=typer.colors.RED, bold=True)
             if field is None
-            else str(field)
+            else field.name
         )
         dtype_string = (
             typer.style("<unknown>", fg=typer.colors.RED, bold=True)
-            if dtype == unknown()
-            else str(dtype)
+            if field.data_type == unknown()
+            else field.data_type
         )
         lines.append(f"{field_string} - {dtype_string}")
     typer.echo("\n".join(lines))

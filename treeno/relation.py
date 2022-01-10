@@ -1,6 +1,7 @@
+import copy
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 import attr
 
@@ -8,14 +9,61 @@ from treeno.base import PrintMode, PrintOptions, SetQuantifier, Sql
 from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import row, unknown
 from treeno.datatypes.types import DataType
-from treeno.expression import Field, Value
+from treeno.expression import Value
 from treeno.groupby import GroupBy
 from treeno.orderby import OrderTerm
 from treeno.printer import StatementPrinter, join_stmts, pad
 from treeno.util import chain_identifiers, parenthesize, quote_identifier
 from treeno.window import Window
 
-Schema = List[Tuple[Optional[Field], DataType]]
+
+@attr.s
+class SchemaField:
+    """Represents a single field in a schema
+    A schema must have a data type, a source, and optionally have a name. For example, a SUM(x) term with no alias
+    should have no name. It still shows up in the output, but there's no way to refer to it.
+    """
+
+    name: Optional[str] = attr.ib()
+    source: "Relation" = attr.ib()
+    data_type: DataType = attr.ib()
+
+
+@attr.s
+class Schema:
+    """Represents the output schema of a given relation.
+    Schemas are used to impute missing types from trees with partial type information.
+    Relation_ids does not denormalize this object(as in add redundant information that can be inferred from fields) -
+    it is used to denote the existence of a relation with no well-defined schema, in which fields would be empty.
+    """
+
+    fields: List[SchemaField] = attr.ib()
+    relation_ids: Set[str] = attr.ib()
+
+    @classmethod
+    def empty_schema(cls) -> "Schema":
+        return cls(fields=[], relation_ids=set())
+
+    def merge(self, another_schema: "Schema") -> "Schema":
+        # TODO: Should this be deep copies? I don't see a point in trying to deepcopy relations since they're expensive.
+        fields = copy.copy(self.fields)
+        relation_ids = copy.copy(self.relation_ids)
+        # TODO: This is also pretty slow, O(N^2)
+        for f in another_schema.fields:
+            if f not in fields:
+                fields.append(f)
+        relation_ids |= another_schema.relation_ids
+        return Schema(fields, relation_ids)
+
+
+def maybe_prune_schema(relation: "Relation", existing_schema: Schema) -> Schema:
+    """Maybe prune the schema to pass to a relation.
+    Some relations don't want extra schema information to be passed through, because it's in its own parenthesized
+    expression which is not aware of the outer namespace.
+    """
+    if isinstance(relation, Query):
+        return Schema.empty_schema()
+    return existing_schema
 
 
 class Relation(Sql, ABC):
@@ -32,11 +80,20 @@ class Relation(Sql, ABC):
     but belong to 2). We have SelectQuery, TablesQuery, and ValuesQuery for this purpose.
     """
 
+    def identifier(self) -> Optional[str]:
+        """TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,
+        but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
+        table.field, which identifier would return "table" for and match on.
+        """
+        return None
+
     @abstractmethod
-    def get_schema(self) -> Optional[Schema]:
-        raise NotImplementedError(
-            "All Relations must implement a get_schema method"
-        )
+    def resolve(self, existing_schema: Schema) -> Schema:
+        """Used to resolve missing types in queries. The user can pass in existing_schemas to hint at what types of
+        fields are when they're dynamically determined i.e. a table in Trino, but we also use resolve() underneath
+        the hood in order to resolve some types that can only be determined through a tree traversal i.e. fields to
+        relations whose schemas are known"""
+        ...
 
 
 @attr.s
@@ -48,22 +105,26 @@ class Query(Relation, Value, ABC):
     offset: Optional[int] = attr.ib(default=None, kw_only=True)
     limit: Optional[int] = attr.ib(default=None, kw_only=True)
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
-    # TODO: This doesn't currently support column aliases on the WITH level.
-    with_queries: Dict[str, "Query"] = attr.ib(factory=dict, kw_only=True)
+    with_: List["AliasedRelation"] = attr.ib(factory=dict, kw_only=True)
 
     def with_query_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
-        if not self.with_queries:
+        if not self.with_:
             return {}
-        newline_if_pretty = "\n" if opts.mode == PrintMode.PRETTY else ""
+        # NOTE: We hold AliasedRelations in self.with_, but the sql output for it should be in
+        # cte namedQuery form - it's not the same as a typical AliasedRelation.sql().
         return {
             "WITH": join_stmts(
-                [
-                    f"{quote_identifier(name)} AS ({newline_if_pretty}{query.sql(opts)})"
-                    for name, query in self.with_queries.items()
-                ],
-                opts,
+                [query.named_query_sql(opts) for query in self.with_], opts
             )
         }
+
+    def resolve_with(self) -> Schema:
+        # The CTE's can actually refer to previously defined CTE's!
+        merging_schema = Schema.empty_schema()
+        for w in self.with_:
+            new_schema = w.resolve(merging_schema)
+            merging_schema = merging_schema.merge(new_schema)
+        return merging_schema
 
     def constraint_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
         str_builder = {}
@@ -94,21 +155,35 @@ class SelectQuery(Query):
     window: Optional[Dict[str, Window]] = attr.ib(default=None, kw_only=True)
 
     def __attrs_post_init__(self) -> None:
-        self.data_type = row(dtypes=[val.data_type for val in self.select])
+        self.data_type = self._compute_data_type()
 
-    def resolve(self) -> None:
+    def _compute_data_type(self) -> DataType:
+        return row(dtypes=[val.data_type for val in self.select])
+
+    def resolve(self, existing_schema: Schema) -> Schema:
         from treeno.datatypes.resolve import resolve_fields
 
         # TODO: Currently resolve only handles a single layer. We should make this a common function across all
         # relations so we can recursively call resolve before performing resolve on this query.
         # Also, it's probably worth allowing table inputs.
-        schema = self.from_.get_schema()
-        assert (
-            schema is not None
-        ), "Can't resolve fields with no defined schema."
-        self.select = [resolve_fields(val, schema) for val in self.select]
-        # Update data type as well after recursively building back up the tree
-        self.data_type = row(dtypes=[val.data_type for val in self.select])
+        # Pass in existing relations from CTE into from_ as long as from_ is not in its own namespace i.e. a subquery.
+        if self.from_ is not None:
+            self.from_.resolve(maybe_prune_schema(self.from_, existing_schema))
+            schema = self.from_.resolve(existing_schema=self.resolve_with())
+            self.select = [resolve_fields(val, schema) for val in self.select]
+            self.data_type = self._compute_data_type()
+
+        schema_fields = []
+        for value in self.select:
+            # All schema fields have the source to the current object
+            schema_fields.append(
+                SchemaField(
+                    name=value.identifier(),
+                    source=self,
+                    data_type=value.data_type,
+                )
+            )
+        return Schema(schema_fields, relation_ids=set())
 
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter()
@@ -144,14 +219,6 @@ class SelectQuery(Query):
         builder.update(self.constraint_string_builder(opts))
         return builder.to_string(opts)
 
-    def get_schema(self) -> Optional[Schema]:
-        schema = []
-        for value in self.select:
-            identifier = value.identifier()
-            field = Field(identifier) if identifier else None
-            schema.append((field, value.data_type))
-        return schema
-
 
 @attr.s
 class Table(Relation):
@@ -165,24 +232,49 @@ class Table(Relation):
     schema: Optional[str] = attr.ib(default=None)
     catalog: Optional[str] = attr.ib(default=None)
 
-    _column_schema: Optional[Schema] = attr.ib(default=None)
+    _column_schema: Schema = attr.ib(factory=Schema.empty_schema)
 
     def __attrs_post_init__(self) -> None:
         if self.catalog:
             assert (
                 self.schema
             ), "If a catalog is specified, a schema must be specified as well"
+        if self.name not in self._column_schema.relation_ids:
+            self._column_schema.relation_ids.add(self.name)
 
     def sql(self, opts: PrintOptions) -> str:
         return chain_identifiers(self.catalog, self.schema, self.name)
 
-    def get_schema(self) -> Optional[Schema]:
+    def resolve(self, existing_schema: Schema) -> Schema:
+        # If this schema isn't defined
+        if self.name not in existing_schema.relation_ids:
+            return self._column_schema
+        # Otherwise, the schema IS defined e.g. by a previous CTE
+        schema_fields = [
+            f
+            for f in existing_schema.fields
+            if f.source.identifier() == self.identifier()
+        ]
+        self._column_schema = Schema(
+            schema_fields, relation_ids={self.identifier()}
+        )
         return self._column_schema
+
+    def identifier(self) -> Optional[str]:
+        return self.name
 
 
 @attr.s
 class TableQuery(Query):
     table: Table = attr.ib()
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self._compute_data_type()
+
+    def _compute_data_type(self) -> DataType:
+        if self.table._column_schema == Schema.empty_schema():
+            return row(dtypes=[f.data_type for f in self.table._column_schema])
+        return unknown()
 
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter()
@@ -191,8 +283,13 @@ class TableQuery(Query):
         builder.update(self.constraint_string_builder(opts))
         return builder.to_string(opts)
 
-    def get_schema(self) -> Optional[Schema]:
-        return self.table.get_schema()
+    def resolve(self, existing_schema: Schema) -> Schema:
+        # We not only need to take the existing schema, but we also need to shadow some fields with the
+        # local WITH clause
+        with_schema = self.resolve_with()
+        table_schema = self.table.resolve(with_schema)
+        self.data_type = self._compute_data_type()
+        return table_schema
 
 
 @attr.s
@@ -217,8 +314,12 @@ class ValuesQuery(Query):
         builder.update(self.constraint_string_builder(opts))
         return builder.to_string(opts)
 
-    def get_schema(self) -> Optional[Schema]:
-        return [(None, val.data_type) for val in self.exprs]
+    def resolve(self, existing_schema: Schema) -> Schema:
+        """TODO: Does ValuesQuery dereference anything by itself?
+        """
+        return Schema(
+            [SchemaField(None, self, val.data_type) for val in self.exprs]
+        )
 
 
 @attr.s
@@ -232,30 +333,36 @@ class AliasedRelation(Relation):
 
     def sql(self, opts: PrintOptions) -> str:
         # TODO: Keep the "AS"?
-        alias_str = f'{relation_string(self.relation, opts)} "{self.alias}"'
+        alias_str = f"{relation_string(self.relation, opts)} {quote_identifier(self.alias)}"
         if self.column_aliases:
             alias_str += f" ({join_stmts(self.column_aliases, opts)})"
         return alias_str
 
-    def get_schema(self) -> Optional[Schema]:
-        old_schema = self.relation.get_schema()
-        if not old_schema:
-            return None
-        else:
-            new_schema = []
-            for idx, tpl in enumerate(old_schema):
-                field, dtype = tpl
-                if field is not None:
-                    field_name = (
-                        self.column_aliases[idx]
-                        if self.column_aliases
-                        else field.name
-                    )
-                    field = attr.evolve(
-                        field, table=self.alias, name=field_name
-                    )
-                new_schema.append((field, dtype))
-            return new_schema
+    def named_query_sql(self, opts: PrintOptions) -> str:
+        alias_str = quote_identifier(self.alias)
+        if self.column_aliases:
+            alias_str += f" {join_stmts(self.column_aliases, opts)}"
+        alias_str += f" AS {relation_string(self.relation, opts)}"
+        return alias_str
+
+    def resolve(self, existing_schema: Schema) -> Schema:
+        relation_schema = self.relation.resolve(
+            maybe_prune_schema(self.relation, existing_schema)
+        )
+        new_schema_fields = []
+        for idx, schema_field in enumerate(relation_schema.fields):
+            field_name = (
+                self.column_aliases[idx]
+                if self.column_aliases
+                else schema_field.name
+            )
+            new_schema_fields.append(
+                SchemaField(field_name, self, schema_field.data_type)
+            )
+        return Schema(new_schema_fields, relation_ids={self.identifier()})
+
+    def identifier(self) -> Optional[str]:
+        return self.alias
 
 
 class JoinType(Enum):
@@ -366,10 +473,19 @@ class Join(Relation):
             builder.update(self.config.criteria.build_sql(opts))
         return builder.to_string(opts)
 
-    def get_schema(self) -> Optional[Schema]:
-        return (
-            self.left_relation.get_schema() + self.right_relation.get_schema()
+    def resolve(self, existing_schema: Schema) -> Schema:
+        pruned_left_arg = maybe_prune_schema(
+            self.left_relation, existing_schema
         )
+        left_schema = self.left_relation.resolve(pruned_left_arg)
+        existing_schema = existing_schema.merge(left_schema)
+        # Pass in the namespace of the first relation to the second. This is important for sql statemnts like
+        # SELECT x FROM a CROSS JOIN UNNEST(a.foo), where UNNEST requires a to be selected first
+        pruned_right_arg = maybe_prune_schema(
+            self.right_relation, existing_schema
+        )
+        right_schema = self.right_relation.resolve(pruned_right_arg)
+        return left_schema.merge(right_schema)
 
 
 @attr.s
@@ -381,13 +497,16 @@ class Unnest(Relation):
     with_ordinality: bool = attr.ib(default=False, kw_only=True)
 
     def __attrs_post_init__(self) -> None:
+        self.data_type = self._compute_data_type()
+
+    def _compute_data_type(self) -> DataType:
         dtypes = []
         for val in self.arrays:
             if val.data_type.type_name != type_consts.ARRAY:
                 dtypes.append(unknown())
             else:
                 dtypes.append(val.data_type.parameters["dtype"])
-        self.data_type = row(dtypes=dtypes)
+        return row(dtypes=dtypes)
 
     def sql(self, opts: PrintOptions) -> str:
         str_builder = [
@@ -397,8 +516,21 @@ class Unnest(Relation):
             str_builder += " WITH ORDINALITY"
         return " ".join(str_builder)
 
-    def get_schema(self) -> Optional[Schema]:
-        return [(None, dtype) for dtype in self.data_type.parameters["dtypes"]]
+    def resolve(self, existing_schema: Schema) -> Schema:
+        from treeno.datatypes.resolve import resolve_fields
+
+        # There's no base
+        self.arrays = [
+            resolve_fields(arr, existing_schema) for arr in self.arrays
+        ]
+        self.data_type = self._compute_data_type()
+        return Schema(
+            fields=[
+                SchemaField(name=None, source=self, data_type=dtype)
+                for dtype in self.data_type.parameters["dtypes"]
+            ],
+            relation_ids=set(),
+        )
 
 
 @attr.s
@@ -411,8 +543,9 @@ class Lateral(Relation):
     def sql(self, opts: PrintOptions) -> str:
         return f"LATERAL({self.subquery.sql(opts)})"
 
-    def get_schema(self) -> Optional[Schema]:
-        return self.subquery.get_schema()
+    def resolve(self, existing_schema: Schema) -> Schema:
+        # NOTE: We explicitly don't maybe_prune_schema here, since lateral needs to explicitly pass it down
+        return self.subquery.resolve(existing_schema)
 
 
 class SampleType(Enum):
@@ -435,8 +568,9 @@ class TableSample(Relation):
         relation_sql = relation_string(self.relation, opts)
         return f"{relation_sql} TABLESAMPLE {self.sample_type.value}({self.percentage.sql(opts)})"
 
-    def get_schema(self) -> Optional[Schema]:
-        return self.relation.get_schema()
+    def resolve(self, existing_schema: Schema) -> Schema:
+        # NOTE: We don't maybe_prune_schema here, because table sample should not affect the namespace scope
+        return self.relation.resolve(existing_schema)
 
 
 def relation_string(relation: Relation, opts: PrintOptions) -> str:

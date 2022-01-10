@@ -50,15 +50,18 @@ class Sql(ABC):
         # Default print options
         return self.sql(PrintOptions())
 
-    def assert_equals(self, other):
+    def equals(self, other) -> bool:
+        self_dict = attr.asdict(self)
+        other_dict = attr.asdict(other)
+        return self_dict == other_dict
+
+    def assert_equals(self, other) -> None:
         """Because we've overridden __eq__, we can no longer use that to test equality on objects. We use attr.asdict
         to make sure the fields are completely collapsed.
         TODO: However, this doesn't completely test equality as the type of the class doesn't show up, so we have to
         add that later.
         """
-        self_dict = attr.asdict(self)
-        other_dict = attr.asdict(other)
-        assert self_dict == other_dict
+        assert self.equals(other)
 
 
 class SetQuantifier(DefaultableEnum):
