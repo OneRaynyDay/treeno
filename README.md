@@ -168,6 +168,40 @@ The above decimal type can be constructed in python using the `treeno.datatypes.
 DataType(type_name='DECIMAL', parameters={'precision': 29, 'scale': 1})
 ```
 
+## Contributing
+
+Thanks for considering contributing to Treeno!
+
+### First time setup
+
+- Create a virtualenv/conda environment
+- Fork the repository by clicking "Fork" on the [main repo](https://github.com/OneRaynyDay/treeno) on the top right corner.
+- Clone the main repository locally
+
+```shell
+$ git clone git@github.com:OneRaynyDay/treeno.git
+$ cd treeno
+```
+
+- If you don't have ANTLR installed, do so first. On Mac OS X you can run:
+
+```shell
+# This should give you version 4.9.2
+$ brew install antlr@4
+```
+
+- Build the repository locally (this will build ANTLR)
+
+```shell
+$ python setup.py develop
+```
+
+To run tests, please run:
+
+```shell
+$ pytest
+```
+
 ## Links
 
 PyPI Releases: https://pypi.org/project/treeno/
