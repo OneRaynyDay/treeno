@@ -1,0 +1,1419 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Welcome to treeno’s documentation! &#8212; treeno 0.0.367 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+
+
+          <div class="body" role="main">
+
+  <section id="welcome-to-treeno-s-documentation">
+<h1>Welcome to treeno’s documentation!<a class="headerlink" href="#welcome-to-treeno-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<section id="module-treeno.relation">
+<span id="api-reference"></span><h2>API Reference<a class="headerlink" href="#module-treeno.relation" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.AliasedRelation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">AliasedRelation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_aliases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.AliasedRelation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Relation</span></code></a></p>
+<p>Represents an alias corresponding to a relation</p>
+<p>Aliased relations can change/add identifier to another underlying <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a>, and can also rname the columns.
+Here’s an example using resolve:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">treeno.expression</span> <span class="kn">import</span> <span class="n">wrap_literal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aliased_relation</span> <span class="o">=</span> <span class="n">AliasedRelation</span><span class="p">(</span><span class="n">SelectQuery</span><span class="p">([</span><span class="n">wrap_literal</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">wrap_literal</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)]),</span> <span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aliased_schema</span> <span class="o">=</span> <span class="n">aliased_relation</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">Schema</span><span class="o">.</span><span class="n">empty_schema</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">schema_field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">schema_field</span> <span class="ow">in</span> <span class="n">aliased_schema</span><span class="o">.</span><span class="n">fields</span><span class="p">]</span>
+<span class="go">[&#39;x&#39;, &#39;y&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aliased_schema</span><span class="o">.</span><span class="n">relation_ids</span>
+<span class="go">{&#39;query&#39;}</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>TODO: Currently we don’t check to see whether the field length is equal to our column_aliases parameter. Should</dt><dd><p>we check this or let it fail later?</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relation</strong> (<a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><em>treeno.relation.Relation</em></a>) – A relation to alias over.</p></li>
+<li><p><strong>alias</strong> (<em>str</em>) – Alias for the relation.</p></li>
+<li><p><strong>column_aliases</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – An optional list of names for each column of the underlying relation.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.AliasedRelation.alias">
+<span class="sig-name descname"><span class="pre">alias</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#treeno.relation.AliasedRelation.alias" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.AliasedRelation.column_aliases">
+<span class="sig-name descname"><span class="pre">column_aliases</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.AliasedRelation.column_aliases" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.AliasedRelation.identifier">
+<span class="sig-name descname"><span class="pre">identifier</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.AliasedRelation.identifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shorthand identifier for the relation</p>
+<dl class="simple">
+<dt>TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,</dt><dd><p>but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
+table.field, which identifier would return “table” for and match on.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A string if the relation has a well-defined identifier, otherwise None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.AliasedRelation.named_query_sql">
+<span class="sig-name descname"><span class="pre">named_query_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.AliasedRelation.named_query_sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.AliasedRelation.relation">
+<span class="sig-name descname"><span class="pre">relation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><span class="pre">treeno.relation.Relation</span></a></em><a class="headerlink" href="#treeno.relation.AliasedRelation.relation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.AliasedRelation.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.AliasedRelation.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.AliasedRelation.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.AliasedRelation.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.ExceptQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">ExceptQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_quantifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SetQuantifier.DISTINCT</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orderby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.ExceptQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.SetQuery" title="treeno.relation.SetQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.SetQuery</span></code></a></p>
+<p>Represents a set subtract of left query with right query.</p>
+<p>Note that except queries cannot use set quantifier ALL, since Trino implements EXCEPT by hashing the rows
+and subsequently deduplicates input query rows.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">treeno.expression</span> <span class="kn">import</span> <span class="n">NULL</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">SelectQuery</span><span class="p">([</span><span class="n">NULL</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">ExceptQuery</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">set_quantifier</span><span class="o">=</span><span class="n">SetQuantifier</span><span class="o">.</span><span class="n">DISTINCT</span><span class="p">))</span>
+<span class="go">&#39;(SELECT NULL) EXCEPT DISTINCT (SELECT NULL)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ExceptQuery</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">set_quantifier</span><span class="o">=</span><span class="n">SetQuantifier</span><span class="o">.</span><span class="n">ALL</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">AssertionError</span>: <span class="n">EXCEPT does not support ALL</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.ExceptQuery.left_query">
+<span class="sig-name descname"><span class="pre">left_query</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><span class="pre">treeno.relation.Query</span></a></em><a class="headerlink" href="#treeno.relation.ExceptQuery.left_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.ExceptQuery.right_query">
+<span class="sig-name descname"><span class="pre">right_query</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><span class="pre">treeno.relation.Query</span></a></em><a class="headerlink" href="#treeno.relation.ExceptQuery.right_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.ExceptQuery.set_quantifier">
+<span class="sig-name descname"><span class="pre">set_quantifier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">treeno.base.SetQuantifier</span></em><a class="headerlink" href="#treeno.relation.ExceptQuery.set_quantifier" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.ExceptQuery.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.ExceptQuery.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.IntersectQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">IntersectQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_quantifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SetQuantifier.DISTINCT</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orderby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.IntersectQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.SetQuery" title="treeno.relation.SetQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.SetQuery</span></code></a></p>
+<p>Represents an intersection of two queries.</p>
+<p>Note that intersect queries cannot use set quantifier ALL, since Trino implements INTERSECT by hashing the rows
+and subsequently deduplicates input query rows.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">treeno.expression</span> <span class="kn">import</span> <span class="n">NULL</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">SelectQuery</span><span class="p">([</span><span class="n">NULL</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">IntersectQuery</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">set_quantifier</span><span class="o">=</span><span class="n">SetQuantifier</span><span class="o">.</span><span class="n">DISTINCT</span><span class="p">))</span>
+<span class="go">&#39;(SELECT NULL) INTERSECT DISTINCT (SELECT NULL)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">IntersectQuery</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">set_quantifier</span><span class="o">=</span><span class="n">SetQuantifier</span><span class="o">.</span><span class="n">ALL</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">AssertionError</span>: <span class="n">INTERSECT does not support ALL</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.IntersectQuery.left_query">
+<span class="sig-name descname"><span class="pre">left_query</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><span class="pre">treeno.relation.Query</span></a></em><a class="headerlink" href="#treeno.relation.IntersectQuery.left_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.IntersectQuery.right_query">
+<span class="sig-name descname"><span class="pre">right_query</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><span class="pre">treeno.relation.Query</span></a></em><a class="headerlink" href="#treeno.relation.IntersectQuery.right_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.IntersectQuery.set_quantifier">
+<span class="sig-name descname"><span class="pre">set_quantifier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">treeno.base.SetQuantifier</span></em><a class="headerlink" href="#treeno.relation.IntersectQuery.set_quantifier" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.IntersectQuery.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.IntersectQuery.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.Join">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">Join</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_relation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_relation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Join" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Relation</span></code></a></p>
+<p>Represents a join between two relations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>left_relation</strong> (<a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><em>treeno.relation.Relation</em></a>) – An arbitrary relation to be joined on</p></li>
+<li><p><strong>right_relation</strong> (<a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><em>treeno.relation.Relation</em></a>) – An arbitrary relation to be joined on</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="#treeno.relation.JoinConfig" title="treeno.relation.JoinConfig"><em>treeno.relation.JoinConfig</em></a>) – Details on what type of join we’re performing. Refer to <a class="reference internal" href="#treeno.relation.JoinConfig" title="treeno.relation.JoinConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">JoinConfig</span></code></a> for more info.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Join.config">
+<span class="sig-name descname"><span class="pre">config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.JoinConfig" title="treeno.relation.JoinConfig"><span class="pre">treeno.relation.JoinConfig</span></a></em><a class="headerlink" href="#treeno.relation.Join.config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Join.left_relation">
+<span class="sig-name descname"><span class="pre">left_relation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><span class="pre">treeno.relation.Relation</span></a></em><a class="headerlink" href="#treeno.relation.Join.left_relation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Join.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Join.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Join.right_relation">
+<span class="sig-name descname"><span class="pre">right_relation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><span class="pre">treeno.relation.Relation</span></a></em><a class="headerlink" href="#treeno.relation.Join.right_relation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Join.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Join.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.JoinConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">JoinConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">join_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">natural</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criteria</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.JoinConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.base.Sql</span></code></p>
+<p>Details the method of join used in a <a class="reference internal" href="#treeno.relation.Join" title="treeno.relation.Join"><code class="xref py py-class docutils literal notranslate"><span class="pre">Join</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>join_type</strong> (<a class="reference internal" href="#treeno.relation.JoinType" title="treeno.relation.JoinType"><em>treeno.relation.JoinType</em></a>) – The type of JOIN (i.e. CROSS JOIN, INNER JOIN, etc)</p></li>
+<li><p><strong>natural</strong> (<em>bool</em>) – Whether the join is natural (i.e. joins on equality on column names that are the same between two queries)</p></li>
+<li><p><strong>criteria</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#treeno.relation.JoinCriteria" title="treeno.relation.JoinCriteria"><em>treeno.relation.JoinCriteria</em></a><em>]</em>) – What boolean expression criteria the join requires. Refer to <a class="reference internal" href="#treeno.relation.JoinCriteria" title="treeno.relation.JoinCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">JoinCriteria</span></code></a> for more info.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinConfig.criteria">
+<span class="sig-name descname"><span class="pre">criteria</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#treeno.relation.JoinCriteria" title="treeno.relation.JoinCriteria"><span class="pre">treeno.relation.JoinCriteria</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.JoinConfig.criteria" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinConfig.join_type">
+<span class="sig-name descname"><span class="pre">join_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.JoinType" title="treeno.relation.JoinType"><span class="pre">treeno.relation.JoinType</span></a></em><a class="headerlink" href="#treeno.relation.JoinConfig.join_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinConfig.natural">
+<span class="sig-name descname"><span class="pre">natural</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#treeno.relation.JoinConfig.natural" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.JoinConfig.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.JoinConfig.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.JoinCriteria">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">JoinCriteria</span></span><a class="headerlink" href="#treeno.relation.JoinCriteria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.base.Sql</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Join criterias are complex expressions that describe exactly how a JOIN is done.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.JoinCriteria.build_sql">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.JoinCriteria.build_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a dictionary mapping of statements to strings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.JoinCriteria.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.JoinCriteria.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.JoinOnCriteria">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">JoinOnCriteria</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constraint</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.JoinOnCriteria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.JoinCriteria" title="treeno.relation.JoinCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.JoinCriteria</span></code></a></p>
+<p>Perform a join between two relations using boolean expressions.</p>
+<p>An example ON usage:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>SELECT * FROM (SELECT 1 AS &quot;foo&quot;) &quot;a&quot; JOIN (SELECT 1 AS &quot;foo&quot;) &quot;b&quot; ON &quot;a&quot;.&quot;foo&quot; = &quot;b&quot;.&quot;foo&quot;;
+ foo | foo
+-----+-----
+   1 |   1
+(1 row)
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>constraint</strong> (<em>treeno.expression.Value</em>) – A boolean expression constraining the join to where the expression evaluates to True using
+two subqueries’ rows.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.JoinOnCriteria.build_sql">
+<span class="sig-name descname"><span class="pre">build_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.JoinOnCriteria.build_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a dictionary mapping of statements to strings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinOnCriteria.constraint">
+<span class="sig-name descname"><span class="pre">constraint</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">treeno.expression.Value</span></em><a class="headerlink" href="#treeno.relation.JoinOnCriteria.constraint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.JoinType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">JoinType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.JoinType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinType.CROSS">
+<span class="sig-name descname"><span class="pre">CROSS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CROSS'</span></em><a class="headerlink" href="#treeno.relation.JoinType.CROSS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinType.INNER">
+<span class="sig-name descname"><span class="pre">INNER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'INNER'</span></em><a class="headerlink" href="#treeno.relation.JoinType.INNER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinType.LEFT">
+<span class="sig-name descname"><span class="pre">LEFT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LEFT'</span></em><a class="headerlink" href="#treeno.relation.JoinType.LEFT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinType.OUTER">
+<span class="sig-name descname"><span class="pre">OUTER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FULL</span> <span class="pre">OUTER'</span></em><a class="headerlink" href="#treeno.relation.JoinType.OUTER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinType.RIGHT">
+<span class="sig-name descname"><span class="pre">RIGHT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'RIGHT'</span></em><a class="headerlink" href="#treeno.relation.JoinType.RIGHT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.JoinUsingCriteria">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">JoinUsingCriteria</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">column_names</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.JoinUsingCriteria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.JoinCriteria" title="treeno.relation.JoinCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.JoinCriteria</span></code></a></p>
+<p>Using allows us to join on equality criterion on multiple rows.</p>
+<p>There’s one subtle difference between USING and ON, which is the output number of columns:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>SELECT * FROM (SELECT 1 AS &quot;foo&quot;) JOIN (SELECT 1 AS &quot;foo&quot;) USING(&quot;foo&quot;);
+ foo
+-----
+   1
+(1 row)
+</pre></div>
+</div>
+<p>Selects the column once. If we use ON:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>SELECT * FROM (SELECT 1 AS &quot;foo&quot;) &quot;a&quot; JOIN (SELECT 1 AS &quot;foo&quot;) &quot;b&quot; ON &quot;a&quot;.&quot;foo&quot; = &quot;b&quot;.&quot;foo&quot;;
+ foo | foo
+-----+-----
+   1 |   1
+(1 row)
+</pre></div>
+</div>
+<p>If the output columns have the same name, then upon referencing the columns Trino will fail.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>column_names</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – A list of column names to check equality clauses for.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.JoinUsingCriteria.build_sql">
+<span class="sig-name descname"><span class="pre">build_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.JoinUsingCriteria.build_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a dictionary mapping of statements to strings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.JoinUsingCriteria.column_names">
+<span class="sig-name descname"><span class="pre">column_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.JoinUsingCriteria.column_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.Lateral">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">Lateral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subquery</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Lateral" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Relation</span></code></a></p>
+<p>Represents a correlated subquery.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>subquery</strong> (<a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><em>treeno.relation.Query</em></a>) – The subquery to correlate with the current scope.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Lateral.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Lateral.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Lateral.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Lateral.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Lateral.subquery">
+<span class="sig-name descname"><span class="pre">subquery</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><span class="pre">treeno.relation.Query</span></a></em><a class="headerlink" href="#treeno.relation.Lateral.subquery" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.Query">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">Query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orderby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Relation</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.expression.Value</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Represents a query with filtered outputs. Queries are also values, in that they yield row types</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Query.limit">
+<span class="sig-name descname"><span class="pre">limit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.Query.limit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Query.offset">
+<span class="sig-name descname"><span class="pre">offset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.Query.offset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Query.orderby">
+<span class="sig-name descname"><span class="pre">orderby</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">treeno.orderby.OrderTerm</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.Query.orderby" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Query.with_">
+<span class="sig-name descname"><span class="pre">with_</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#treeno.relation.AliasedRelation" title="treeno.relation.AliasedRelation"><span class="pre">treeno.relation.AliasedRelation</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.Query.with_" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.Relation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">Relation</span></span><a class="headerlink" href="#treeno.relation.Relation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.base.Sql</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Represents a SQL relation.</p>
+<p>A <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a> can be one of the following:</p>
+<ol class="arabic simple">
+<li><p>(<a class="reference internal" href="#treeno.relation.Table" title="treeno.relation.Table"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a>) A table reference.</p></li>
+<li><dl class="simple">
+<dt>(<a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">Query</span></code></a>) A subquery. <a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">Query</span></code></a> is an abstract class, and its subclasses contain</dt><dd><p><a class="reference internal" href="#treeno.relation.SelectQuery" title="treeno.relation.SelectQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SelectQuery</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ValuesTable</span></code>, <a class="reference internal" href="#treeno.relation.SetQuery" title="treeno.relation.SetQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SetQuery</span></code></a> and its subclasses, etc.</p>
+</dd>
+</dl>
+</li>
+<li><p>(<a class="reference internal" href="#treeno.relation.Unnest" title="treeno.relation.Unnest"><code class="xref py py-class docutils literal notranslate"><span class="pre">Unnest</span></code></a>) An unnested expression of arrays.</p></li>
+<li><p>(<a class="reference internal" href="#treeno.relation.Lateral" title="treeno.relation.Lateral"><code class="xref py py-class docutils literal notranslate"><span class="pre">Lateral</span></code></a>) Shares the current relation’s namespace with any <a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">Query</span></code></a>.</p></li>
+<li><p>(<a class="reference internal" href="#treeno.relation.TableSample" title="treeno.relation.TableSample"><code class="xref py py-class docutils literal notranslate"><span class="pre">TableSample</span></code></a>) A subset sample of any relation.</p></li>
+<li><p>(<a class="reference internal" href="#treeno.relation.Join" title="treeno.relation.Join"><code class="xref py py-class docutils literal notranslate"><span class="pre">Join</span></code></a>) A join composing of any relation.</p></li>
+<li><p>(<a class="reference internal" href="#treeno.relation.AliasedRelation" title="treeno.relation.AliasedRelation"><code class="xref py py-class docutils literal notranslate"><span class="pre">AliasedRelation</span></code></a>) An alias (both as relation name and its column names) of any relation.</p></li>
+</ol>
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Relation.identifier">
+<span class="sig-name descname"><span class="pre">identifier</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Relation.identifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shorthand identifier for the relation</p>
+<dl class="simple">
+<dt>TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,</dt><dd><p>but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
+table.field, which identifier would return “table” for and match on.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A string if the relation has a well-defined identifier, otherwise None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Relation.resolve">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Relation.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.SampleType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">SampleType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.SampleType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SampleType.BERNOULLI">
+<span class="sig-name descname"><span class="pre">BERNOULLI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BERNOULLI'</span></em><a class="headerlink" href="#treeno.relation.SampleType.BERNOULLI" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SampleType.SYSTEM">
+<span class="sig-name descname"><span class="pre">SYSTEM</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SYSTEM'</span></em><a class="headerlink" href="#treeno.relation.SampleType.SYSTEM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.Schema">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">Schema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fields</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relation_ids</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents the output schema of a given <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a></p>
+<p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a> s are used to impute missing types from trees with partial type information. This class serves two
+main functions. The first is to resolve cross-query references i.e. WITH queries which can be referenced from the
+FROM clause in a <a class="reference internal" href="#treeno.relation.SelectQuery" title="treeno.relation.SelectQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">SelectQuery</span></code></a>. The second is to allow the user to pass in schemas to resolve relations
+like <a class="reference internal" href="#treeno.relation.Table" title="treeno.relation.Table"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a> s which can’t resolve its own schema without access to external metadata (i.e. from a metastore).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fields</strong> (<em>List</em><em>[</em><a class="reference internal" href="#treeno.relation.SchemaField" title="treeno.relation.SchemaField"><em>treeno.relation.SchemaField</em></a><em>]</em>) – A list of <a class="reference internal" href="#treeno.relation.SchemaField" title="treeno.relation.SchemaField"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchemaField</span></code></a> s that exist in the current namespace</p></li>
+<li><p><strong>Relation_ids</strong> – A set of relations used to denote the existence of a relation included in the schema.
+This set can contain relations that contains no fields - e.g. for a table with an undefined schema,
+the fields would be empty but the relation would still be in the set</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Schema.empty_schema">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">empty_schema</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Schema.empty_schema" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Schema.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#treeno.relation.SchemaField" title="treeno.relation.SchemaField"><span class="pre">treeno.relation.SchemaField</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.Schema.fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Schema.merge">
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">another_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Schema.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge two schemas together to create a new schema</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">treeno.datatypes.builder</span> <span class="kn">import</span> <span class="n">bigint</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">schema_a</span> <span class="o">=</span> <span class="n">Schema</span><span class="p">([</span><span class="n">SchemaField</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">Table</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">),</span> <span class="n">bigint</span><span class="p">())],</span> <span class="n">relation_ids</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;a&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">schema_b</span> <span class="o">=</span> <span class="n">Schema</span><span class="p">([</span><span class="n">SchemaField</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">Table</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">),</span> <span class="n">bigint</span><span class="p">())],</span> <span class="n">relation_ids</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;b&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resulting_schema</span> <span class="o">=</span> <span class="n">schema_a</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">schema_b</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">resulting_schema</span><span class="o">.</span><span class="n">fields</span> <span class="o">==</span> <span class="n">schema_a</span><span class="o">.</span><span class="n">fields</span> <span class="o">+</span> <span class="n">schema_b</span><span class="o">.</span><span class="n">fields</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">resulting_schema</span><span class="o">.</span><span class="n">relation_ids</span> <span class="o">==</span> <span class="p">{</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>another_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – The other schema to merge with. The fields from it are appended to the end of the resulting
+<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a> fields</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a> object with both schemas’ fields and relations in the same namespace.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Schema.relation_ids">
+<span class="sig-name descname"><span class="pre">relation_ids</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.Schema.relation_ids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.SchemaField">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">SchemaField</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.SchemaField" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents a single field in a <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+<p>A schema must have a data type, a source, and optionally have a name. For example, a SUM(x) term with no alias
+should have no name. It still shows up in the output, but there’s no way to refer to it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – An optional name of the schema field. If the name is None, then the field cannot be selected later on,
+and Trino will autogenerate column names for these e.g. _col0</p></li>
+<li><p><strong>source</strong> (<a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><em>treeno.relation.Relation</em></a>) – The source of which the field came from. Important to disambiguate <a class="reference internal" href="#treeno.relation.SchemaField" title="treeno.relation.SchemaField"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchemaField</span></code></a> with same
+names across different sources</p></li>
+<li><p><strong>data_type</strong> (<em>treeno.datatypes.types.DataType</em>) – The data type of the field</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SchemaField.data_type">
+<span class="sig-name descname"><span class="pre">data_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">treeno.datatypes.types.DataType</span></em><a class="headerlink" href="#treeno.relation.SchemaField.data_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SchemaField.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.SchemaField.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SchemaField.source">
+<span class="sig-name descname"><span class="pre">source</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><span class="pre">treeno.relation.Relation</span></a></em><a class="headerlink" href="#treeno.relation.SchemaField.source" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">SelectQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">select</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">where</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groupby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">having</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_quantifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orderby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.SelectQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Query</span></code></a></p>
+<p>Represents a high level SELECT query.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">treeno.expression</span> <span class="kn">import</span> <span class="n">wrap_literal</span><span class="p">,</span> <span class="n">AliasedValue</span><span class="p">,</span> <span class="n">Field</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="n">SelectQuery</span><span class="p">(</span><span class="n">select</span><span class="o">=</span><span class="p">[</span><span class="n">AliasedValue</span><span class="p">(</span><span class="n">wrap_literal</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;foo&quot;</span><span class="p">),</span> <span class="n">Field</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="mi">5</span><span class="p">],</span> <span class="n">from_</span><span class="o">=</span><span class="n">table</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">Field</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># We can get the SQL string of the query via __str__</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="go">&#39;SELECT 2 &quot;foo&quot;,&quot;a&quot; / 5 FROM &quot;a&quot; WHERE &quot;a&quot; &gt; 5&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># The schema of the fields can be retrieved from resolve</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">query_fields</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">Schema</span><span class="o">.</span><span class="n">empty_schema</span><span class="p">())</span><span class="o">.</span><span class="n">fields</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># We aliased the literal value as &quot;foo&quot;, but we didn&#39;t give a name for the second field</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">schema_field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">schema_field</span> <span class="ow">in</span> <span class="n">query_fields</span><span class="p">]</span>
+<span class="go">[&#39;foo&#39;, None]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># The type for field a is unknown without a schema supplied to the Table object.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">schema_field</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span> <span class="k">for</span> <span class="n">schema_field</span> <span class="ow">in</span> <span class="n">query_fields</span><span class="p">]</span>
+<span class="go">[&#39;INTEGER&#39;, &#39;UNKNOWN&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Alternatively, we can also get the whole row type of the select query via:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span>
+<span class="go">&#39;ROW(INTEGER,UNKNOWN)&#39;</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>select</strong> (<em>List</em><em>[</em><em>treeno.expression.Value</em><em>]</em>) – A list of <code class="xref py py-class docutils literal notranslate"><span class="pre">Value</span></code> s as outputs to the query.</p></li>
+<li><p><strong>from_</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><em>treeno.relation.Relation</em></a><em>]</em>) – An optional relation to select from. If from is not specified, select must contain values that do not
+reference any external relations, i.e. <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">1</span></code>.</p></li>
+<li><p><strong>where</strong> (<em>Optional</em><em>[</em><em>treeno.expression.Value</em><em>]</em>) – An optional boolean clause to filter rows by. If where is not specified, all rows are used.</p></li>
+<li><p><strong>groupby</strong> (<em>Optional</em><em>[</em><em>treeno.groupby.GroupBy</em><em>]</em>) – An optional <code class="xref py py-class docutils literal notranslate"><span class="pre">GroupBy</span></code> which allows the user to run partial aggregate functions over different
+groupings. For more information refer to <code class="xref py py-mod docutils literal notranslate"><span class="pre">treeno.groupby</span></code>.</p></li>
+<li><p><strong>having</strong> (<em>Optional</em><em>[</em><em>treeno.expression.Value</em><em>]</em>) – An optional boolean clause to filter groups by. If having is not specified, all groups are used.</p></li>
+<li><p><strong>select_quantifier</strong> (<em>treeno.base.SetQuantifier</em>) – Whether to return all rows or only the distinct ones. Defaults to ALL.</p></li>
+<li><p><strong>window</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>treeno.window.Window</em><em>]</em><em>]</em>) – An optional mapping of window names to <code class="xref py py-class docutils literal notranslate"><span class="pre">Window</span></code> s. For more information refer to
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">treeno.window</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery.from_">
+<span class="sig-name descname"><span class="pre">from_</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><span class="pre">treeno.relation.Relation</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.SelectQuery.from_" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery.groupby">
+<span class="sig-name descname"><span class="pre">groupby</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">treeno.groupby.GroupBy</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.SelectQuery.groupby" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery.having">
+<span class="sig-name descname"><span class="pre">having</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">treeno.expression.Value</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.SelectQuery.having" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.SelectQuery.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery.select">
+<span class="sig-name descname"><span class="pre">select</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">treeno.expression.Value</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.SelectQuery.select" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery.select_quantifier">
+<span class="sig-name descname"><span class="pre">select_quantifier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">treeno.base.SetQuantifier</span></em><a class="headerlink" href="#treeno.relation.SelectQuery.select_quantifier" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.SelectQuery.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery.where">
+<span class="sig-name descname"><span class="pre">where</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">treeno.expression.Value</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.SelectQuery.where" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SelectQuery.window">
+<span class="sig-name descname"><span class="pre">window</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">treeno.window.Window</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.SelectQuery.window" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.SetQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">SetQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_quantifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SetQuantifier.DISTINCT</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orderby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.SetQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Query</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Represents a set operation on two subqueries.</p>
+<p>For all set operations, the input query schemas must be the coercible with each other (i.e. integer and bigint).
+Otherwise, Trino will complain:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>trino&gt; SELECT 1 UNION SELECT &#39;a&#39;;
+... column 1 in UNION query has incompatible types: integer, varchar(1)
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>left_query</strong> (<a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><em>treeno.relation.Query</em></a>) – An arbitrary <a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">Query</span></code></a>. The set query’s output will be identical in schema to this query.</p></li>
+<li><p><strong>right_query</strong> (<a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><em>treeno.relation.Query</em></a>) – An arbitrary <a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">Query</span></code></a> to filter <code class="docutils literal notranslate"><span class="pre">left_query</span></code> on.</p></li>
+<li><p><strong>set_quantifier</strong> (<em>treeno.base.SetQuantifier</em>) – Quantifier for the output rows. If DISTINCT, then the output rows will only contain unique rows.
+If ALL, then the output rows will contain all rows of the set operation.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SetQuery.left_query">
+<span class="sig-name descname"><span class="pre">left_query</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><span class="pre">treeno.relation.Query</span></a></em><a class="headerlink" href="#treeno.relation.SetQuery.left_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.SetQuery.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.SetQuery.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SetQuery.right_query">
+<span class="sig-name descname"><span class="pre">right_query</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><span class="pre">treeno.relation.Query</span></a></em><a class="headerlink" href="#treeno.relation.SetQuery.right_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.SetQuery.set_quantifier">
+<span class="sig-name descname"><span class="pre">set_quantifier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">treeno.base.SetQuantifier</span></em><a class="headerlink" href="#treeno.relation.SetQuery.set_quantifier" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.Table">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">Table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">catalog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Relation</span></code></a></p>
+<p>A table reference uniquely identified by a qualified name</p>
+<p>Tables can be standalone queries by themselves (in the form TABLE {table name}), and thus
+can be subject to orderby, offset, and limit constraints. Refer to TableQuery for more information.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">treeno.datatypes.builder</span> <span class="kn">import</span> <span class="n">bigint</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">table</span><span class="o">.</span><span class="n">_column_schema</span> <span class="o">==</span> <span class="n">Schema</span><span class="p">([],</span> <span class="n">relation_ids</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;a&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Supply a schema to the table via resolve</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_schema</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">Schema</span><span class="p">([</span><span class="n">SchemaField</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">bigint</span><span class="p">())],</span> <span class="n">relation_ids</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;a&quot;</span><span class="p">}))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">schema_fields</span> <span class="o">=</span> <span class="n">new_schema</span><span class="o">.</span><span class="n">fields</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">table</span><span class="o">.</span><span class="n">_column_schema</span> <span class="o">==</span> <span class="n">new_schema</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">schema_field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">schema_field</span> <span class="ow">in</span> <span class="n">schema_fields</span><span class="p">]</span>
+<span class="go">[&#39;x&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">schema_field</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span> <span class="k">for</span> <span class="n">schema_field</span> <span class="ow">in</span> <span class="n">schema_fields</span><span class="p">]</span>
+<span class="go">[&#39;BIGINT&#39;]</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – The name of the table.</p></li>
+<li><p><strong>schema</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – The schema the table belongs to. Can be unspecified to denote the current session’s schema.</p></li>
+<li><p><strong>catalog</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – The catalog the schema belongs to. Can be unspecified to denote the current session’s catalog.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Table.catalog">
+<span class="sig-name descname"><span class="pre">catalog</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.Table.catalog" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Table.identifier">
+<span class="sig-name descname"><span class="pre">identifier</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Table.identifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shorthand identifier for the relation</p>
+<dl class="simple">
+<dt>TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,</dt><dd><p>but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
+table.field, which identifier would return “table” for and match on.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A string if the relation has a well-defined identifier, otherwise None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Table.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#treeno.relation.Table.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Table.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Table.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Table.schema">
+<span class="sig-name descname"><span class="pre">schema</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.Table.schema" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Table.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Table.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.TableQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">TableQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orderby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.TableQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Query</span></code></a></p>
+<p>A light wrapper around a table for querying.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">TableQuery</span><span class="p">(</span><span class="n">Table</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)))</span>
+<span class="go">&#39;TABLE &quot;x&quot;&#39;</span>
+</pre></div>
+</div>
+<p>The above statement is equivalent to SELECT * FROM x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>table</strong> (<a class="reference internal" href="#treeno.relation.Table" title="treeno.relation.Table"><em>treeno.relation.Table</em></a>) – The underlying table to select from.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.TableQuery.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.TableQuery.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.TableQuery.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.TableQuery.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.TableQuery.table">
+<span class="sig-name descname"><span class="pre">table</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Table" title="treeno.relation.Table"><span class="pre">treeno.relation.Table</span></a></em><a class="headerlink" href="#treeno.relation.TableQuery.table" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.TableSample">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">TableSample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentage</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.TableSample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Relation</span></code></a></p>
+<p>Represents a sampled relation.</p>
+<p>Note that TABLESAMPLE can work with all relations, including JOINs. However, for JOINs we need to take extra care
+to parenthesize the expression. This doesn’t work:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>trino&gt; WITH f (a) AS (SELECT 1), g (b) AS (SELECT 1) SELECT f.a, g.b FROM f JOIN g ON f.a = g.b TABLESAMPLE BERNOULLI(99);
+... mismatched input &#39;TABLESAMPLE&#39; ...
+</pre></div>
+</div>
+<p>But this does:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>trino&gt; WITH f (a) AS (SELECT 1), g (b) AS (SELECT 1) SELECT f.a, g.b FROM (f JOIN g ON f.a = g.b) TABLESAMPLE BERNOULLI(99);
+ a | b
+---+---
+ 1 | 1
+</pre></div>
+</div>
+<p>Because JOINs are higher on the parsing hierarchy than TABLESAMPLEs, potentially due to an ambiguous parse
+otherwise where TABLESAMPLE can be applied to the right relation in a JOIN.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.TableSample.percentage">
+<span class="sig-name descname"><span class="pre">percentage</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">treeno.expression.Value</span></em><a class="headerlink" href="#treeno.relation.TableSample.percentage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.TableSample.relation">
+<span class="sig-name descname"><span class="pre">relation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><span class="pre">treeno.relation.Relation</span></a></em><a class="headerlink" href="#treeno.relation.TableSample.relation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.TableSample.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.TableSample.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.TableSample.sample_type">
+<span class="sig-name descname"><span class="pre">sample_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.SampleType" title="treeno.relation.SampleType"><span class="pre">treeno.relation.SampleType</span></a></em><a class="headerlink" href="#treeno.relation.TableSample.sample_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.TableSample.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.TableSample.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">UnionQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_quantifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SetQuantifier.DISTINCT</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orderby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.UnionQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.SetQuery" title="treeno.relation.SetQuery"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.SetQuery</span></code></a></p>
+<p>Represents a union of two queries’ rows.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">treeno.expression</span> <span class="kn">import</span> <span class="n">NULL</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">SelectQuery</span><span class="p">([</span><span class="n">NULL</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">UnionQuery</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">set_quantifier</span><span class="o">=</span><span class="n">SetQuantifier</span><span class="o">.</span><span class="n">DISTINCT</span><span class="p">))</span>
+<span class="go">&#39;(SELECT NULL) UNION DISTINCT (SELECT NULL)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">UnionQuery</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">set_quantifier</span><span class="o">=</span><span class="n">SetQuantifier</span><span class="o">.</span><span class="n">ALL</span><span class="p">))</span>
+<span class="go">&#39;(SELECT NULL) UNION ALL (SELECT NULL)&#39;</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery.data_type">
+<span class="sig-name descname"><span class="pre">data_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">treeno.datatypes.types.DataType</span></em><a class="headerlink" href="#treeno.relation.UnionQuery.data_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery.left_query">
+<span class="sig-name descname"><span class="pre">left_query</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><span class="pre">treeno.relation.Query</span></a></em><a class="headerlink" href="#treeno.relation.UnionQuery.left_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery.limit">
+<span class="sig-name descname"><span class="pre">limit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.UnionQuery.limit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery.offset">
+<span class="sig-name descname"><span class="pre">offset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.UnionQuery.offset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery.orderby">
+<span class="sig-name descname"><span class="pre">orderby</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">treeno.orderby.OrderTerm</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.UnionQuery.orderby" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery.right_query">
+<span class="sig-name descname"><span class="pre">right_query</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><span class="pre">treeno.relation.Query</span></a></em><a class="headerlink" href="#treeno.relation.UnionQuery.right_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery.set_quantifier">
+<span class="sig-name descname"><span class="pre">set_quantifier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">treeno.base.SetQuantifier</span></em><a class="headerlink" href="#treeno.relation.UnionQuery.set_quantifier" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.UnionQuery.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.UnionQuery.with_">
+<span class="sig-name descname"><span class="pre">with_</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#treeno.relation.AliasedRelation" title="treeno.relation.AliasedRelation"><span class="pre">treeno.relation.AliasedRelation</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.UnionQuery.with_" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.Unnest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">Unnest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arrays</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_ordinality</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Unnest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Relation</span></code></a></p>
+<p>Represents an unnested set of arrays representing a table</p>
+<p>An example of unnest:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>trino&gt; SELECT * FROM UNNEST(ARRAY[1,2]);
+ _col0
+-------
+     1
+     2
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arrays</strong> (<em>List</em><em>[</em><em>treeno.expression.Value</em><em>]</em>) – The array(s) to use in an unnest. The i-th array in the list corresponds to the i-th output column.</p></li>
+<li><p><strong>with_ordinality</strong> (<em>bool</em>) – Whether there should be an ordinality column appended at the end of the UNNEST.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Unnest.arrays">
+<span class="sig-name descname"><span class="pre">arrays</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">treeno.expression.Value</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.Unnest.arrays" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Unnest.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Unnest.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.Unnest.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Unnest.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.Unnest.with_ordinality">
+<span class="sig-name descname"><span class="pre">with_ordinality</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#treeno.relation.Unnest.with_ordinality" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="treeno.relation.ValuesQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">ValuesQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exprs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orderby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.ValuesQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">treeno.relation.Query</span></code></a></p>
+<p>A literal table constructed by literal ROWs</p>
+<p>For a given comma separated list of expressions, the VALUES keyword turns the expression into a subquery that can
+be used later on. VALUES is often used for unit testing fixtures for mock tables.</p>
+<p>Values tables can be standalone queries by themselves, and thus can be subject to
+orderby, offset, and limit constraints. Refer to ValuesQuery for more information.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">decimal</span> <span class="kn">import</span> <span class="n">Decimal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">treeno.expression</span> <span class="kn">import</span> <span class="n">wrap_literal</span><span class="p">,</span> <span class="n">RowConstructor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Types are inferred from all input values coerced together</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="n">ValuesQuery</span><span class="p">([</span><span class="n">wrap_literal</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">wrap_literal</span><span class="p">(</span><span class="n">Decimal</span><span class="p">(</span><span class="s2">&quot;2.2&quot;</span><span class="p">))])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="go">&#39;VALUES 1,2.2&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span>
+<span class="go">&#39;DECIMAL(11,1)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">query</span> <span class="o">=</span> <span class="n">ValuesQuery</span><span class="p">([</span>
+<span class="gp">... </span>    <span class="n">RowConstructor</span><span class="p">([</span>
+<span class="gp">... </span>        <span class="n">wrap_literal</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">wrap_literal</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="p">]),</span>
+<span class="gp">... </span>    <span class="n">RowConstructor</span><span class="p">([</span>
+<span class="gp">... </span>        <span class="n">wrap_literal</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">wrap_literal</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="p">])</span>
+<span class="gp">... </span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+<span class="go">&quot;VALUES (1,&#39;a&#39;),(2,&#39;b&#39;)&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span>
+<span class="go">&#39;ROW(INTEGER,VARCHAR(1))&#39;</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>exprs</strong> (<em>List</em><em>[</em><em>treeno.expression.Value</em><em>]</em>) – Values for each row of the query.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="treeno.relation.ValuesQuery.exprs">
+<span class="sig-name descname"><span class="pre">exprs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">treeno.expression.Value</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#treeno.relation.ValuesQuery.exprs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.ValuesQuery.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.ValuesQuery.resolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>TODO: Does ValuesQuery dereference anything by itself?</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="treeno.relation.ValuesQuery.sql">
+<span class="sig-name descname"><span class="pre">sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">opts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.ValuesQuery.sql" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="treeno.relation.maybe_prune_schema">
+<span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">maybe_prune_schema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.maybe_prune_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prune the schema depending on whether the relation will enter a new namespace</p>
+<p>Some relations don’t want extra schema information to be passed through because it’s in its own parenthesized
+expression which is not aware of the outer namespace.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>relation</strong> (<a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a>) – The relation to enter into with the given schema</p></li>
+<li><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – The schema to pass into the relation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Either an empty <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a> or the original <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="treeno.relation.relation_string">
+<span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">relation_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">newline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">special_parenthesize_relations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.relation_string" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+          </div>
+
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">treeno</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Ray Zhang.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+
+
+
+  </body>
+</html>
