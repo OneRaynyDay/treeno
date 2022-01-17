@@ -1,3 +1,6 @@
+import pytest
+
+from treeno.base import SetQuantifier
 from treeno.datatypes.builder import integer, varchar
 from treeno.expression import (
     Add,
@@ -14,6 +17,8 @@ from treeno.groupby import GroupBy, GroupingSet
 from treeno.orderby import OrderTerm, OrderType
 from treeno.relation import (
     AliasedRelation,
+    ExceptQuery,
+    IntersectQuery,
     Join,
     JoinConfig,
     JoinOnCriteria,
@@ -23,6 +28,7 @@ from treeno.relation import (
     SelectQuery,
     Table,
     TableQuery,
+    UnionQuery,
     Unnest,
     ValuesQuery,
 )
@@ -269,4 +275,48 @@ class TestQueryPrimary(VisitorTest):
         assert isinstance(ast, SqlBaseParser.QueryPrimaryDefaultContext)
         self.visitor.visit(ast).assert_equals(
             SelectQuery(select=[wrap_literal(1), Field("foo")])
+        )
+
+
+class TestSetQuery(VisitorTest):
+    def test_intersect(self):
+        ast = get_parser("SELECT 1 INTERSECT SELECT 2").queryTerm()
+        assert isinstance(ast, SqlBaseParser.SetOperationContext)
+        q1 = SelectQuery(select=[wrap_literal(1)])
+        q2 = SelectQuery(select=[wrap_literal(2)])
+        intersect = self.visitor.visit(ast)
+        intersect.assert_equals(IntersectQuery(q1, q2))
+        ast = get_parser("SELECT 1 INTERSECT DISTINCT SELECT 2").queryTerm()
+        self.visitor.visit(ast).assert_equals(intersect)
+        ast = get_parser("SELECT 1 INTERSECT ALL SELECT 2").queryTerm()
+        with pytest.raises(
+            AssertionError, match="INTERSECT does not support ALL"
+        ):
+            self.visitor.visit(ast)
+
+    def test_except(self):
+        ast = get_parser("SELECT 1 EXCEPT SELECT 2").queryTerm()
+        assert isinstance(ast, SqlBaseParser.SetOperationContext)
+        q1 = SelectQuery(select=[wrap_literal(1)])
+        q2 = SelectQuery(select=[wrap_literal(2)])
+        except_query = self.visitor.visit(ast)
+        except_query.assert_equals(ExceptQuery(q1, q2))
+        ast = get_parser("SELECT 1 EXCEPT DISTINCT SELECT 2").queryTerm()
+        self.visitor.visit(ast).assert_equals(except_query)
+        ast = get_parser("SELECT 1 EXCEPT ALL SELECT 2").queryTerm()
+        with pytest.raises(AssertionError, match="EXCEPT does not support ALL"):
+            self.visitor.visit(ast)
+
+    def test_union(self):
+        ast = get_parser("SELECT 1 UNION SELECT 2").queryTerm()
+        assert isinstance(ast, SqlBaseParser.SetOperationContext)
+        q1 = SelectQuery(select=[wrap_literal(1)])
+        q2 = SelectQuery(select=[wrap_literal(2)])
+        union = self.visitor.visit(ast)
+        union.assert_equals(UnionQuery(q1, q2))
+        ast = get_parser("SELECT 1 UNION DISTINCT SELECT 2").queryTerm()
+        self.visitor.visit(ast).assert_equals(union)
+        ast = get_parser("SELECT 1 UNION ALL SELECT 2").queryTerm()
+        self.visitor.visit(ast).assert_equals(
+            UnionQuery(q1, q2, set_quantifier=SetQuantifier.ALL)
         )

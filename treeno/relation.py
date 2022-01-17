@@ -8,8 +8,9 @@ import attr
 from treeno.base import PrintMode, PrintOptions, SetQuantifier, Sql
 from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import row, unknown
+from treeno.datatypes.conversions import common_supertype
 from treeno.datatypes.types import DataType
-from treeno.expression import Value
+from treeno.expression import Value, value_attr
 from treeno.groupby import GroupBy
 from treeno.orderby import OrderTerm
 from treeno.printer import StatementPrinter, join_stmts, pad
@@ -19,7 +20,8 @@ from treeno.window import Window
 
 @attr.s
 class SchemaField:
-    """Represents a single field in a schema
+    """Represents a single field in a :class:`Schema`
+
     A schema must have a data type, a source, and optionally have a name. For example, a SUM(x) term with no alias
     should have no name. It still shows up in the output, but there's no way to refer to it.
     """
@@ -96,7 +98,7 @@ class Relation(Sql, ABC):
         ...
 
 
-@attr.s
+@value_attr
 class Query(Relation, Value, ABC):
     """Represents a query with filtered outputs. Queries are also values, in that they yield row types
     """
@@ -141,7 +143,92 @@ class Query(Relation, Value, ABC):
         return str_builder
 
 
-@attr.s
+@value_attr
+class SetQuery(Query, ABC):
+    """Represents a set operation on two subqueries"""
+
+    left_query: Query = attr.ib()
+    right_query: Query = attr.ib()
+    # NOTE: Set quantifier for set queries is DISTINCT by default, instead of ALL.
+    set_quantifier: SetQuantifier = attr.ib(default=SetQuantifier.DISTINCT)
+
+    def __attrs_post_init__(self) -> None:
+        self.data_type = self._compute_data_type()
+
+    def _compute_data_type(self) -> DataType:
+        if (
+            self.left_query.data_type == unknown()
+            or self.right_query.data_type == unknown()
+        ):
+            return unknown()
+        assert (
+            self.left_query.data_type.type_name == type_consts.ROW
+            and self.right_query.data_type.type_name == type_consts.ROW
+        ), "Input data types for query set operations must be ROW"
+        dtypes = []
+        for t1, t2 in zip(
+            self.left_query.data_type.parameters["dtypes"],
+            self.right_query.data_type.parameters["dtypes"],
+        ):
+            dtypes.append(common_supertype(t1, t2))
+        return row(dtypes=dtypes)
+
+    def to_string(self, set_type: str, opts: PrintOptions) -> str:
+        spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
+        query_string = f"{relation_string(self.left_query, opts, newline=False)}{spacing}{set_type}"
+        if self.set_quantifier != self.set_quantifier.default():
+            query_string += f" {self.set_quantifier}"
+        query_string += (
+            f"{spacing}{relation_string(self.right_query, opts, newline=False)}"
+        )
+        return query_string
+
+    def resolve(self, existing_schema: Schema) -> Schema:
+        left_schema = self.left_query.resolve(
+            maybe_prune_schema(self.left_query, existing_schema)
+        )
+        self.right_query.resolve(
+            maybe_prune_schema(self.right_query, existing_schema)
+        )
+        # The column names and such are always taken from the left schema.
+        schema_fields = []
+        for schema_field in left_schema.fields:
+            # Basically take the schema that belonged to left schema and re-assign it to this set query
+            schema_fields.append(
+                SchemaField(schema_field.name, self, schema_field.data_type)
+            )
+        return Schema(schema_fields, relation_ids=left_schema.relation_ids)
+
+
+@value_attr
+class IntersectQuery(SetQuery):
+    def __attrs_post_init__(self) -> None:
+        assert (
+            self.set_quantifier == SetQuantifier.DISTINCT
+        ), f"INTERSECT does not support {self.set_quantifier.name}"
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string("INTERSECT", opts)
+
+
+@value_attr
+class ExceptQuery(SetQuery):
+    def __attrs_post_init__(self) -> None:
+        assert (
+            self.set_quantifier == SetQuantifier.DISTINCT
+        ), f"EXCEPT does not support {self.set_quantifier.name}"
+
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string("EXCEPT", opts)
+
+
+@value_attr
+class UnionQuery(SetQuery):
+    def sql(self, opts: PrintOptions) -> str:
+        return self.to_string("UNION", opts)
+
+
+@value_attr
 class SelectQuery(Query):
     """Represents a high level SELECT query.
     """
@@ -168,8 +255,10 @@ class SelectQuery(Query):
         # Also, it's probably worth allowing table inputs.
         # Pass in existing relations from CTE into from_ as long as from_ is not in its own namespace i.e. a subquery.
         if self.from_ is not None:
-            self.from_.resolve(maybe_prune_schema(self.from_, existing_schema))
-            schema = self.from_.resolve(existing_schema=self.resolve_with())
+            existing_schema = existing_schema.merge(self.resolve_with())
+            schema = self.from_.resolve(
+                maybe_prune_schema(self.from_, existing_schema)
+            )
             self.select = [resolve_fields(val, schema) for val in self.select]
             self.data_type = self._compute_data_type()
 
@@ -264,7 +353,7 @@ class Table(Relation):
         return self.name
 
 
-@attr.s
+@value_attr
 class TableQuery(Query):
     table: Table = attr.ib()
 
@@ -292,7 +381,7 @@ class TableQuery(Query):
         return table_schema
 
 
-@attr.s
+@value_attr
 class ValuesQuery(Query):
     """A literal table constructed by literal ROWs
 
@@ -573,10 +662,12 @@ class TableSample(Relation):
         return self.relation.resolve(existing_schema)
 
 
-def relation_string(relation: Relation, opts: PrintOptions) -> str:
+def relation_string(
+    relation: Relation, opts: PrintOptions, newline: bool = True
+) -> str:
     relation_str = relation.sql(opts)
     if isinstance(relation, Query):
-        if opts.mode == PrintMode.PRETTY:
+        if opts.mode == PrintMode.PRETTY and newline:
             relation_str = "\n" + relation_str
         return parenthesize(relation_str)
     else:

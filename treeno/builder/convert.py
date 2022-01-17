@@ -66,6 +66,8 @@ from treeno.groupby import Cube, GroupBy, GroupingSet, GroupingSetList, Rollup
 from treeno.orderby import NullOrder, OrderTerm, OrderType
 from treeno.relation import (
     AliasedRelation,
+    ExceptQuery,
+    IntersectQuery,
     Join,
     JoinConfig,
     JoinCriteria,
@@ -78,9 +80,11 @@ from treeno.relation import (
     SampleType,
     SelectQuery,
     SetQuantifier,
+    SetQuery,
     Table,
     TableQuery,
     TableSample,
+    UnionQuery,
     Unnest,
     ValuesQuery,
 )
@@ -220,10 +224,7 @@ class ConvertVisitor(SqlBaseVisitor):
 
     @overrides
     def visitQueryNoWith(self, ctx: SqlBaseParser.QueryNoWithContext) -> Query:
-        query_term = ctx.queryTerm()
-        if not isinstance(query_term, SqlBaseParser.QueryTermDefaultContext):
-            raise NotImplementedError("Set operations are not yet implemented")
-        query = self.visit(query_term)
+        query = self.visit(ctx.queryTerm())
         if ctx.ORDER() and ctx.BY():
             query.orderby = [self.visit(item) for item in ctx.sortItem()]
         if ctx.offset:
@@ -233,6 +234,24 @@ class ConvertVisitor(SqlBaseVisitor):
             # TODO: Assign this to the query object
             query.limit = self.visit(limit_clause)
         return query
+
+    @overrides
+    def visitSetOperation(
+        self, ctx: SqlBaseParser.SetOperationContext
+    ) -> SetQuery:
+        left_query = self.visit(ctx.left)
+        right_query = self.visit(ctx.right)
+        kwargs = {}
+        if ctx.setQuantifier():
+            kwargs["set_quantifier"] = self.visit(ctx.setQuantifier())
+        operator_text = ctx.operator.text.upper()
+        if operator_text == "INTERSECT":
+            return IntersectQuery(left_query, right_query, **kwargs)
+        elif operator_text == "UNION":
+            return UnionQuery(left_query, right_query, **kwargs)
+        elif operator_text == "EXCEPT":
+            return ExceptQuery(left_query, right_query, **kwargs)
+        raise NotImplementedError(f"Unsupported operator type {operator_text}")
 
     @overrides
     def visitRowCount(self, ctx: SqlBaseParser.RowCountContext) -> int:
@@ -246,12 +265,12 @@ class ConvertVisitor(SqlBaseVisitor):
         value = self.visit(ctx.expression())
         order_type = (
             OrderType.ASC
-            if not ctx.ordering or ctx.ordering.text == "ASC"
+            if not ctx.ordering or ctx.ordering.text.upper() == "ASC"
             else OrderType.DESC
         )
         null_order = (
             NullOrder.LAST
-            if not ctx.nullOrdering or ctx.nullOrdering.text == "LAST"
+            if not ctx.nullOrdering or ctx.nullOrdering.text.upper() == "LAST"
             else NullOrder.FIRST
         )
         return OrderTerm(value, order_type, null_order)
@@ -421,14 +440,14 @@ class ConvertVisitor(SqlBaseVisitor):
     ) -> Value:
         left = self.visit(ctx.left)
         right = self.visit(ctx.right)
-        return apply_operator(ctx.operator.text, left, right)
+        return apply_operator(ctx.operator.text.upper(), left, right)
 
     @overrides
     def visitArithmeticUnary(
         self, ctx: SqlBaseParser.ArithmeticUnaryContext
     ) -> Value:
         return apply_operator(
-            ctx.operator.text, self.visit(ctx.valueExpression())
+            ctx.operator.text.upper(), self.visit(ctx.valueExpression())
         )
 
     @overrides
@@ -1204,7 +1223,7 @@ class ConvertVisitor(SqlBaseVisitor):
     @overrides
     def visitFrameExtent(self, ctx: SqlBaseParser.FrameExtentContext) -> Window:
         params = {
-            "frame_type": FrameType[ctx.frameType.text],
+            "frame_type": FrameType[ctx.frameType.text.upper()],
             "start_bound": self.visit(ctx.start),
         }
         if ctx.end:
@@ -1216,7 +1235,7 @@ class ConvertVisitor(SqlBaseVisitor):
         self, ctx: SqlBaseParser.BoundedFrameContext
     ) -> BoundedFrameBound:
         return BoundedFrameBound(
-            bound_type=BoundType[ctx.boundType.text],
+            bound_type=BoundType[ctx.boundType.text.upper()],
             offset=self.visit(ctx.expression()),
         )
 
@@ -1224,7 +1243,9 @@ class ConvertVisitor(SqlBaseVisitor):
     def visitUnboundedFrame(
         self, ctx: SqlBaseParser.UnboundedFrameContext
     ) -> UnboundedFrameBound:
-        return UnboundedFrameBound(bound_type=BoundType[ctx.boundType.text])
+        return UnboundedFrameBound(
+            bound_type=BoundType[ctx.boundType.text.upper()]
+        )
 
     @overrides
     def visitCurrentRowBound(

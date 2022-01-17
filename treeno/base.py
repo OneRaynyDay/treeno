@@ -1,6 +1,6 @@
 from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum, EnumMeta, auto
-from typing import TypeVar
+from typing import Any, TypeVar
 
 import attr
 
@@ -41,7 +41,7 @@ class PrintOptions:
 @attr.s
 class Sql(ABC):
     @abstractmethod
-    def sql(self, print_options: PrintOptions):
+    def sql(self, opts: PrintOptions) -> str:
         raise NotImplementedError(
             f"All {self.__class__.__name__} must implement sql"
         )
@@ -50,12 +50,14 @@ class Sql(ABC):
         # Default print options
         return self.sql(PrintOptions())
 
-    def equals(self, other) -> bool:
+    def equals(self, other: Any) -> bool:
+        if not isinstance(other, Sql):
+            return False
         self_dict = attr.asdict(self)
         other_dict = attr.asdict(other)
         return self_dict == other_dict
 
-    def assert_equals(self, other) -> None:
+    def assert_equals(self, other: Any) -> None:
         """Because we've overridden __eq__, we can no longer use that to test equality on objects. We use attr.asdict
         to make sure the fields are completely collapsed.
         TODO: However, this doesn't completely test equality as the type of the class doesn't show up, so we have to
