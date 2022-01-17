@@ -1037,7 +1037,7 @@ class ConvertVisitor(SqlBaseVisitor):
                     self.visit(identifier) for identifier in ctx.identifier()
                 ]
             )
-        return JoinOnCriteria(relation=self.visit(ctx.booleanExpression()))
+        return JoinOnCriteria(constraint=self.visit(ctx.booleanExpression()))
 
     @overrides
     def visitJoinType(self, ctx: SqlBaseParser.JoinTypeContext) -> JoinType:

@@ -8,7 +8,9 @@ Welcome to treeno's documentation!
 API Reference
 -------------
 
-TODO
+.. automodule:: treeno.relation
+    :members:
+    :show-inheritance:
 
 
 Indices and tables

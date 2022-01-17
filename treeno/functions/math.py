@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 import attr
 
 from treeno.base import PrintOptions
@@ -8,6 +10,7 @@ from treeno.functions.base import Function
 
 @value_attr
 class Power(Function):
+    FN_NAME: ClassVar[str] = "POWER"
     x: Value = attr.ib(converter=wrap_literal)
     p: Value = attr.ib(converter=wrap_literal)
 

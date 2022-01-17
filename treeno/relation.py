@@ -1,7 +1,7 @@
 import copy
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Type
 
 import attr
 
@@ -18,25 +18,84 @@ from treeno.util import chain_identifiers, parenthesize, quote_identifier
 from treeno.window import Window
 
 
+class Relation(Sql, ABC):
+    """Represents a SQL relation.
+
+    A :class:`Relation` can be one of the following:
+
+    1. (:class:`Table`) A table reference.
+    2. (:class:`Query`) A subquery. :class:`Query` is an abstract class, and its subclasses contain
+        :class:`SelectQuery`, :class:`ValuesTable`, :class:`SetQuery` and its subclasses, etc.
+    3. (:class:`Unnest`) An unnested expression of arrays.
+    4. (:class:`Lateral`) Shares the current relation's namespace with any :class:`Query`.
+    5. (:class:`TableSample`) A subset sample of any relation.
+    6. (:class:`Join`) A join composing of any relation.
+    7. (:class:`AliasedRelation`) An alias (both as relation name and its column names) of any relation.
+    """
+
+    def identifier(self) -> Optional[str]:
+        """Shorthand identifier for the relation
+
+        TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,
+         but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
+         table.field, which identifier would return "table" for and match on.
+
+        Returns:
+            A string if the relation has a well-defined identifier, otherwise None
+        """
+        return None
+
+    @abstractmethod
+    def resolve(self, existing_schema: "Schema") -> "Schema":
+        """Resolves the current relation's schema with supplemental schema information.
+
+        This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+        hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+        the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+        more information refer to :class:`Schema`.
+
+        Args:
+            existing_schema: Schema with a partial list of fields to resolve the current field's schema
+        Returns:
+            A new schema for the current relation
+        """
+        ...
+
+
 @attr.s
 class SchemaField:
     """Represents a single field in a :class:`Schema`
 
     A schema must have a data type, a source, and optionally have a name. For example, a SUM(x) term with no alias
     should have no name. It still shows up in the output, but there's no way to refer to it.
+
+    Attributes:
+        name: An optional name of the schema field. If the name is None, then the field cannot be selected later on,
+            and Trino will autogenerate column names for these e.g. _col0
+        source: The source of which the field came from. Important to disambiguate :class:`SchemaField` with same
+            names across different sources
+        data_type: The data type of the field
     """
 
     name: Optional[str] = attr.ib()
-    source: "Relation" = attr.ib()
+    source: Relation = attr.ib()
     data_type: DataType = attr.ib()
 
 
 @attr.s
 class Schema:
-    """Represents the output schema of a given relation.
-    Schemas are used to impute missing types from trees with partial type information.
-    Relation_ids does not denormalize this object(as in add redundant information that can be inferred from fields) -
-    it is used to denote the existence of a relation with no well-defined schema, in which fields would be empty.
+    """Represents the output schema of a given :class:`Relation`
+
+    :py:class:`Schema` s are used to impute missing types from trees with partial type information. This class serves two
+    main functions. The first is to resolve cross-query references i.e. WITH queries which can be referenced from the
+    FROM clause in a :class:`SelectQuery`. The second is to allow the user to pass in schemas to resolve relations
+    like :class:`Table` s which can't resolve its own schema without access to external metadata (i.e. from a metastore).
+
+    Attributes:
+        fields: A list of :class:`SchemaField` s that exist in the current namespace
+        Relation_ids: A set of relations used to denote the existence of a relation included in the schema.
+            This set can contain relations that contains no fields - e.g. for a table with an undefined schema,
+            the fields would be empty but the relation would still be in the set
     """
 
     fields: List[SchemaField] = attr.ib()
@@ -47,6 +106,21 @@ class Schema:
         return cls(fields=[], relation_ids=set())
 
     def merge(self, another_schema: "Schema") -> "Schema":
+        """Merge two schemas together to create a new schema
+
+        >>> from treeno.datatypes.builder import bigint
+        >>> schema_a = Schema([SchemaField("x", Table("a"), bigint())], relation_ids={"a"})
+        >>> schema_b = Schema([SchemaField("y", Table("b"), bigint())], relation_ids={"b"})
+        >>> resulting_schema = schema_a.merge(schema_b)
+        >>> assert resulting_schema.fields == schema_a.fields + schema_b.fields
+        >>> assert resulting_schema.relation_ids == {"a", "b"}
+
+        Args:
+            another_schema: The other schema to merge with. The fields from it are appended to the end of the resulting
+                :class:`Schema` fields
+        Returns:
+            A new :class:`Schema` object with both schemas' fields and relations in the same namespace.
+        """
         # TODO: Should this be deep copies? I don't see a point in trying to deepcopy relations since they're expensive.
         fields = copy.copy(self.fields)
         relation_ids = copy.copy(self.relation_ids)
@@ -56,46 +130,6 @@ class Schema:
                 fields.append(f)
         relation_ids |= another_schema.relation_ids
         return Schema(fields, relation_ids)
-
-
-def maybe_prune_schema(relation: "Relation", existing_schema: Schema) -> Schema:
-    """Maybe prune the schema to pass to a relation.
-    Some relations don't want extra schema information to be passed through, because it's in its own parenthesized
-    expression which is not aware of the outer namespace.
-    """
-    if isinstance(relation, Query):
-        return Schema.empty_schema()
-    return existing_schema
-
-
-class Relation(Sql, ABC):
-    """A value can be one of the following:
-
-    1. (Table, ValuesTable) A table reference or an inline table
-    2. (Query) A subquery. This subquery may or may not be correlated
-        (which means the query gets executed once per row fetched from the outer query)
-    3. (Unnest) An unnested expression of arrays
-    4. (TableSample) A subset sample of any 1-5.
-    5. (Join) A join composing of any 1-5.
-
-    In the case of 1), they can be reinterpreted as standalone queries, which are also relations
-    but belong to 2). We have SelectQuery, TablesQuery, and ValuesQuery for this purpose.
-    """
-
-    def identifier(self) -> Optional[str]:
-        """TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,
-        but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
-        table.field, which identifier would return "table" for and match on.
-        """
-        return None
-
-    @abstractmethod
-    def resolve(self, existing_schema: Schema) -> Schema:
-        """Used to resolve missing types in queries. The user can pass in existing_schemas to hint at what types of
-        fields are when they're dynamically determined i.e. a table in Trino, but we also use resolve() underneath
-        the hood in order to resolve some types that can only be determined through a tree traversal i.e. fields to
-        relations whose schemas are known"""
-        ...
 
 
 @value_attr
@@ -109,7 +143,12 @@ class Query(Relation, Value, ABC):
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
     with_: List["AliasedRelation"] = attr.ib(factory=dict, kw_only=True)
 
-    def with_query_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
+    def _with_query_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
+        """Creates a dictionary mapping of the WITH clause to the queries.
+
+        This function is used solely for :func:`treeno.Sql.sql`, where we use :class:`treeno.printer.StatementPrinter`
+        to format the "river" for readability.
+        """
         if not self.with_:
             return {}
         # NOTE: We hold AliasedRelations in self.with_, but the sql output for it should be in
@@ -120,19 +159,38 @@ class Query(Relation, Value, ABC):
             )
         }
 
-    def resolve_with(self) -> Schema:
-        # The CTE's can actually refer to previously defined CTE's!
+    def _resolve_with(self) -> Schema:
+        """Resolves the queries in WITH statement with context that carries over.
+
+        It's important to note that CTE's can actually refer to previously defined CTE's using FROM:
+
+        .. code-block:: text
+
+            trino> WITH a (foo) AS (SELECT 1), b (bar) AS (SELECT a.foo + 1 FROM a) SELECT bar FROM b;
+             bar
+            -----
+               2
+            (1 row)
+
+        In the above example, ``b`` is able to refer to ``a`` because it's defined before in the WITH sequence.
+        """
         merging_schema = Schema.empty_schema()
         for w in self.with_:
             new_schema = w.resolve(merging_schema)
             merging_schema = merging_schema.merge(new_schema)
         return merging_schema
 
-    def constraint_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
+    def _constraint_string_builder(self, opts: PrintOptions) -> Dict[str, str]:
+        """Creates a dictionary mapping of a couple output-filtering constraints to the query.
+
+        This function is used solely for :func:`treeno.Sql.sql`, where we use :class:`treeno.printer.StatementPrinter`
+        to format the "river" for readability.
+        """
         str_builder = {}
         if self.orderby:
-            # Typically the ORDER BY clause goes across the indentation river.
-            # TODO: The "BY" will offset the max length slightly.
+            # Typically the BY in ORDER BY clause goes across the indentation river.
+            # TODO: The "BY" will offset the max length slightly - we might see join_stmts max out at 80 characters
+            #  but we also have a few characters added due to the BY.
             str_builder["ORDER"] = "BY " + join_stmts(
                 [order.sql(opts) for order in self.orderby], opts
             )
@@ -145,7 +203,22 @@ class Query(Relation, Value, ABC):
 
 @value_attr
 class SetQuery(Query, ABC):
-    """Represents a set operation on two subqueries"""
+    """Represents a set operation on two subqueries.
+
+    For all set operations, the input query schemas must be the coercible with each other (i.e. integer and bigint).
+    Otherwise, Trino will complain:
+
+    .. code-block:: text
+
+        trino> SELECT 1 UNION SELECT 'a';
+        ... column 1 in UNION query has incompatible types: integer, varchar(1)
+
+    Attributes:
+        left_query: An arbitrary :class:`Query`. The set query's output will be identical in schema to this query.
+        right_query: An arbitrary :class:`Query` to filter ``left_query`` on.
+        set_quantifier: Quantifier for the output rows. If DISTINCT, then the output rows will only contain unique rows.
+            If ALL, then the output rows will contain all rows of the set operation.
+    """
 
     left_query: Query = attr.ib()
     right_query: Query = attr.ib()
@@ -156,31 +229,44 @@ class SetQuery(Query, ABC):
         self.data_type = self._compute_data_type()
 
     def _compute_data_type(self) -> DataType:
-        if (
-            self.left_query.data_type == unknown()
-            or self.right_query.data_type == unknown()
-        ):
+        left_type, right_type = (
+            self.left_query.data_type,
+            self.right_query.data_type,
+        )
+        if left_type == unknown() or right_type == unknown():
             return unknown()
+
+        # The subqueries not being row-like is possible for a table/subquery that only has 1 column
+        left_row_like = left_type.type_name == type_consts.ROW
+        right_row_like = right_type.type_name == type_consts.ROW
         assert (
-            self.left_query.data_type.type_name == type_consts.ROW
-            and self.right_query.data_type.type_name == type_consts.ROW
+            left_row_like == right_row_like
+        ), f"Either both types are ROWs or neither are. Found {left_type} and {right_type}"
+
+        if not left_row_like:
+            return common_supertype(left_type, right_type)
+
+        # TODO: Redundant after previous assertion
+        assert (
+            left_row_like and right_row_like
         ), "Input data types for query set operations must be ROW"
         dtypes = []
         for t1, t2 in zip(
-            self.left_query.data_type.parameters["dtypes"],
-            self.right_query.data_type.parameters["dtypes"],
+            left_type.parameters["dtypes"], right_type.parameters["dtypes"]
         ):
             dtypes.append(common_supertype(t1, t2))
         return row(dtypes=dtypes)
 
-    def to_string(self, set_type: str, opts: PrintOptions) -> str:
+    def _to_string(self, set_type: str, opts: PrintOptions) -> str:
         spacing = "\n" if opts.mode == PrintMode.PRETTY else " "
-        query_string = f"{relation_string(self.left_query, opts, newline=False)}{spacing}{set_type}"
-        if self.set_quantifier != self.set_quantifier.default():
-            query_string += f" {self.set_quantifier}"
-        query_string += (
-            f"{spacing}{relation_string(self.right_query, opts, newline=False)}"
-        )
+        query_string = relation_string(self.left_query, opts, newline=False)
+        query_string += spacing
+        query_string += set_type
+        # NOTE: We currently have set_quantifier explicitly spelled out for set operations because the default ALL
+        # for expressions doesn't apply here(the default here is DISTINCT).
+        query_string += f" {self.set_quantifier.name}"
+        query_string += spacing
+        query_string += relation_string(self.right_query, opts, newline=False)
         return query_string
 
     def resolve(self, existing_schema: Schema) -> Schema:
@@ -202,35 +288,105 @@ class SetQuery(Query, ABC):
 
 @value_attr
 class IntersectQuery(SetQuery):
+    """Represents an intersection of two queries.
+
+    Note that intersect queries cannot use set quantifier ALL, since Trino implements INTERSECT by hashing the rows
+    and subsequently deduplicates input query rows.
+
+    >>> from treeno.expression import NULL
+    >>> q = SelectQuery([NULL])
+    >>> str(IntersectQuery(q, q, set_quantifier=SetQuantifier.DISTINCT))
+    '(SELECT NULL) INTERSECT DISTINCT (SELECT NULL)'
+    >>> IntersectQuery(q, q, set_quantifier=SetQuantifier.ALL)
+    Traceback (most recent call last):
+        ...
+    AssertionError: INTERSECT does not support ALL
+    """
+
     def __attrs_post_init__(self) -> None:
         assert (
             self.set_quantifier == SetQuantifier.DISTINCT
         ), f"INTERSECT does not support {self.set_quantifier.name}"
 
     def sql(self, opts: PrintOptions) -> str:
-        return self.to_string("INTERSECT", opts)
+        return self._to_string("INTERSECT", opts)
 
 
 @value_attr
 class ExceptQuery(SetQuery):
+    """Represents a set subtract of left query with right query.
+
+    Note that except queries cannot use set quantifier ALL, since Trino implements EXCEPT by hashing the rows
+    and subsequently deduplicates input query rows.
+
+    >>> from treeno.expression import NULL
+    >>> q = SelectQuery([NULL])
+    >>> str(ExceptQuery(q, q, set_quantifier=SetQuantifier.DISTINCT))
+    '(SELECT NULL) EXCEPT DISTINCT (SELECT NULL)'
+    >>> ExceptQuery(q, q, set_quantifier=SetQuantifier.ALL)
+    Traceback (most recent call last):
+        ...
+    AssertionError: EXCEPT does not support ALL
+    """
+
     def __attrs_post_init__(self) -> None:
         assert (
             self.set_quantifier == SetQuantifier.DISTINCT
         ), f"EXCEPT does not support {self.set_quantifier.name}"
 
     def sql(self, opts: PrintOptions) -> str:
-        return self.to_string("EXCEPT", opts)
+        return self._to_string("EXCEPT", opts)
 
 
 @value_attr
 class UnionQuery(SetQuery):
+    """Represents a union of two queries' rows.
+
+    >>> from treeno.expression import NULL
+    >>> q = SelectQuery([NULL])
+    >>> str(UnionQuery(q, q, set_quantifier=SetQuantifier.DISTINCT))
+    '(SELECT NULL) UNION DISTINCT (SELECT NULL)'
+    >>> str(UnionQuery(q, q, set_quantifier=SetQuantifier.ALL))
+    '(SELECT NULL) UNION ALL (SELECT NULL)'
+    """
+
     def sql(self, opts: PrintOptions) -> str:
-        return self.to_string("UNION", opts)
+        return self._to_string("UNION", opts)
 
 
 @value_attr
 class SelectQuery(Query):
     """Represents a high level SELECT query.
+
+    >>> from treeno.expression import wrap_literal, AliasedValue, Field
+    >>> table = Table("a")
+    >>> query = SelectQuery(select=[AliasedValue(wrap_literal(2), "foo"), Field("a") / 5], from_=table, where=Field("a") > 5)
+    >>> # We can get the SQL string of the query via __str__
+    >>> str(query)
+    'SELECT 2 "foo","a" / 5 FROM "a" WHERE "a" > 5'
+    >>> # The schema of the fields can be retrieved from resolve
+    >>> query_fields = query.resolve(Schema.empty_schema()).fields
+    >>> # We aliased the literal value as "foo", but we didn't give a name for the second field
+    >>> [schema_field.name for schema_field in query_fields]
+    ['foo', None]
+    >>> # The type for field a is unknown without a schema supplied to the Table object.
+    >>> [str(schema_field.data_type) for schema_field in query_fields]
+    ['INTEGER', 'UNKNOWN']
+    >>> # Alternatively, we can also get the whole row type of the select query via:
+    >>> str(query.data_type)
+    'ROW(INTEGER,UNKNOWN)'
+
+    Attributes:
+        select: A list of :class:`Value` s as outputs to the query.
+        from_: An optional relation to select from. If from is not specified, select must contain values that do not
+            reference any external relations, i.e. ``SELECT 1``.
+        where: An optional boolean clause to filter rows by. If where is not specified, all rows are used.
+        groupby: An optional :class:`GroupBy` which allows the user to run partial aggregate functions over different
+            groupings. For more information refer to :mod:`treeno.groupby`.
+        having: An optional boolean clause to filter groups by. If having is not specified, all groups are used.
+        select_quantifier: Whether to return all rows or only the distinct ones. Defaults to ALL.
+        window: An optional mapping of window names to :class:`Window` s. For more information refer to
+            :mod:`treeno.window`.
     """
 
     select: List[Value] = attr.ib()
@@ -242,9 +398,15 @@ class SelectQuery(Query):
     window: Optional[Dict[str, Window]] = attr.ib(default=None, kw_only=True)
 
     def __attrs_post_init__(self) -> None:
+        assert len(
+            self.select
+        ), "Must select at least one value for SELECT clause"
         self.data_type = self._compute_data_type()
 
     def _compute_data_type(self) -> DataType:
+        # Special case: If the select clause only has one output element, it's not a row.
+        if len(self.select) == 1:
+            return self.select[0].data_type
         return row(dtypes=[val.data_type for val in self.select])
 
     def resolve(self, existing_schema: Schema) -> Schema:
@@ -255,7 +417,7 @@ class SelectQuery(Query):
         # Also, it's probably worth allowing table inputs.
         # Pass in existing relations from CTE into from_ as long as from_ is not in its own namespace i.e. a subquery.
         if self.from_ is not None:
-            existing_schema = existing_schema.merge(self.resolve_with())
+            existing_schema = existing_schema.merge(self._resolve_with())
             schema = self.from_.resolve(
                 maybe_prune_schema(self.from_, existing_schema)
             )
@@ -276,7 +438,7 @@ class SelectQuery(Query):
 
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter()
-        builder.update(self.with_query_string_builder(opts))
+        builder.update(self._with_query_string_builder(opts))
         select_value = join_stmts([val.sql(opts) for val in self.select], opts)
         # All is the default, so we don't need to mention it
         if self.select_quantifier != SetQuantifier.default():
@@ -305,7 +467,7 @@ class SelectQuery(Query):
                 opts,
             )
             builder.add_entry("WINDOW", window_string)
-        builder.update(self.constraint_string_builder(opts))
+        builder.update(self._constraint_string_builder(opts))
         return builder.to_string(opts)
 
 
@@ -315,12 +477,30 @@ class Table(Relation):
 
     Tables can be standalone queries by themselves (in the form TABLE {table name}), and thus
     can be subject to orderby, offset, and limit constraints. Refer to TableQuery for more information.
+
+    >>> from treeno.datatypes.builder import bigint
+    >>> table = Table("a")
+    >>> assert table._column_schema == Schema([], relation_ids={"a"})
+    >>> # Supply a schema to the table via resolve
+    >>> new_schema = table.resolve(Schema([SchemaField("x", table, bigint())], relation_ids={"a"}))
+    >>> schema_fields = new_schema.fields
+    >>> assert table._column_schema == new_schema
+    >>> [schema_field.name for schema_field in schema_fields]
+    ['x']
+    >>> [str(schema_field.data_type) for schema_field in schema_fields]
+    ['BIGINT']
+
+    Attributes:
+        name: The name of the table.
+        schema: The schema the table belongs to. Can be unspecified to denote the current session's schema.
+        catalog: The catalog the schema belongs to. Can be unspecified to denote the current session's catalog.
     """
 
     name: str = attr.ib()
     schema: Optional[str] = attr.ib(default=None)
     catalog: Optional[str] = attr.ib(default=None)
 
+    # The table object will remember its own column_schema here.
     _column_schema: Schema = attr.ib(factory=Schema.empty_schema)
 
     def __attrs_post_init__(self) -> None:
@@ -355,6 +535,17 @@ class Table(Relation):
 
 @value_attr
 class TableQuery(Query):
+    """A light wrapper around a table for querying.
+
+    >>> str(TableQuery(Table("x")))
+    'TABLE "x"'
+
+    The above statement is equivalent to SELECT * FROM x.
+
+    Attributes:
+        table: The underlying table to select from.
+    """
+
     table: Table = attr.ib()
 
     def __attrs_post_init__(self) -> None:
@@ -367,15 +558,15 @@ class TableQuery(Query):
 
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter()
-        builder.update(self.with_query_string_builder(opts))
+        builder.update(self._with_query_string_builder(opts))
         builder.add_entry("TABLE", self.table.sql(opts))
-        builder.update(self.constraint_string_builder(opts))
+        builder.update(self._constraint_string_builder(opts))
         return builder.to_string(opts)
 
     def resolve(self, existing_schema: Schema) -> Schema:
         # We not only need to take the existing schema, but we also need to shadow some fields with the
         # local WITH clause
-        with_schema = self.resolve_with()
+        with_schema = self._resolve_with()
         table_schema = self.table.resolve(with_schema)
         self.data_type = self._compute_data_type()
         return table_schema
@@ -385,22 +576,55 @@ class TableQuery(Query):
 class ValuesQuery(Query):
     """A literal table constructed by literal ROWs
 
+    For a given comma separated list of expressions, the VALUES keyword turns the expression into a subquery that can
+    be used later on. VALUES is often used for unit testing fixtures for mock tables.
+
     Values tables can be standalone queries by themselves, and thus can be subject to
     orderby, offset, and limit constraints. Refer to ValuesQuery for more information.
+
+    >>> from decimal import Decimal
+    >>> from treeno.expression import wrap_literal, RowConstructor
+    >>> # Types are inferred from all input values coerced together
+    >>> query = ValuesQuery([wrap_literal(1), wrap_literal(Decimal("2.2"))])
+    >>> str(query)
+    'VALUES 1,2.2'
+    >>> str(query.data_type)
+    'DECIMAL(11,1)'
+    >>> query = ValuesQuery([
+    ...     RowConstructor([
+    ...         wrap_literal(1),
+    ...         wrap_literal('a')
+    ...     ]),
+    ...     RowConstructor([
+    ...         wrap_literal(2),
+    ...         wrap_literal('b')
+    ...     ])
+    ... ])
+    >>> str(query)
+    "VALUES (1,'a'),(2,'b')"
+    >>> str(query.data_type)
+    'ROW(INTEGER,VARCHAR(1))'
+
+    Attributes:
+        exprs: Values for each row of the query.
     """
 
     exprs: List[Value] = attr.ib()
 
     def __attrs_post_init__(self) -> None:
-        self.data_type = row(dtypes=[val.data_type for val in self.exprs])
+        for val in self.exprs:
+            if self.data_type == unknown():
+                self.data_type = val.data_type
+            else:
+                self.data_type = common_supertype(self.data_type, val.data_type)
 
     def sql(self, opts: PrintOptions) -> str:
         builder = StatementPrinter()
-        builder.update(self.with_query_string_builder(opts))
+        builder.update(self._with_query_string_builder(opts))
         builder.add_entry(
             "VALUES", join_stmts([expr.sql(opts) for expr in self.exprs], opts)
         )
-        builder.update(self.constraint_string_builder(opts))
+        builder.update(self._constraint_string_builder(opts))
         return builder.to_string(opts)
 
     def resolve(self, existing_schema: Schema) -> Schema:
@@ -414,6 +638,25 @@ class ValuesQuery(Query):
 @attr.s
 class AliasedRelation(Relation):
     """Represents an alias corresponding to a relation
+
+    Aliased relations can change/add identifier to another underlying :class:`Relation`, and can also rname the columns.
+    Here's an example using resolve:
+
+    >>> from treeno.expression import wrap_literal
+    >>> aliased_relation = AliasedRelation(SelectQuery([wrap_literal(1), wrap_literal('2')]), "query", ["x", "y"])
+    >>> aliased_schema = aliased_relation.resolve(Schema.empty_schema())
+    >>> [schema_field.name for schema_field in aliased_schema.fields]
+    ['x', 'y']
+    >>> aliased_schema.relation_ids
+    {'query'}
+
+    TODO: Currently we don't check to see whether the field length is equal to our column_aliases parameter. Should
+     we check this or let it fail later?
+
+    Attributes:
+        relation: A relation to alias over.
+        alias: Alias for the relation.
+        column_aliases: An optional list of names for each column of the underlying relation.
     """
 
     relation: Relation = attr.ib()
@@ -466,7 +709,9 @@ class JoinCriteria(Sql, ABC):
     """Join criterias are complex expressions that describe exactly how a JOIN is done."""
 
     @abstractmethod
-    def build_sql(self, opts: PrintOptions) -> Dict[str, Any]:
+    def build_sql(self, opts: PrintOptions) -> Dict[str, str]:
+        """Creates a dictionary mapping of statements to strings
+        """
         ...
 
     def sql(self, opts: PrintOptions) -> str:
@@ -481,44 +726,75 @@ class JoinUsingCriteria(JoinCriteria):
 
     There's one subtle difference between USING and ON, which is the output number of columns:
 
-    SELECT * FROM (SELECT 1 AS "foo") JOIN (SELECT 1 AS "foo") USING("foo");
-     foo
-    -----
-       1
-    (1 row)
+    .. code-block:: text
 
-    SELECT * FROM (SELECT 1 AS "foo") "a" JOIN (SELECT 1 AS "foo") "b" ON "a"."foo" = "b"."foo";
-     foo | foo
-    -----+-----
-       1 |   1
-    (1 row)
+        SELECT * FROM (SELECT 1 AS "foo") JOIN (SELECT 1 AS "foo") USING("foo");
+         foo
+        -----
+           1
+        (1 row)
+
+    Selects the column once. If we use ON:
+
+    .. code-block:: text
+
+        SELECT * FROM (SELECT 1 AS "foo") "a" JOIN (SELECT 1 AS "foo") "b" ON "a"."foo" = "b"."foo";
+         foo | foo
+        -----+-----
+           1 |   1
+        (1 row)
 
     If the output columns have the same name, then upon referencing the columns Trino will fail.
+
+    Attributes:
+        column_names: A list of column names to check equality clauses for.
     """
 
     # NOTE: We can't use Field from treeno.expression since they refer to a single relation. These column names refer to
     # both the left and right relations of the join.
     column_names: List[str] = attr.ib()
 
-    def build_sql(self, opts: PrintOptions):
+    def build_sql(self, opts: PrintOptions) -> Dict[str, str]:
         return {"USING": parenthesize(join_stmts(self.column_names, opts))}
 
 
 @attr.s
 class JoinOnCriteria(JoinCriteria):
-    """Perform a join between two relations using arbitrary relations.
+    """Perform a join between two relations using boolean expressions.
+
+    An example ON usage:
+
+    .. code-block:: text
+
+        SELECT * FROM (SELECT 1 AS "foo") "a" JOIN (SELECT 1 AS "foo") "b" ON "a"."foo" = "b"."foo";
+         foo | foo
+        -----+-----
+           1 |   1
+        (1 row)
+
+    Attributes:
+        constraint: A boolean expression constraining the join to where the expression evaluates to True using
+            two subqueries' rows.
     """
 
-    relation: Value = attr.ib()
+    constraint: Value = attr.ib()
 
-    def build_sql(self, opts: PrintOptions):
+    def build_sql(self, opts: PrintOptions) -> Dict[str, str]:
         # For complex boolean expressions i.e. conjunctions and disjunctions we have a new line, so we have to
         # indent it here for readability
-        return {"ON": pad(self.relation.sql(opts), opts.spaces)}
+        return {"ON": pad(self.constraint.sql(opts), opts.spaces)}
 
 
 @attr.s
 class JoinConfig(Sql):
+    """Details the method of join used in a :class:`Join`.
+
+    Attributes:
+        join_type: The type of JOIN (i.e. CROSS JOIN, INNER JOIN, etc)
+        natural: Whether the join is natural (i.e. joins on equality on column names that are the same between two queries)
+        criteria: What boolean expression criteria the join requires. Refer to :class:`JoinCriteria` for more info.
+    """
+
     join_type: JoinType = attr.ib()
     # Natural joins are dangerous and should be avoided, but since
     # it's valid Trino grammar we'll allow it for now.
@@ -543,6 +819,11 @@ class JoinConfig(Sql):
 @attr.s
 class Join(Relation):
     """Represents a join between two relations
+
+    Attributes:
+        left_relation: An arbitrary relation to be joined on
+        right_relation: An arbitrary relation to be joined on
+        config: Details on what type of join we're performing. Refer to :class:`JoinConfig` for more info.
     """
 
     left_relation: Relation = attr.ib()
@@ -580,6 +861,20 @@ class Join(Relation):
 @attr.s
 class Unnest(Relation):
     """Represents an unnested set of arrays representing a table
+
+    An example of unnest:
+
+    .. code-block:: text
+
+        trino> SELECT * FROM UNNEST(ARRAY[1,2]);
+         _col0
+        -------
+             1
+             2
+
+    Attributes:
+        arrays: The array(s) to use in an unnest. The i-th array in the list corresponds to the i-th output column.
+        with_ordinality: Whether there should be an ordinality column appended at the end of the UNNEST.
     """
 
     arrays: List[Value] = attr.ib()
@@ -625,6 +920,9 @@ class Unnest(Relation):
 @attr.s
 class Lateral(Relation):
     """Represents a correlated subquery.
+
+    Attributes:
+        subquery: The subquery to correlate with the current scope.
     """
 
     subquery: Query = attr.ib()
@@ -644,8 +942,27 @@ class SampleType(Enum):
 
 @attr.s
 class TableSample(Relation):
-    """Represents a sampled table/subquery
-    TODO: We should do some checks that a TableSample can't contain a Join relation for example.
+    """Represents a sampled relation.
+
+    Note that TABLESAMPLE can work with all relations, including JOINs. However, for JOINs we need to take extra care
+    to parenthesize the expression. This doesn't work:
+
+    .. code-block:: text
+
+        trino> WITH f (a) AS (SELECT 1), g (b) AS (SELECT 1) SELECT f.a, g.b FROM f JOIN g ON f.a = g.b TABLESAMPLE BERNOULLI(99);
+        ... mismatched input 'TABLESAMPLE' ...
+
+    But this does:
+
+    .. code-block:: text
+
+        trino> WITH f (a) AS (SELECT 1), g (b) AS (SELECT 1) SELECT f.a, g.b FROM (f JOIN g ON f.a = g.b) TABLESAMPLE BERNOULLI(99);
+         a | b
+        ---+---
+         1 | 1
+
+    Because JOINs are higher on the parsing hierarchy than TABLESAMPLEs, potentially due to an ambiguous parse
+    otherwise where TABLESAMPLE can be applied to the right relation in a JOIN.
     """
 
     relation: Relation = attr.ib()
@@ -654,7 +971,12 @@ class TableSample(Relation):
 
     def sql(self, opts: PrintOptions) -> str:
         # Queries need to be parenthesized to be considered relations
-        relation_sql = relation_string(self.relation, opts)
+        relation_sql = relation_string(
+            self.relation,
+            opts,
+            newline=False,
+            special_parenthesize_relations=[Join],
+        )
         return f"{relation_sql} TABLESAMPLE {self.sample_type.value}({self.percentage.sql(opts)})"
 
     def resolve(self, existing_schema: Schema) -> Schema:
@@ -663,12 +985,35 @@ class TableSample(Relation):
 
 
 def relation_string(
-    relation: Relation, opts: PrintOptions, newline: bool = True
+    relation: Relation,
+    opts: PrintOptions,
+    newline: bool = True,
+    special_parenthesize_relations: Optional[List[Type[Relation]]] = None,
 ) -> str:
     relation_str = relation.sql(opts)
-    if isinstance(relation, Query):
+    parenthesize_classes = [Query]
+    if special_parenthesize_relations:
+        parenthesize_classes.extend(special_parenthesize_relations)
+    if isinstance(relation, tuple(parenthesize_classes)):
         if opts.mode == PrintMode.PRETTY and newline:
             relation_str = "\n" + relation_str
         return parenthesize(relation_str)
     else:
         return relation_str
+
+
+def maybe_prune_schema(relation: Relation, existing_schema: Schema) -> Schema:
+    """Prune the schema depending on whether the relation will enter a new namespace
+
+    Some relations don't want extra schema information to be passed through because it's in its own parenthesized
+    expression which is not aware of the outer namespace.
+
+    Args:
+        relation: The relation to enter into with the given schema
+        existing_schema: The schema to pass into the relation
+    Returns:
+        Either an empty :class:`Schema` or the original :class:`Schema`.
+    """
+    if isinstance(relation, Query):
+        return Schema.empty_schema()
+    return existing_schema
