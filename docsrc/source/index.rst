@@ -5,12 +5,7 @@ Welcome to treeno's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-API Reference
--------------
-
-.. automodule:: treeno.relation
-    :members:
-    :show-inheritance:
+   api
 
 
 Indices and tables

@@ -6,11 +6,7 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
-# IMPORTANT: We change this from build to docs because we want to publish
-# the results in the master branch. Committing auto-generated documentation
-# may not be the cleanest, but I'd rather have that over managing multiple
-# branches when iterating quickly.
-BUILDDIR      = docs
+BUILDDIR      = build
 
 # Put it first so that "make" without argument is like "make help".
 help:

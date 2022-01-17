@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Welcome to treeno’s documentation! &#8212; treeno 0.0.367 documentation</title>
+    <title>API Reference &#8212; treeno 0.0.367 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -15,6 +15,7 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to treeno’s documentation!" href="index.html" />
 
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
 
@@ -31,12 +32,45 @@
 
           <div class="body" role="main">
 
-  <section id="welcome-to-treeno-s-documentation">
-<h1>Welcome to treeno’s documentation!<a class="headerlink" href="#welcome-to-treeno-s-documentation" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-</div>
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
 <section id="module-treeno.relation">
-<span id="api-reference"></span><h2>API Reference<a class="headerlink" href="#module-treeno.relation" title="Permalink to this headline">¶</a></h2>
+<span id="treeno-relations"></span><h2>Treeno Relations<a class="headerlink" href="#module-treeno.relation" title="Permalink to this headline">¶</a></h2>
+<p>Every relation in Treeno is a <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a>. <a class="reference external" href="https://en.wikipedia.org/wiki/Relation_(database)">Relations</a> are SQL entities that contain rows of data,
+with every row being the same data type, and each element in the row are assigned its corresponding column name.
+You can think of relations as “things I can FROM in a SELECT query”.</p>
+<p>For example, the following constructs are all relations:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>trino&gt; VALUES 1,2,3;
+ _col0
+-------
+     1
+     2
+     3
+
+trino&gt; SELECT 1,2,3;
+ _col0 | _col1 | _col2
+-------+-------+-------
+     1 |     2 |     3
+
+trino&gt; SELECT * FROM UNNEST(ARRAY[1,2,3]);
+ _col0
+-------
+     1
+     2
+     3
+
+trino&gt; SELECT * FROM some_table;
+ _col0
+-------
+     1
+     2
+     3
+</pre></div>
+</div>
+<p>Not all <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a> s are directly queryable though! For those that are directly queryable, i.e. SELECT statements,
+TABLE statements, etc, they inherit from <a class="reference internal" href="#treeno.relation.Query" title="treeno.relation.Query"><code class="xref py py-class docutils literal notranslate"><span class="pre">Query</span></code></a> which directly inherits from <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a>.</p>
+<p>Since Treeno does not try to communicate with the metastore(s) powering <a class="reference internal" href="#treeno.relation.Table" title="treeno.relation.Table"><code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code></a> s, we need user input to resolve
+schemas. More information can be found in <a class="reference internal" href="#treeno.relation.Relation" title="treeno.relation.Relation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Relation</span></code></a>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="treeno.relation.AliasedRelation">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">treeno.relation.</span></span><span class="sig-name descname"><span class="pre">AliasedRelation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_aliases</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.AliasedRelation" title="Permalink to this definition">¶</a></dt>
@@ -53,10 +87,6 @@ Here’s an example using resolve:</p>
 <span class="go">{&#39;query&#39;}</span>
 </pre></div>
 </div>
-<dl class="simple">
-<dt>TODO: Currently we don’t check to see whether the field length is equal to our column_aliases parameter. Should</dt><dd><p>we check this or let it fail later?</p>
-</dd>
-</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Variables</dt>
 <dd class="field-odd"><ul class="simple">
@@ -80,11 +110,6 @@ Here’s an example using resolve:</p>
 <dt class="sig sig-object py" id="treeno.relation.AliasedRelation.identifier">
 <span class="sig-name descname"><span class="pre">identifier</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.AliasedRelation.identifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shorthand identifier for the relation</p>
-<dl class="simple">
-<dt>TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,</dt><dd><p>but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
-table.field, which identifier would return “table” for and match on.</p>
-</dd>
-</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
@@ -574,11 +599,6 @@ more information refer to <a class="reference internal" href="#treeno.relation.S
 <dt class="sig sig-object py" id="treeno.relation.Relation.identifier">
 <span class="sig-name descname"><span class="pre">identifier</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Relation.identifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shorthand identifier for the relation</p>
-<dl class="simple">
-<dt>TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,</dt><dd><p>but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
-table.field, which identifier would return “table” for and match on.</p>
-</dd>
-</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
@@ -936,11 +956,6 @@ can be subject to orderby, offset, and limit constraints. Refer to TableQuery fo
 <dt class="sig sig-object py" id="treeno.relation.Table.identifier">
 <span class="sig-name descname"><span class="pre">identifier</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.Table.identifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shorthand identifier for the relation</p>
-<dl class="simple">
-<dt>TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,</dt><dd><p>but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
-table.field, which identifier would return “table” for and match on.</p>
-</dd>
-</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
@@ -1290,10 +1305,20 @@ orderby, offset, and limit constraints. Refer to ValuesQuery for more informatio
 <dl class="py method">
 <dt class="sig sig-object py" id="treeno.relation.ValuesQuery.resolve">
 <span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">existing_schema</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#treeno.relation.ValuesQuery.resolve" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO: Does ValuesQuery dereference anything by itself?</p>
+<dd><p>Resolves the current relation’s schema with supplemental schema information.</p>
+<p>This function is used to resolve missing types in queries. The user can pass in existing_schemas to
+hint at types of dynamically determined fields i.e. a table in Trino, but we also use resolve() underneath
+the hood in order to resolve some types that can only be determined through a cross-query tree traversal. For
+more information refer to <a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>existing_schema</strong> (<a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a>) – Schema with a partial list of fields to resolve the current field’s schema</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#treeno.relation.Schema" title="treeno.relation.Schema"><code class="xref py py-class docutils literal notranslate"><span class="pre">Schema</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A new schema for the current relation</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1344,14 +1369,6 @@ expression which is not aware of the outer namespace.</p>
 
 </section>
 </section>
-<section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
-</ul>
-</section>
 
 
           </div>
@@ -1360,7 +1377,7 @@ expression which is not aware of the outer namespace.</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="#">treeno</a></h1>
+<h1 class="logo"><a href="index.html">treeno</a></h1>
 
 
 
@@ -1370,11 +1387,19 @@ expression which is not aware of the outer namespace.</p>
 
 
 <h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-treeno.relation">Treeno Relations</a></li>
+</ul>
+</li>
+</ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
-  <li><a href="#">Documentation overview</a><ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to treeno’s documentation!</a></li>
   </ul></li>
 </ul>
 </div>
@@ -1408,7 +1433,7 @@ expression which is not aware of the outer namespace.</p>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
 
       |
-      <a href="_sources/index.rst.txt"
+      <a href="_sources/api.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

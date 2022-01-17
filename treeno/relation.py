@@ -1,3 +1,46 @@
+"""
+Every relation in Treeno is a :class:`Relation`. `Relations
+<https://en.wikipedia.org/wiki/Relation_(database)>`_ are SQL entities that contain rows of data,
+with every row being the same data type, and each element in the row are assigned its corresponding column name.
+You can think of relations as "things I can FROM in a SELECT query".
+
+For example, the following constructs are all relations:
+
+.. code-block:: text
+
+    trino> VALUES 1,2,3;
+     _col0
+    -------
+         1
+         2
+         3
+
+    trino> SELECT 1,2,3;
+     _col0 | _col1 | _col2
+    -------+-------+-------
+         1 |     2 |     3
+
+    trino> SELECT * FROM UNNEST(ARRAY[1,2,3]);
+     _col0
+    -------
+         1
+         2
+         3
+
+    trino> SELECT * FROM some_table;
+     _col0
+    -------
+         1
+         2
+         3
+
+Not all :class:`Relation` s are directly queryable though! For those that are directly queryable, i.e. SELECT statements,
+TABLE statements, etc, they inherit from :class:`Query` which directly inherits from :class:`Relation`.
+
+Since Treeno does not try to communicate with the metastore(s) powering :class:`Table` s, we need user input to resolve
+schemas. More information can be found in :class:`Relation`.
+"""
+
 import copy
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -36,9 +79,9 @@ class Relation(Sql, ABC):
     def identifier(self) -> Optional[str]:
         """Shorthand identifier for the relation
 
-        TODO: This identifier function is used to check for whether dereferences in fields correspond to a relation,
-         but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
-         table.field, which identifier would return "table" for and match on.
+        .. todo:: This identifier function is used to check for whether dereferences in fields correspond to a relation,
+            but there are multiple ways we can dereference. catalog.schema.table.field is a valid identifier, not only
+            table.field, which identifier would return "table" for and match on.
 
         Returns:
             A string if the relation has a well-defined identifier, otherwise None
@@ -121,10 +164,10 @@ class Schema:
         Returns:
             A new :class:`Schema` object with both schemas' fields and relations in the same namespace.
         """
-        # TODO: Should this be deep copies? I don't see a point in trying to deepcopy relations since they're expensive.
+        # .. todo:: Should this be deep copies? I don't see a point in trying to deepcopy relations since they're expensive.
         fields = copy.copy(self.fields)
         relation_ids = copy.copy(self.relation_ids)
-        # TODO: This is also pretty slow, O(N^2)
+        # .. todo:: This is also pretty slow, O(N^2)
         for f in another_schema.fields:
             if f not in fields:
                 fields.append(f)
@@ -137,7 +180,7 @@ class Query(Relation, Value, ABC):
     """Represents a query with filtered outputs. Queries are also values, in that they yield row types
     """
 
-    # TODO: Technically, an offset can either be an integer or a question mark(as a parameter).
+    # .. todo:: Technically, an offset can either be an integer or a question mark(as a parameter).
     offset: Optional[int] = attr.ib(default=None, kw_only=True)
     limit: Optional[int] = attr.ib(default=None, kw_only=True)
     orderby: Optional[List[OrderTerm]] = attr.ib(default=None, kw_only=True)
@@ -189,8 +232,8 @@ class Query(Relation, Value, ABC):
         str_builder = {}
         if self.orderby:
             # Typically the BY in ORDER BY clause goes across the indentation river.
-            # TODO: The "BY" will offset the max length slightly - we might see join_stmts max out at 80 characters
-            #  but we also have a few characters added due to the BY.
+            # .. todo:: The "BY" will offset the max length slightly - we might see join_stmts max out at 80 characters
+            #       but we also have a few characters added due to the BY.
             str_builder["ORDER"] = "BY " + join_stmts(
                 [order.sql(opts) for order in self.orderby], opts
             )
@@ -246,7 +289,7 @@ class SetQuery(Query, ABC):
         if not left_row_like:
             return common_supertype(left_type, right_type)
 
-        # TODO: Redundant after previous assertion
+        # .. todo:: Redundant after previous assertion
         assert (
             left_row_like and right_row_like
         ), "Input data types for query set operations must be ROW"
@@ -412,8 +455,8 @@ class SelectQuery(Query):
     def resolve(self, existing_schema: Schema) -> Schema:
         from treeno.datatypes.resolve import resolve_fields
 
-        # TODO: Currently resolve only handles a single layer. We should make this a common function across all
-        # relations so we can recursively call resolve before performing resolve on this query.
+        # .. todo:: Currently resolve only handles a single layer. We should make this a common function across all
+        #       relations so we can recursively call resolve before performing resolve on this query.
         # Also, it's probably worth allowing table inputs.
         # Pass in existing relations from CTE into from_ as long as from_ is not in its own namespace i.e. a subquery.
         if self.from_ is not None:
@@ -628,8 +671,7 @@ class ValuesQuery(Query):
         return builder.to_string(opts)
 
     def resolve(self, existing_schema: Schema) -> Schema:
-        """TODO: Does ValuesQuery dereference anything by itself?
-        """
+        # ..todo:: Does ValuesQuery dereference anything by itself?
         return Schema(
             [SchemaField(None, self, val.data_type) for val in self.exprs]
         )
@@ -650,8 +692,8 @@ class AliasedRelation(Relation):
     >>> aliased_schema.relation_ids
     {'query'}
 
-    TODO: Currently we don't check to see whether the field length is equal to our column_aliases parameter. Should
-     we check this or let it fail later?
+    .. todo:: Currently we don't check to see whether the field length is equal to our column_aliases parameter. Should
+        we check this or let it fail later?
 
     Attributes:
         relation: A relation to alias over.
@@ -664,7 +706,7 @@ class AliasedRelation(Relation):
     column_aliases: Optional[List[str]] = attr.ib(default=None)
 
     def sql(self, opts: PrintOptions) -> str:
-        # TODO: Keep the "AS"?
+        # .. todo:: Keep the "AS"?
         alias_str = f"{relation_string(self.relation, opts)} {quote_identifier(self.alias)}"
         if self.column_aliases:
             alias_str += f" ({join_stmts(self.column_aliases, opts)})"
