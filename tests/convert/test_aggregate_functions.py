@@ -35,6 +35,7 @@ from treeno.functions.aggregate import (
     RegrIntercept,
     RegrSlope,
     Skewness,
+    StdDev,
     StdDevPop,
     StdDevSamp,
     Sum,
@@ -324,7 +325,7 @@ class TestFunction(VisitorTest):
 
         ast = get_parser("STDDEV(x)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
-        self.visitor.visit(ast).assert_equals(Skewness(Field("x")))
+        self.visitor.visit(ast).assert_equals(StdDev(Field("x")))
 
         ast = get_parser("STDDEV_POP(x)").primaryExpression()
         assert isinstance(ast, SqlBaseParser.FunctionCallContext)
