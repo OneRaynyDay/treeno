@@ -1,19 +1,44 @@
+"""
+Treeno supports arbitrary expressions including arithmetic binary, arithmetic unary, function, boolean expressions and
+more. Underneath the hood, the values to be expressed in SQL are actually nodes of a tree and the tree is traversed to
+generate SQL for execution. The base class which supports a suite of syntactic sugar such as ``__add__``, ``__eq__`` and
+is :class:`Value`.
+
+Here's an example using the CLI tool:
+
+.. code-block:: bash
+
+    ❯ treeno tree expression "1+2*3"
+                                         Add
+         _________________________________|__________________________
+        |                  |                                       right
+        |                  |                                         |
+        |                  |                                      Multiply
+        |                  |               __________________________|__________________
+        |                 left            |                 left                      right
+        |                  |              |                  |                          |
+        |               Literal           |               Literal                    Literal
+        |          ________|______        |          ________|_______           ________|______
+    data_type data_type         value data_type data_type          value   data_type         value
+        |         |               |       |         |                |         |               |
+     INTEGER   INTEGER            1    INTEGER   INTEGER             2      INTEGER            3
+
+A simple multiply and add is represented as nodes in a tree, each node having a data type (here, all of them are
+INTEGER).
+
+A myriad of python data types are supported to convert to :class:`Literal` nodes using :func:`wrap_literal`. We even
+support ``decimal.Decimal`` types for fixed precision decimal point classes in python. A notable exception is NoneType,
+which cannot be wrapped to a literal. Instead, please use the :data:`NULL` singleton.
+"""
 import functools
 from abc import ABC
 from decimal import Decimal
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 import attr
 
+# NOTE: This is done so sphinx-autodoc-typehints doesn't run into a circular import issue with InQuery.
+import treeno
 from treeno.base import PrintMode, PrintOptions, Sql
 from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import (
@@ -44,9 +69,6 @@ from treeno.util import (
     quote_literal,
 )
 
-if TYPE_CHECKING:
-    from treeno.relation import Query
-
 GenericValue = TypeVar("GenericValue", bound="Value")
 
 # Attr tries to assign __le__, __ge__, __eq__ and friends by default. We define our own.
@@ -55,15 +77,22 @@ value_attr = functools.partial(attr.s, order=False, eq=False, str=False)
 
 @value_attr
 class Value(Sql, ABC):
-    """A value can be one of the following:
+    """Represents a basic SQL value.
 
-    1. (Literal) A literal value with well-defined type
-    2. (Field) A reference to a field in a table, which doesn't always have a well-defined type before resolution.
-    3. (Expression) A nested complex expression involving any of (1), (2) and (3).
-        3.5. (SubqueryExpression) A subquery reinterpreted as ROW's. This is considered an Expression as well.
+    A value can be one of the following:
 
-    Every expression has a type, and elementary operations on expressions should be supported
-    as syntactic sugar for Expression(<op>, operands...).
+    1. (:class:`Literal`) A literal value with well-defined type
+    2. (:class:`Field`) A reference to a field in a table, which doesn't always have a well-defined type before
+        resolution.
+    3. (:class:`Star`) A reference to ALL of the fields in a table.
+    4. (:class:`AliasedValue` and :class:`AliasedStar`) Aliased versions of (2) and (3).
+    5. (:class:`Expression`) A nested complex expression involving any :class:`Value`. This can be a
+        built-in operator such as +, a lambda expression, a complex function involving potentially variadic arguments
+        as seen in :mod:`treeno.functions` inheriting from :class:`treeno.functions.base.Function`, etc.
+
+    Attributes:
+        data_type: The data type of the value. If not specified, defaults to UNKNOWN, which means the data type can't
+            be directly determined.
     """
 
     data_type: DataType = attr.ib(factory=unknown, kw_only=True)
@@ -122,24 +151,70 @@ class Value(Sql, ABC):
         return Or(self, other)
 
     def identifier(self) -> Optional[str]:
+        """Identifier for the value.
+
+        Values if aliased can have identifiers which are useful to capture output information. By default,
+        :class:`Value` s are not identifiable by themselves.
+
+        Returns:
+            String name for the value's identifier if one exists, otherwise None.
+        """
         return None
 
 
 @value_attr
 class Expression(Value, ABC):
-    """Represents a complex expression which involves a function and its corresponding
-    arguments.
+    """Represents a complex expression which involves a function and its corresponding arguments.
+
+    Expressions can be grouped into two general groups - :class:`treeno.functions.base.Function` s and built-in SQL operators. For all
+    functions, please refer to the module :mod:`treeno.functions`. Operators live in `treeno.expression`, and support
+    basic arihmetic scalar transforms such as add, subtract, divide, etc. and boolean clauses such as LIKE, IS NULL,
+    DISTINCT FROM, etc.
     """
 
 
 @value_attr
 class Literal(Value):
+    """Represents a literal value in SQL.
+
+    Literal values are expressions that don't require calling constructors to any SQL data types such as ARRAY,
+    and have a known data type (with the exception of NULL).
+
+    >>> from decimal import Decimal
+    >>> # Don't directly create a Literal value
+    >>> Literal("a").data_type
+    Traceback (most recent call last):
+        ...
+    AssertionError: Please use wrap_literal to construct a Literal value so the data types are detected
+    >>> print(wrap_literal("a").data_type)
+    VARCHAR(1)
+    >>> print(wrap_literal(True).data_type)
+    BOOLEAN
+    >>> print(wrap_literal(1).data_type)
+    INTEGER
+    >>> print(wrap_literal(100000000000).data_type)
+    BIGINT
+    >>> print(wrap_literal(2.2).data_type)
+    DOUBLE
+    >>> # Use decimal.Decimal if you wish to represent a fixed precision decimal point in SQL
+    >>> print(wrap_literal(Decimal("2.2")).data_type)
+    DECIMAL(2,1)
+
+    Attributes:
+        value: A value in python representing a value in SQL.
+    """
+
     value: Any = attr.ib()
 
+    def __attrs_post_init__(self) -> None:
+        if self.value is not None:
+            assert (
+                self.data_type != unknown()
+            ), "Please use wrap_literal to construct a Literal value so the data types are detected"
+
     def sql(self, opts: PrintOptions) -> str:
-        """
-        TODO: The stringification is actively under development as we add more literal types
-        """
+        # NOTE: Literal decimals can be directly convertible
+        # through string representation, i.e. 3.14 is DECIMAL(3,2), so we don't need to do anything.
         s = str(self.value)
         if self.value is None:
             s = "NULL"
@@ -148,14 +223,18 @@ class Literal(Value):
         if isinstance(self.value, str):
             # Single quotes to mean literal string
             s = quote_literal(self.value)
-        # NOTE: Literal decimals can be directly convertible
-        # through string representation, i.e. 3.14 is DECIMAL(3,2)
         return s
 
 
 @value_attr
 class Field(Value):
-    """Represents a field referenced in the input relations of a SELECT query"""
+    """Represents a field referenced in the input relations of a SELECT query
+
+    Attributes:
+        name: The name of the field
+        table: The source of the field. This is sometimes necessary when there are multiple relations with duplicate
+            column names and the name is not sufficient to disambiguate the field.
+    """
 
     name: str = attr.ib()
     table: Optional[Union[str, Value]] = attr.ib(default=None)
@@ -203,8 +282,10 @@ class AliasedValue(Value):
 @value_attr
 class Star(Value):
     """Represents a `*` or a `table.*` statement
-    NOTE: The reason Star does not inherit from Field is because a star has no name.
-    Fields must have a name, and allow an optional table identifier.
+
+    Note:
+        The reason Star does not inherit from Field is because a star has no name.
+        Fields must have a name, and allow an optional table identifier.
     """
 
     # TODO: It should be noted that if table is a Field, that is a field referring to a table, not a column.
@@ -654,7 +735,7 @@ class Array(Expression):
 @value_attr
 class InQuery(Expression):
     value: Value = attr.ib(converter=wrap_literal)
-    query: "Query" = attr.ib()
+    query: "treeno.relation.Query" = attr.ib()
 
     def __attrs_post_init__(self) -> None:
         self.data_type = boolean()

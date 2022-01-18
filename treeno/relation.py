@@ -6,7 +6,7 @@ You can think of relations as "things I can FROM in a SELECT query".
 
 For example, the following constructs are all relations:
 
-.. code-block:: text
+.. code-block:: sql
 
     trino> VALUES 1,2,3;
      _col0
@@ -177,7 +177,9 @@ class Schema:
 
 @value_attr
 class Query(Relation, Value, ABC):
-    """Represents a query with filtered outputs. Queries are also values, in that they yield row types
+    """Represents a query with filtered outputs.
+
+    Note that Queries are also :class:`treeno.expression.Values`, in that they are just row data typed expressions.
     """
 
     # .. todo:: Technically, an offset can either be an integer or a question mark(as a parameter).
@@ -198,7 +200,7 @@ class Query(Relation, Value, ABC):
         # cte namedQuery form - it's not the same as a typical AliasedRelation.sql().
         return {
             "WITH": join_stmts(
-                [query.named_query_sql(opts) for query in self.with_], opts
+                [query._named_query_sql(opts) for query in self.with_], opts
             )
         }
 
@@ -207,7 +209,7 @@ class Query(Relation, Value, ABC):
 
         It's important to note that CTE's can actually refer to previously defined CTE's using FROM:
 
-        .. code-block:: text
+        .. code-block:: sql
 
             trino> WITH a (foo) AS (SELECT 1), b (bar) AS (SELECT a.foo + 1 FROM a) SELECT bar FROM b;
              bar
@@ -251,7 +253,7 @@ class SetQuery(Query, ABC):
     For all set operations, the input query schemas must be the coercible with each other (i.e. integer and bigint).
     Otherwise, Trino will complain:
 
-    .. code-block:: text
+    .. code-block:: sql
 
         trino> SELECT 1 UNION SELECT 'a';
         ... column 1 in UNION query has incompatible types: integer, varchar(1)
@@ -403,7 +405,11 @@ class SelectQuery(Query):
 
     >>> from treeno.expression import wrap_literal, AliasedValue, Field
     >>> table = Table("a")
-    >>> query = SelectQuery(select=[AliasedValue(wrap_literal(2), "foo"), Field("a") / 5], from_=table, where=Field("a") > 5)
+    >>> query = SelectQuery(
+    ...     select=[AliasedValue(wrap_literal(2), "foo"), Field("a") / 5],
+    ...     from_=table,
+    ...     where=Field("a") > 5
+    ... )
     >>> # We can get the SQL string of the query via __str__
     >>> str(query)
     'SELECT 2 "foo","a" / 5 FROM "a" WHERE "a" > 5'
@@ -712,7 +718,7 @@ class AliasedRelation(Relation):
             alias_str += f" ({join_stmts(self.column_aliases, opts)})"
         return alias_str
 
-    def named_query_sql(self, opts: PrintOptions) -> str:
+    def _named_query_sql(self, opts: PrintOptions) -> str:
         alias_str = quote_identifier(self.alias)
         if self.column_aliases:
             alias_str += f" {join_stmts(self.column_aliases, opts)}"
@@ -768,7 +774,7 @@ class JoinUsingCriteria(JoinCriteria):
 
     There's one subtle difference between USING and ON, which is the output number of columns:
 
-    .. code-block:: text
+    .. code-block:: sql
 
         SELECT * FROM (SELECT 1 AS "foo") JOIN (SELECT 1 AS "foo") USING("foo");
          foo
@@ -778,7 +784,7 @@ class JoinUsingCriteria(JoinCriteria):
 
     Selects the column once. If we use ON:
 
-    .. code-block:: text
+    .. code-block:: sql
 
         SELECT * FROM (SELECT 1 AS "foo") "a" JOIN (SELECT 1 AS "foo") "b" ON "a"."foo" = "b"."foo";
          foo | foo
@@ -806,7 +812,7 @@ class JoinOnCriteria(JoinCriteria):
 
     An example ON usage:
 
-    .. code-block:: text
+    .. code-block:: sql
 
         SELECT * FROM (SELECT 1 AS "foo") "a" JOIN (SELECT 1 AS "foo") "b" ON "a"."foo" = "b"."foo";
          foo | foo
@@ -906,7 +912,7 @@ class Unnest(Relation):
 
     An example of unnest:
 
-    .. code-block:: text
+    .. code-block:: sql
 
         trino> SELECT * FROM UNNEST(ARRAY[1,2]);
          _col0
@@ -989,14 +995,14 @@ class TableSample(Relation):
     Note that TABLESAMPLE can work with all relations, including JOINs. However, for JOINs we need to take extra care
     to parenthesize the expression. This doesn't work:
 
-    .. code-block:: text
+    .. code-block:: sql
 
         trino> WITH f (a) AS (SELECT 1), g (b) AS (SELECT 1) SELECT f.a, g.b FROM f JOIN g ON f.a = g.b TABLESAMPLE BERNOULLI(99);
         ... mismatched input 'TABLESAMPLE' ...
 
     But this does:
 
-    .. code-block:: text
+    .. code-block:: sql
 
         trino> WITH f (a) AS (SELECT 1), g (b) AS (SELECT 1) SELECT f.a, g.b FROM (f JOIN g ON f.a = g.b) TABLESAMPLE BERNOULLI(99);
          a | b

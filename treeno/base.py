@@ -1,3 +1,16 @@
+"""
+Treeno is built around the concept of creating python nodes that represent SQL constructs. These constructs must be
+interoperable with SQL strings, which means:
+
+1. The trees created by a hierarchy of nodes can produce valid SQL.
+2. We can construct a Treeno tree from valid SQL.
+
+In order to do this, this module introduces some preliminary classes for printing/formatting SQL and the base
+:class:`Sql` superclass responsible for representing all SQL nodes.
+
+.. todo:: We currently copy this description into api.rst, because we don't want to include all the
+"""
+
 from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum, EnumMeta, auto
 from typing import Any, TypeVar
@@ -40,8 +53,38 @@ class PrintOptions:
 
 @attr.s
 class Sql(ABC):
+    """A base class for all SQL nodes in Treeno."""
+
     @abstractmethod
     def sql(self, opts: PrintOptions) -> str:
+        """Converts the Treeno object into SQL string.
+
+        All objects that represent some concept in SQL inherit from :class:`~treeno.base.Sql` and must
+        implement this function to return its SQL representation which may be more compact
+        or more readable depending on the :class:`~treeno.base.PrintOptions`. By default, all Treeno
+        objects has a ``__str__`` representation which calls this function with default
+        print options.
+
+        When writing a new class that inherits from :class:`~treeno.base.Sql`, remember to pass along
+        ``opts`` to its childrens' ``sql()`` call to make sure the print options are
+        recursively applied.
+
+        >>> from treeno.expression import wrap_literal, AliasedValue, Field
+        >>> from treeno.relation import SelectQuery, Table
+        >>> table = Table("a")
+        >>> query = SelectQuery(select=[AliasedValue(wrap_literal(2), "foo"), Field("a") / 5], from_=table, where=Field("a") > 5)
+        >>> print(query.sql(PrintOptions(mode=PrintMode.DEFAULT)))
+        SELECT 2 "foo","a" / 5 FROM "a" WHERE "a" > 5
+        >>> print(query.sql(PrintOptions(mode=PrintMode.PRETTY, spaces=2)))
+        SELECT 2 "foo","a" / 5
+          FROM "a"
+         WHERE "a" > 5
+
+        Args:
+            opts: The print options to control the SQL output format.
+        Returns:
+            A SQL string for the given object.
+        """
         raise NotImplementedError(
             f"All {self.__class__.__name__} must implement sql"
         )
@@ -51,17 +94,28 @@ class Sql(ABC):
         return self.sql(PrintOptions())
 
     def equals(self, other: Any) -> bool:
-        if not isinstance(other, Sql):
+        """Checks to see whether two :class:`Sql` nodes have identical content.
+
+        Note:
+            Why do we not use ``__eq__`` here? Because for the sake of syntactical sugar, we need that operator for
+            :class:`~treeno.expression.Value` to evaluate whether two objects are equal in SQL space (thus generating
+            a Sql node using :class:`~treeno.expression.Equal` rather than returning to us a boolean value).
+
+        Args:
+            other: Another potentially SQL-like object.
+        Returns:
+            True if both objects are equal, False otherwise.
+        """
+        if not isinstance(other, Sql) or type(self) is not type(other):
             return False
         self_dict = attr.asdict(self)
         other_dict = attr.asdict(other)
         return self_dict == other_dict
 
     def assert_equals(self, other: Any) -> None:
-        """Because we've overridden __eq__, we can no longer use that to test equality on objects. We use attr.asdict
-        to make sure the fields are completely collapsed.
-        TODO: However, this doesn't completely test equality as the type of the class doesn't show up, so we have to
-        add that later.
+        """Assert whether two :class:`Sql` nodes are the same.
+
+        For more information, refer to :func:`Sql.equals`.
         """
         assert self.equals(other)
 

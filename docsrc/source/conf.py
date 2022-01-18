@@ -47,7 +47,7 @@ exclude_patterns = []
 napoleon_use_ivar = True
 
 # Autodoc format settings
-autodoc_default_options = {"members": True, "undoc-members": False}
+autodoc_default_options = {"undoc-members": False}
 
 # -- Options for HTML output -------------------------------------------------
 
