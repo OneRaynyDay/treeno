@@ -59,6 +59,7 @@ from treeno.functions.session import (
     CurrentSchema,
     CurrentUser,
 )
+from treeno.functions.string import NormalForm, Normalize
 from treeno.grammar.gen.SqlBaseParser import SqlBaseParser
 from treeno.grammar.gen.SqlBaseVisitor import SqlBaseVisitor
 from treeno.grammar.parse import AST
@@ -161,8 +162,7 @@ def table_from_qualifiers(qualifiers: List[str]) -> Table:
 
 
 class ConvertVisitor(SqlBaseVisitor):
-    """Converts the tree into a builder tree in python
-    """
+    """Converts the tree into a builder tree in python"""
 
     @overrides
     def visitSingleStatement(
@@ -554,6 +554,12 @@ class ConvertVisitor(SqlBaseVisitor):
         return interval(**parameters)
 
     @overrides
+    def visitNormalForm(
+        self, ctx: SqlBaseParser.NormalFormContext
+    ) -> NormalForm:
+        return NormalForm[ctx.getText()]
+
+    @overrides
     def visitArrayType(self, ctx: SqlBaseParser.ArrayTypeContext) -> DataType:
         assert not ctx.INTEGER_VALUE(), "Explicit array size not supported"
         return array(dtype=self.visit(ctx.type_()))
@@ -650,6 +656,14 @@ class ConvertVisitor(SqlBaseVisitor):
         self, ctx: SqlBaseParser.CurrentPathContext
     ) -> CurrentPath:
         return CurrentPath()
+
+    @overrides
+    def visitNormalize(self, ctx: SqlBaseParser.NormalizeContext) -> Normalize:
+        string = self.visit(ctx.valueExpression())
+        normal_form = None
+        if ctx.normalForm() is not None:
+            normal_form = self.visit(ctx.normalForm())
+        return Normalize(string=string, normal_form=normal_form)
 
     @overrides
     def visitNullLiteral(
@@ -904,8 +918,7 @@ class ConvertVisitor(SqlBaseVisitor):
 
     @overrides
     def visitOver(self, ctx: SqlBaseParser.OverContext) -> Window:
-        """The window can either be an identifier or a full window specification.
-        """
+        """The window can either be an identifier or a full window specification."""
         if ctx.windowName:
             return Window(parent_window=self.visit(ctx.windowName))
         return self.visit(ctx.windowSpecification())
@@ -985,8 +998,7 @@ class ConvertVisitor(SqlBaseVisitor):
 
     @overrides
     def visitSelectAll(self, ctx: SqlBaseParser.SelectAllContext) -> Value:
-        """Visits a `*` or `"table".*` statement. Returns a Star field.
-        """
+        """Visits a `*` or `"table".*` statement. Returns a Star field."""
         if ctx.getText() == "*":
             return Star()
         primary_expr = ctx.primaryExpression()

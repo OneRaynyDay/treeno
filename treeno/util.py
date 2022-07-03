@@ -51,6 +51,6 @@ def construct_container(var: Iterable[T], it: Iterator[T]) -> Iterable[T]:
     return type(var)(it)
 
 
-def children(sql: Sql, recursive: bool = False) -> Dict[str, Any]:
+def children(sql: Sql) -> Dict[str, Any]:
     fields_dict = attr.fields_dict(type(sql))
     return {field_name: getattr(sql, field_name) for field_name in fields_dict}
