@@ -1,9 +1,22 @@
+import inspect
 import itertools
-from typing import Any, Dict, Iterable, Iterator, List, Optional, TypeVar
+from abc import ABC
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+)
 
 import attr
 
-from treeno.base import Sql
+if TYPE_CHECKING:
+    from treeno.base import Sql
 
 T = TypeVar("T")
 
@@ -51,6 +64,13 @@ def construct_container(var: Iterable[T], it: Iterator[T]) -> Iterable[T]:
     return type(var)(it)
 
 
-def children(sql: Sql) -> Dict[str, Any]:
+def children(sql: "Sql") -> Dict[str, Any]:
     fields_dict = attr.fields_dict(type(sql))
     return {field_name: getattr(sql, field_name) for field_name in fields_dict}
+
+
+def is_abstract(cls: Type[T]) -> bool:
+    # TODO: We ignore abstract classes, but some already have all of their
+    # abstract methods defined. Thus we do the extra check of ABC as a direct base.
+    # See: https://stackoverflow.com/questions/62352982/python-determine-if-class-is-abstract-abc-without-abstractmethod
+    return inspect.isabstract(cls) or ABC in cls.__bases__

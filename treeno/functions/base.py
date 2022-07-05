@@ -1,4 +1,3 @@
-import inspect
 from abc import ABC
 from typing import Any, Dict, List, Type, TypeVar
 
@@ -7,6 +6,7 @@ import attr
 from treeno.base import PrintOptions
 from treeno.expression import Expression, Value, value_attr, wrap_literal
 from treeno.printer import join_stmts
+from treeno.util import is_abstract
 
 GenericFunction = TypeVar("GenericFunction", bound="Function")
 
@@ -22,13 +22,10 @@ class Function(Expression, ABC):
     Functions are different from general expressions such as Cast, TypeConstructor, Like, etc.
     """
 
-    def __init_subclass__(cls, *args, **kwargs):
+    def __init_subclass__(cls, *args: Any, **kwargs: Any):
         super().__init_subclass__(*args, **kwargs)
 
-        # TODO: We ignore abstract classes, but some already have all of their
-        # abstract methods defined. Thus we do the extra check of ABC as a direct base.
-        # See: https://stackoverflow.com/questions/62352982/python-determine-if-class-is-abstract-abc-without-abstractmethod
-        if inspect.isabstract(cls) or ABC in cls.__bases__:
+        if is_abstract(cls):
             return
 
         if not hasattr(cls, "FN_NAME"):

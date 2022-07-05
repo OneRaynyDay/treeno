@@ -310,8 +310,7 @@ class Star(Value):
 
 @value_attr
 class AliasedStar(Value):
-    """Represents one or more aliases corresponding to an unpacked star
-    """
+    """Represents one or more aliases corresponding to an unpacked star"""
 
     star: Star = attr.ib()
     aliases: List[str] = attr.ib()

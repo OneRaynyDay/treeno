@@ -13,11 +13,14 @@ In order to do this, this module introduces some preliminary classes for printin
 
 from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum, EnumMeta, auto
-from typing import Any, TypeVar
+from typing import Any, ClassVar, Set, TypeVar
 
 import attr
 
+from treeno.util import is_abstract
+
 GenericEnum = TypeVar("GenericEnum", bound=Enum)
+GenericSql = TypeVar("GenericSql", bound="Sql")
 
 
 class ABCEnumMeta(EnumMeta, ABCMeta):
@@ -53,7 +56,19 @@ class PrintOptions:
 
 @attr.s
 class Sql(ABC):
-    """A base class for all SQL nodes in Treeno."""
+    """A base class for all SQL nodes in Treeno.
+    Sql contains some metadata hooked by subclasses in order to track registered functions.
+    One usecase is to autogenerate the function body of the visitor class
+    """
+
+    # List contains all nodes that inherit from Sql.
+    _REGISTERED_NODES: ClassVar[Set[GenericSql]] = set()
+
+    def __init_subclass__(cls, *args: Any, **kwargs: Any):
+        super().__init_subclass__(*args, **kwargs)
+        # Register all non-abstract classes
+        if not is_abstract(cls):
+            cls._REGISTERED_NODES.add(cls)
 
     @abstractmethod
     def sql(self, opts: PrintOptions) -> str:
@@ -121,8 +136,7 @@ class Sql(ABC):
 
 
 class SetQuantifier(DefaultableEnum):
-    """Whether to select all rows or only distinct values
-    """
+    """Whether to select all rows or only distinct values"""
 
     DISTINCT = auto()
     ALL = auto()
