@@ -73,4 +73,12 @@ def is_abstract(cls: Type[T]) -> bool:
     # TODO: We ignore abstract classes, but some already have all of their
     # abstract methods defined. Thus we do the extra check of ABC as a direct base.
     # See: https://stackoverflow.com/questions/62352982/python-determine-if-class-is-abstract-abc-without-abstractmethod
-    return inspect.isabstract(cls) or ABC in cls.__bases__
+    has_abc_inheritance = ABC in cls.__bases__
+    has_abstract_methods = inspect.isabstract(cls)
+    if has_abstract_methods:
+        assert (
+            has_abc_inheritance
+        ), f"Class {cls.__qualname__} is abstract because it has abstract methods, but it doesn't directly inherit from ABC."
+        return True
+    else:
+        return has_abc_inheritance

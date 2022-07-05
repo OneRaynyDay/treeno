@@ -2,7 +2,7 @@ from typing import ClassVar
 
 import attr
 
-from treeno.base import PrintOptions
+from treeno.base import GenericVisitor, PrintOptions
 from treeno.datatypes.builder import double
 from treeno.expression import Value, value_attr, wrap_literal
 from treeno.functions.base import Function
@@ -19,3 +19,7 @@ class Power(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.x, self.p], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.x)
+        visitor.visit(self.p)

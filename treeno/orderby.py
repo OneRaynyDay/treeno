@@ -2,7 +2,13 @@ from enum import auto
 
 import attr
 
-from treeno.base import DefaultableEnum, GenericEnum, PrintOptions, Sql
+from treeno.base import (
+    DefaultableEnum,
+    GenericEnum,
+    GenericVisitor,
+    PrintOptions,
+    Sql,
+)
 from treeno.expression import Value
 
 
@@ -37,3 +43,6 @@ class OrderTerm(Sql):
         if self.null_order != NullOrder.default():
             order_string += f" NULLS {self.null_order.name}"
         return order_string
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)

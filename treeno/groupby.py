@@ -3,20 +3,18 @@ from typing import List
 
 import attr
 
-from treeno.base import PrintOptions, SetQuantifier, Sql
+from treeno.base import GenericVisitor, PrintOptions, SetQuantifier, Sql
 from treeno.expression import Value
 from treeno.printer import join_stmts
 
 
 class Group(Sql, ABC):
-    """Base class to describe all grouping entities.
-    """
+    """Base class to describe all grouping entities."""
 
 
 @attr.s
 class GroupBy(Sql):
-    """GroupBys are used to group rows by their membership in grouping sets to get partial aggregates.
-    """
+    """GroupBys are used to group rows by their membership in grouping sets to get partial aggregates."""
 
     groups: List[Group] = attr.ib()
     groupby_quantifier: SetQuantifier = attr.ib(factory=SetQuantifier.default)
@@ -28,6 +26,10 @@ class GroupBy(Sql):
         if self.groupby_quantifier != SetQuantifier.default():
             groupby_string = f"{self.groupby_quantifier.name} {groupby_string}"
         return groupby_string
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        for group in self.groups:
+            visitor.visit(group)
 
 
 @attr.s
@@ -44,6 +46,10 @@ class GroupingSet(Group):
         if len(self.values) == 1:
             return self.values[0].sql(opts)
         return f"({join_stmts([val.sql(opts) for val in self.values], opts)})"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        for val in self.values:
+            visitor.visit(val)
 
 
 @attr.s
@@ -62,6 +68,10 @@ class GroupingSetList(Group):
 
     def sql(self, opts: PrintOptions) -> str:
         return f"GROUPING SETS ({join_stmts([group.sql(opts) for group in self.groups], opts)})"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        for group_set in self.groups:
+            visitor.visit(group_set)
 
 
 @attr.s
@@ -83,6 +93,10 @@ class Cube(Group):
             f"CUBE ({join_stmts([val.sql(opts) for val in self.values], opts)})"
         )
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        for val in self.values:
+            visitor.visit(val)
+
 
 @attr.s
 class Rollup(Group):
@@ -100,3 +114,7 @@ class Rollup(Group):
 
     def sql(self, opts: PrintOptions) -> str:
         return f"ROLLUP ({join_stmts([val.sql(opts) for val in self.values], opts)})"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        for val in self.values:
+            visitor.visit(val)

@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import attr
 
-from treeno.base import PrintOptions, Sql
+from treeno.base import GenericVisitor, PrintOptions, Sql
 
 (
     BOOLEAN,
@@ -135,6 +135,10 @@ class DataType(Sql):
 
         param_string = ",".join(values)
         return f"{self.type_name}({param_string})"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        # Data types should not contain any further Sql constructs
+        pass
 
 
 @attr.s

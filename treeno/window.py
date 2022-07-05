@@ -4,7 +4,13 @@ from typing import List, Optional
 
 import attr
 
-from treeno.base import DefaultableEnum, GenericEnum, PrintOptions, Sql
+from treeno.base import (
+    DefaultableEnum,
+    GenericEnum,
+    GenericVisitor,
+    PrintOptions,
+    Sql,
+)
 from treeno.expression import Value, wrap_literal
 from treeno.orderby import OrderTerm
 from treeno.printer import StatementPrinter, join_stmts
@@ -48,6 +54,9 @@ class BoundedFrameBound(FrameBound):
     def sql(self, opts: PrintOptions) -> str:
         return f"{self.offset.sql(opts)} {self.bound_type.value}"
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.offset)
+
 
 @attr.s
 class UnboundedFrameBound(FrameBound):
@@ -56,11 +65,17 @@ class UnboundedFrameBound(FrameBound):
     def sql(self, opts: PrintOptions) -> str:
         return f"UNBOUNDED {self.bound_type.value}"
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
+
 
 @attr.s
 class CurrentFrameBound(FrameBound):
     def sql(self, opts: PrintOptions) -> str:
         return "CURRENT ROW"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
 
 
 def default_start_bound() -> UnboundedFrameBound:
@@ -110,3 +125,15 @@ class Window(Sql):
             ),
         )
         return builder.to_string(opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        if self.orderby:
+            for order_term in self.orderby:
+                visitor.visit(order_term)
+        if self.partitions:
+            for part in self.partitions:
+                visitor.visit(part)
+        if self.start_bound:
+            visitor.visit(self.start_bound)
+        if self.end_bound:
+            visitor.visit(self.end_bound)

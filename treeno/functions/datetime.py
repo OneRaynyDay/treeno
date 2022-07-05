@@ -3,7 +3,7 @@ from typing import Any, ClassVar, Optional
 
 import attr
 
-from treeno.base import PrintOptions
+from treeno.base import GenericVisitor, PrintOptions
 from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import (
     bigint,
@@ -33,11 +33,13 @@ class CurrentDate(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.FN_NAME
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
+
 
 @value_attr
 class ParametrizedDateTimeFunction(Function, ABC):
-    """This class doesn't inherit from Function because it doesn't have to have parentheses when there's no arguments.
-    """
+    """This class doesn't inherit from Function because it doesn't have to have parentheses when there's no arguments."""
 
     precision: int = attr.ib(default=DEFAULT_DATETIME_PRECISION)
 
@@ -46,6 +48,9 @@ class ParametrizedDateTimeFunction(Function, ABC):
         if self.precision != DEFAULT_DATETIME_PRECISION:
             precision_str = parenthesize(str(self.precision))
         return f"{FUNCTIONS_TO_NAMES[type(self)]}{precision_str}"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
 
 
 @value_attr
@@ -137,6 +142,10 @@ class AtTimezone(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.value, self.zone], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        visitor.visit(self.zone)
+
 
 @value_attr
 class WithTimezone(Function):
@@ -153,6 +162,10 @@ class WithTimezone(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.value, self.zone], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        visitor.visit(self.zone)
 
 
 @value_attr
@@ -205,6 +218,17 @@ class FromUnixtime(Function):
             values += [self.hours, self.minutes]
         return self.to_string(values, opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        if self.zone:
+            visitor.visit(self.zone)
+
+        if self.hours:
+            visitor.visit(self.hours)
+
+        if self.minutes:
+            visitor.visit(self.minutes)
+
 
 @value_attr
 class FromUnixtimeNanos(UnaryFunction):
@@ -223,6 +247,9 @@ class Now(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
 
 
 @value_attr
@@ -261,6 +288,10 @@ class DateTrunc(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.unit, self.value], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.unit)
+        visitor.visit(self.value)
+
 
 @value_attr
 class DateAdd(Function):
@@ -274,6 +305,11 @@ class DateAdd(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.unit, self.value, self.timestamp], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.unit)
+        visitor.visit(self.value)
+        visitor.visit(self.timestamp)
 
 
 @value_attr
@@ -290,6 +326,11 @@ class DateDiff(Function):
         return self.to_string(
             [self.unit, self.timestamp1, self.timestamp2], opts
         )
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.unit)
+        visitor.visit(self.timestamp1)
+        visitor.visit(self.timestamp2)
 
 
 @value_attr

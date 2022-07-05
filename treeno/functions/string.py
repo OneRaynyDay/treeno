@@ -3,7 +3,7 @@ from typing import ClassVar, Optional
 
 import attr
 
-from treeno.base import PrintOptions
+from treeno.base import GenericVisitor, PrintOptions
 from treeno.datatypes.builder import (
     bigint,
     boolean,
@@ -34,6 +34,9 @@ class Chr(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.number], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.number)
+
 
 @value_attr
 class CodePoint(Function):
@@ -45,6 +48,9 @@ class CodePoint(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
 
 
 @value_attr
@@ -59,6 +65,10 @@ class HammingDistance(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string1, self.string2], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string1)
+        visitor.visit(self.string2)
+
 
 @value_attr
 class Length(Function):
@@ -70,6 +80,9 @@ class Length(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
 
 
 @value_attr
@@ -84,6 +97,10 @@ class LevenshteinDistance(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string1, self.string2], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string1)
+        visitor.visit(self.string2)
+
 
 @value_attr
 class Lower(Function):
@@ -95,6 +112,9 @@ class Lower(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
 
 
 @value_attr
@@ -110,6 +130,11 @@ class LPad(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string, self.size, self.pad_string], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
+        visitor.visit(self.size)
+        visitor.visit(self.pad_string)
+
 
 @value_attr
 class LTrim(Function):
@@ -122,6 +147,9 @@ class LTrim(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
+
 
 @value_attr
 class LuhnCheck(Function):
@@ -133,6 +161,9 @@ class LuhnCheck(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
 
 
 @value_attr
@@ -153,6 +184,12 @@ class Replace(Function):
             components.append(self.replace)
         return self.to_string(components, opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
+        visitor.visit(self.search)
+        if self.replace:
+            visitor.visit(self.replace)
+
 
 @value_attr
 class Reverse(Function):
@@ -164,6 +201,9 @@ class Reverse(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
 
 
 @value_attr
@@ -179,6 +219,11 @@ class RPad(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string, self.size, self.pad_string], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
+        visitor.visit(self.size)
+        visitor.visit(self.pad_string)
+
 
 @value_attr
 class RTrim(Function):
@@ -191,6 +236,9 @@ class RTrim(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
+
 
 @value_attr
 class Soundex(Function):
@@ -202,6 +250,9 @@ class Soundex(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
 
 
 @value_attr
@@ -223,6 +274,9 @@ class Normalize(Function):
         arg_string = join_stmts(components, opts)
         return f"{self.FN_NAME}({arg_string})"
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
+
 
 @value_attr
 class ToUTF8(Function):
@@ -234,6 +288,9 @@ class ToUTF8(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.string], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.string)
 
 
 @value_attr
@@ -252,3 +309,8 @@ class FromUTF8(Function):
         if self.replace:
             components.append(self.replace)
         return self.to_string(components, opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.binary)
+        if self.replace:
+            visitor.visit(self.replace)

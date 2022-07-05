@@ -4,7 +4,7 @@ from typing import Any, ClassVar, List, Optional
 
 import attr
 
-from treeno.base import PrintMode, PrintOptions, Sql
+from treeno.base import GenericVisitor, PrintMode, PrintOptions, Sql
 from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import (
     array,
@@ -88,6 +88,9 @@ class UnaryAggregateFunction(AggregateFunction, ABC):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.value], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+
 
 @value_attr
 class BinaryStatsFunction(AggregateFunction, ABC):
@@ -99,6 +102,10 @@ class BinaryStatsFunction(AggregateFunction, ABC):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.y, self.x], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.x)
+        visitor.visit(self.y)
 
 
 @value_attr
@@ -209,6 +216,9 @@ class OverflowFiller(Sql):
     def sql(self, opts: PrintOptions) -> str:
         return f"TRUNCATE {quote_literal(self.filler)} {self.count_indication.value}"
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
+
 
 @value_attr
 class ListAgg(AggregateFunction):
@@ -251,6 +261,11 @@ class ListAgg(AggregateFunction):
         constraint_string = pad(spacing + constraint_string, opts.spaces)
         return f"{FUNCTIONS_TO_NAMES[type(self)]}({value_string}){constraint_string}"
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        if self.overflow_filler:
+            visitor.visit(self.overflow_filler)
+
 
 @value_attr
 class Max(AggregateFunction):
@@ -268,6 +283,11 @@ class Max(AggregateFunction):
         if self.num_values:
             values.append(self.num_values)
         return self.to_string(values, opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        if self.num_values:
+            visitor.visit(self.num_values)
 
 
 @value_attr
@@ -288,6 +308,12 @@ class MaxBy(AggregateFunction):
             values.append(self.num_values)
         return self.to_string(values, opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        visitor.visit(self.max_by)
+        if self.num_values:
+            visitor.visit(self.num_values)
+
 
 @value_attr
 class Min(AggregateFunction):
@@ -306,12 +332,17 @@ class Min(AggregateFunction):
             values.append(self.num_values)
         return self.to_string(values, opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        if self.num_values:
+            visitor.visit(self.num_values)
+
 
 @value_attr
 class MinBy(AggregateFunction):
     FN_NAME: ClassVar[str] = "MIN_BY"
     value: Value = attr.ib(converter=wrap_literal)
-    max_by: Value = attr.ib(converter=wrap_literal)
+    min_by: Value = attr.ib(converter=wrap_literal)
     num_values: Optional[Value] = attr.ib(
         default=None, converter=attr.converters.optional(wrap_literal)
     )
@@ -320,10 +351,16 @@ class MinBy(AggregateFunction):
         self.data_type = self.value.data_type
 
     def sql(self, opts: PrintOptions) -> str:
-        values = [self.value, self.max_by]
+        values = [self.value, self.min_by]
         if self.num_values:
             values.append(self.num_values)
         return self.to_string(values, opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        visitor.visit(self.min_by)
+        if self.num_values:
+            visitor.visit(self.num_values)
 
 
 @value_attr
@@ -366,6 +403,10 @@ class MapAgg(AggregateFunction):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.key, self.value], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.key)
+        visitor.visit(self.value)
+
 
 @value_attr
 class MapUnion(UnaryAggregateFunction):
@@ -390,6 +431,10 @@ class MultiMapAgg(AggregateFunction):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.key, self.value], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.key)
+        visitor.visit(self.value)
+
 
 @value_attr
 class ApproxDistinct(AggregateFunction):
@@ -408,6 +453,11 @@ class ApproxDistinct(AggregateFunction):
             values.append(self.epsilon)
         return self.to_string(values, opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.key)
+        if self.epsilon:
+            visitor.visit(self.epsilon)
+
 
 @value_attr
 class ApproxMostFrequent(AggregateFunction):
@@ -423,6 +473,11 @@ class ApproxMostFrequent(AggregateFunction):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.buckets, self.value, self.capacity], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.buckets)
+        visitor.visit(self.value)
+        visitor.visit(self.capacity)
 
 
 @value_attr(init=False)
@@ -456,6 +511,12 @@ class ApproxPercentile(AggregateFunction):
         if self.weight:
             values.append(self.weight)
         return self.to_string(values, opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        visitor.visit(self.percentage)
+        if self.weight:
+            visitor.visit(self.weight)
 
 
 @value_attr
@@ -498,6 +559,12 @@ class NumericHistogram(AggregateFunction):
             values.append(self.weight)
         return self.to_string(values, opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.buckets)
+        visitor.visit(self.value)
+        if self.weight:
+            visitor.visit(self.weight)
+
 
 @value_attr
 class QDigestAgg(AggregateFunction):
@@ -521,6 +588,13 @@ class QDigestAgg(AggregateFunction):
             values.append(self.accuracy)
         return self.to_string(values, opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.buckets)
+        if self.weight:
+            visitor.visit(self.weight)
+        if self.accuracy:
+            visitor.visit(self.accuracy)
+
 
 @value_attr
 class TDigestAgg(AggregateFunction):
@@ -538,6 +612,11 @@ class TDigestAgg(AggregateFunction):
         if self.weight:
             values.append(self.weight)
         return self.to_string(values, opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        if self.weight:
+            visitor.visit(self.weight)
 
 
 @value_attr

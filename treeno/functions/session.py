@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from treeno.base import PrintOptions
+from treeno.base import GenericVisitor, PrintOptions
 from treeno.datatypes.builder import varchar
 from treeno.expression import value_attr
 from treeno.functions.base import Function
@@ -16,6 +16,9 @@ class CurrentUser(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.FN_NAME
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
+
 
 @value_attr
 class CurrentCatalog(Function):
@@ -26,6 +29,9 @@ class CurrentCatalog(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.FN_NAME
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
 
 
 @value_attr
@@ -38,6 +44,9 @@ class CurrentSchema(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.FN_NAME
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
+
 
 @value_attr
 class CurrentPath(Function):
@@ -48,3 +57,6 @@ class CurrentPath(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.FN_NAME
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass

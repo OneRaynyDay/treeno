@@ -48,7 +48,13 @@ from typing import Dict, List, Optional, Set, Type
 
 import attr
 
-from treeno.base import PrintMode, PrintOptions, SetQuantifier, Sql
+from treeno.base import (
+    GenericVisitor,
+    PrintMode,
+    PrintOptions,
+    SetQuantifier,
+    Sql,
+)
 from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import row, unknown
 from treeno.datatypes.conversions import common_supertype
@@ -330,6 +336,10 @@ class SetQuery(Query, ABC):
             )
         return Schema(schema_fields, relation_ids=left_schema.relation_ids)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.left_query)
+        visitor.visit(self.right_query)
+
 
 @value_attr
 class IntersectQuery(SetQuery):
@@ -519,6 +529,20 @@ class SelectQuery(Query):
         builder.update(self._constraint_string_builder(opts))
         return builder.to_string(opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.select)
+        if self.from_:
+            visitor.visit(self.from_)
+        if self.where:
+            visitor.visit(self.where)
+        if self.groupby:
+            visitor.visit(self.groupby)
+        if self.having:
+            visitor.visit(self.having)
+        if self.window:
+            for window in self.window.values():
+                visitor.visit(window)
+
 
 @attr.s
 class Table(Relation):
@@ -581,6 +605,10 @@ class Table(Relation):
     def identifier(self) -> Optional[str]:
         return self.name
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        # Table is a terminal node with no child Values
+        pass
+
 
 @value_attr
 class TableQuery(Query):
@@ -619,6 +647,9 @@ class TableQuery(Query):
         table_schema = self.table.resolve(with_schema)
         self.data_type = self._compute_data_type()
         return table_schema
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.table)
 
 
 @value_attr
@@ -682,6 +713,10 @@ class ValuesQuery(Query):
             [SchemaField(None, self, val.data_type) for val in self.exprs]
         )
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        for expr in self.exprs:
+            visitor.visit(expr)
+
 
 @attr.s
 class AliasedRelation(Relation):
@@ -744,6 +779,9 @@ class AliasedRelation(Relation):
     def identifier(self) -> Optional[str]:
         return self.alias
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.relation)
+
 
 class JoinType(Enum):
     INNER = "INNER"
@@ -758,8 +796,7 @@ class JoinCriteria(Sql, ABC):
 
     @abstractmethod
     def build_sql(self, opts: PrintOptions) -> Dict[str, str]:
-        """Creates a dictionary mapping of statements to strings
-        """
+        """Creates a dictionary mapping of statements to strings"""
         ...
 
     def sql(self, opts: PrintOptions) -> str:
@@ -805,6 +842,10 @@ class JoinUsingCriteria(JoinCriteria):
     def build_sql(self, opts: PrintOptions) -> Dict[str, str]:
         return {"USING": parenthesize(join_stmts(self.column_names, opts))}
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        # Using only references the fields, so this should do nothing
+        pass
+
 
 @attr.s
 class JoinOnCriteria(JoinCriteria):
@@ -831,6 +872,9 @@ class JoinOnCriteria(JoinCriteria):
         # For complex boolean expressions i.e. conjunctions and disjunctions we have a new line, so we have to
         # indent it here for readability
         return {"ON": pad(self.constraint.sql(opts), opts.spaces)}
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.constraint)
 
 
 @attr.s
@@ -862,6 +906,9 @@ class JoinConfig(Sql):
         raise NotImplementedError(
             "JoinConfig.sql should not be used. Refer to Join"
         )
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.criteria)
 
 
 @attr.s
@@ -904,6 +951,11 @@ class Join(Relation):
         )
         right_schema = self.right_relation.resolve(pruned_right_arg)
         return left_schema.merge(right_schema)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.left_relation)
+        visitor.visit(self.right_relation)
+        visitor.visit(self.config)
 
 
 @attr.s
@@ -964,6 +1016,10 @@ class Unnest(Relation):
             relation_ids=set(),
         )
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        for arr in self.arrays:
+            visitor.visit(arr)
+
 
 @attr.s
 class Lateral(Relation):
@@ -981,6 +1037,9 @@ class Lateral(Relation):
     def resolve(self, existing_schema: Schema) -> Schema:
         # NOTE: We explicitly don't maybe_prune_schema here, since lateral needs to explicitly pass it down
         return self.subquery.resolve(existing_schema)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.subquery)
 
 
 class SampleType(Enum):
@@ -1030,6 +1089,10 @@ class TableSample(Relation):
     def resolve(self, existing_schema: Schema) -> Schema:
         # NOTE: We don't maybe_prune_schema here, because table sample should not affect the namespace scope
         return self.relation.resolve(existing_schema)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.relation)
+        visitor.visit(self.percentage)
 
 
 def relation_string(

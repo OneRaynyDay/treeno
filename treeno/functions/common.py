@@ -6,7 +6,7 @@ from typing import Any, ClassVar, List, Type
 
 import attr
 
-from treeno.base import PrintOptions
+from treeno.base import GenericVisitor, PrintOptions
 from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import array, char, unknown, varbinary, varchar
 from treeno.datatypes.conversions import (
@@ -30,7 +30,7 @@ def _num_array_layers(dtype: type_consts.DataType) -> int:
 
 
 def _get_array_concat_type(
-    dtypes: List[type_consts.DataType]
+    dtypes: List[type_consts.DataType],
 ) -> type_consts.DataType:
     # We need to find the number of layers of arrays we have, since we can only permit N or N+1 layers and we
     # strip the topmost, e.g.:
@@ -55,7 +55,7 @@ def _get_array_concat_type(
 
 
 def _get_string_concat_type(
-    dtypes: List[type_consts.DataType]
+    dtypes: List[type_consts.DataType],
 ) -> type_consts.DataType:
     char_conversion = any(
         dtype.type_name == type_consts.CHAR for dtype in dtypes
@@ -98,6 +98,10 @@ class Concatenate(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string(self.values, opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        for val in self.values:
+            visitor.visit(val)
 
 
 # TODO: See expressions.py

@@ -225,6 +225,11 @@ class Literal(Value):
             s = quote_literal(self.value)
         return s
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        # We assume the value underneath is not a Sql object but rather a
+        # python primitive data type
+        pass
+
 
 @value_attr
 class Field(Value):
@@ -256,6 +261,10 @@ class Field(Value):
                 table_sql = self.table.sql(opts)
         return chain_identifiers(table_sql, self.name)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        if self.table is not None and isinstance(self.table, Value):
+            visitor.visit(self.table)
+
 
 @value_attr
 class AliasedValue(Value):
@@ -277,6 +286,9 @@ class AliasedValue(Value):
 
     def sql(self, opts: PrintOptions) -> str:
         return f'{self.value.sql(opts)} "{self.alias}"'
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
 
 
 @value_attr
@@ -307,6 +319,10 @@ class Star(Value):
         star_string += "*"
         return star_string
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        if self.table is not None and isinstance(self.table, Value):
+            visitor.visit(self.table)
+
 
 @value_attr
 class AliasedStar(Value):
@@ -321,6 +337,9 @@ class AliasedStar(Value):
     def sql(self, opts: PrintOptions) -> str:
         alias_str = join_stmts(self.aliases, opts)
         return f"{self.star.sql(opts)} ({alias_str})"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.star)
 
 
 @value_attr
@@ -338,6 +357,10 @@ class Lambda(Expression):
 
         def identifier(self) -> Optional[str]:
             return self.name
+
+        def visit(self, visitor: GenericVisitor) -> None:
+            # This variable should not directly reference anything as of right now
+            pass
 
     inputs: List[Variable] = attr.ib()
     expr: Value = attr.ib()
@@ -381,6 +404,11 @@ class Lambda(Expression):
         if len(self.inputs) > 1:
             input_string = parenthesize(input_string)
         return f"{input_string} -> {self.expr.sql(opts)}"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        for val in self.inputs:
+            visitor.visit(val)
+        visitor.visit(self.expr)
 
 
 def wrap_literal(val: Any) -> Value:
@@ -789,6 +817,11 @@ class InList(Expression):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string(opts, negate=False)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        for expr in self.exprs:
+            visitor.visit(expr)
+
 
 @value_attr
 class Like(Expression):
@@ -813,6 +846,12 @@ class Like(Expression):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string(opts, negate=False)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        visitor.visit(self.pattern)
+        if self.escape:
+            visitor.visit(self.escape)
 
 
 @value_attr
@@ -844,6 +883,9 @@ class TypeConstructor(Expression):
         # can just take the type name.
         return f"{self.type_name} {quote_literal(self.value)}"
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
+
 
 @value_attr
 class RowConstructor(Expression):
@@ -857,6 +899,10 @@ class RowConstructor(Expression):
             [value.sql(opts) for value in self.values], opts
         )
         return f"({values_string})"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        for value in self.values:
+            visitor.visit(value)
 
 
 @value_attr
@@ -881,6 +927,9 @@ class Interval(Expression):
         to_interval_str = f" TO {self.to_interval}" if self.to_interval else ""
         return f"INTERVAL {self.value} {self.from_interval}" + to_interval_str
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        pass
+
 
 @value_attr
 class Cast(Expression):
@@ -893,6 +942,9 @@ class Cast(Expression):
 
     def sql(self, opts: PrintOptions) -> str:
         return f"CAST({self.expr.sql(opts)} AS {self.data_type.sql(opts)})"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.expr)
 
 
 @value_attr
@@ -907,6 +959,9 @@ class TryCast(Expression):
     def sql(self, opts: PrintOptions) -> str:
         return f"TRY_CAST({self.expr.sql(opts)} AS {self.data_type.sql(opts)})"
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.expr)
+
 
 @value_attr
 class Subscript(Expression):
@@ -915,6 +970,10 @@ class Subscript(Expression):
 
     def sql(self, opts: PrintOptions) -> str:
         return f"{self.value.sql(opts)}[{self.index.sql(opts)}]"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        visitor.visit(self.index)
 
 
 # These are not values by themselves and must be used in the context of `Case`.
@@ -929,6 +988,10 @@ class When(Sql):
     def sql(self, opts: PrintOptions):
         return f"WHEN {self.condition.sql(opts)} THEN {self.value.sql(opts)}"
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.condition)
+        visitor.visit(self.value)
+
 
 @attr.s
 class Else(Sql):
@@ -939,6 +1002,9 @@ class Else(Sql):
 
     def sql(self, opts: PrintOptions):
         return f"ELSE {self.value.sql(opts)}"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
 
 
 @value_attr
@@ -966,6 +1032,14 @@ class Case(Expression):
         end_string = spacing + "END"
         value_string = self.value.sql(opts) if self.value is not None else ""
         return f"CASE {value_string}{branches_string}{end_string}"
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        for branch in self.branches:
+            visitor.visit(branch)
+        if self.else_:
+            visitor.visit(self.else_)
+        if self.value:
+            visitor.visit(self.value)
 
 
 # Operator precedence according to:

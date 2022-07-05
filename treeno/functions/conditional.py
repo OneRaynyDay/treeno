@@ -3,7 +3,7 @@ from typing import Any, ClassVar, List, Optional, Type
 
 import attr
 
-from treeno.base import PrintOptions
+from treeno.base import GenericVisitor, PrintOptions
 from treeno.datatypes.builder import unknown
 from treeno.datatypes.conversions import common_supertype
 from treeno.expression import Value, value_attr, wrap_literal, wrap_literal_list
@@ -33,6 +33,12 @@ class If(Function):
             args.append(self.false_value)
         return self.to_string(args, opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.condition)
+        visitor.visit(self.true_value)
+        if self.false_value:
+            visitor.visit(self.false_value)
+
 
 @value_attr
 class Coalesce(Function):
@@ -57,6 +63,10 @@ class Coalesce(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string(self.values, opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        for val in self.values:
+            visitor.visit(val)
+
 
 @value_attr
 class NullIf(Function):
@@ -70,6 +80,10 @@ class NullIf(Function):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.value1, self.value2], opts)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value1)
+        visitor.visit(self.value2)
+
 
 @value_attr
 class Try(Function):
@@ -81,3 +95,6 @@ class Try(Function):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.expr], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.expr)

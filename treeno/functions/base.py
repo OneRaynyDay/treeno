@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Type, TypeVar
 
 import attr
 
-from treeno.base import PrintOptions
+from treeno.base import GenericVisitor, PrintOptions
 from treeno.expression import Expression, Value, value_attr, wrap_literal
 from treeno.printer import join_stmts
 from treeno.util import is_abstract
@@ -66,3 +66,6 @@ class UnaryFunction(Function, ABC):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string([self.value], opts)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)

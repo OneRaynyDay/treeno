@@ -75,7 +75,7 @@ class Sql(ABC):
             cls._REGISTERED_NODES.add(cls)
 
     # TODO: Reenable this
-    # @abstractmethod
+    @abstractmethod
     def visit(self, visitor: GenericVisitor) -> None:
         """Visits the current node with a generic visitor pattern.
 
