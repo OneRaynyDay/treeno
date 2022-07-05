@@ -13,14 +13,18 @@ In order to do this, this module introduces some preliminary classes for printin
 
 from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum, EnumMeta, auto
-from typing import Any, ClassVar, Set, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Set, TypeVar
 
 import attr
 
 from treeno.util import is_abstract
 
+if TYPE_CHECKING:
+    from treeno.visitor import TreenoVisitor
+
 GenericEnum = TypeVar("GenericEnum", bound=Enum)
 GenericSql = TypeVar("GenericSql", bound="Sql")
+GenericVisitor = TypeVar("GenericVisitor", bound="TreenoVisitor")
 
 
 class ABCEnumMeta(EnumMeta, ABCMeta):
@@ -69,6 +73,20 @@ class Sql(ABC):
         # Register all non-abstract classes
         if not is_abstract(cls):
             cls._REGISTERED_NODES.add(cls)
+
+    # TODO: Reenable this
+    # @abstractmethod
+    def visit(self, visitor: GenericVisitor) -> None:
+        """Visits the current node with a generic visitor pattern.
+
+        Args:
+            visitor: The visitor object to traverse the AST.
+        Returns:
+            Either self or a copy of the Sql object.
+        """
+        raise NotImplementedError(
+            f"Class {self.__class__.__name__} must implement visit"
+        )
 
     @abstractmethod
     def sql(self, opts: PrintOptions) -> str:

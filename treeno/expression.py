@@ -39,7 +39,7 @@ import attr
 
 # NOTE: This is done so sphinx-autodoc-typehints doesn't run into a circular import issue with InQuery.
 import treeno
-from treeno.base import PrintMode, PrintOptions, Sql
+from treeno.base import GenericVisitor, PrintMode, PrintOptions, Sql
 from treeno.datatypes import types as type_consts
 from treeno.datatypes.builder import (
     array,
@@ -443,10 +443,17 @@ class BinaryExpression(Expression, ABC):
     left: Value = attr.ib(converter=wrap_literal)
     right: Value = attr.ib(converter=wrap_literal)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.left)
+        visitor.visit(self.right)
+
 
 @value_attr
 class UnaryExpression(Expression, ABC):
     value: Value = attr.ib(converter=wrap_literal)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
 
 
 def builtin_binary_str(
@@ -711,6 +718,11 @@ class Between(Expression):
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string(opts, negate=False)
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        visitor.visit(self.lower)
+        visitor.visit(self.upper)
+
 
 @value_attr
 class Array(Expression):
@@ -730,6 +742,10 @@ class Array(Expression):
         values_str = join_stmts([val.sql(opts) for val in self.values], opts)
         return f"ARRAY[{values_str}]"
 
+    def visit(self, visitor: GenericVisitor) -> None:
+        for val in self.values:
+            visitor.visit(val)
+
 
 @value_attr
 class InQuery(Expression):
@@ -748,6 +764,10 @@ class InQuery(Expression):
 
     def sql(self, opts: PrintOptions) -> str:
         return self.to_string(opts, negate=False)
+
+    def visit(self, visitor: GenericVisitor) -> None:
+        visitor.visit(self.value)
+        visitor.visit(self.query)
 
 
 @value_attr
