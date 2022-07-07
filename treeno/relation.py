@@ -471,9 +471,6 @@ class SelectQuery(Query):
     def resolve(self, existing_schema: Schema) -> Schema:
         from treeno.datatypes.resolve import resolve_fields
 
-        # .. todo:: Currently resolve only handles a single layer. We should make this a common function across all
-        #       relations so we can recursively call resolve before performing resolve on this query.
-        # Also, it's probably worth allowing table inputs.
         # Pass in existing relations from CTE into from_ as long as from_ is not in its own namespace i.e. a subquery.
         if self.from_ is not None:
             existing_schema = existing_schema.merge(self._resolve_with())
