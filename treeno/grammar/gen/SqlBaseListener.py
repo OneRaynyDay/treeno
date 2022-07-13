@@ -1,5 +1,6 @@
 # Generated from SqlBase.g4 by ANTLR 4.9.2
 from antlr4 import *
+
 if __name__ is not None and "." in __name__:
     from .SqlBaseParser import SqlBaseParser
 else:
@@ -293,6 +294,15 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#renameMaterializedView.
     def exitRenameMaterializedView(self, ctx:SqlBaseParser.RenameMaterializedViewContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#setMaterializedViewProperties.
+    def enterSetMaterializedViewProperties(self, ctx:SqlBaseParser.SetMaterializedViewPropertiesContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#setMaterializedViewProperties.
+    def exitSetMaterializedViewProperties(self, ctx:SqlBaseParser.SetMaterializedViewPropertiesContext):
         pass
 
 
@@ -755,6 +765,24 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#defaultPropertyValue.
+    def enterDefaultPropertyValue(self, ctx:SqlBaseParser.DefaultPropertyValueContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#defaultPropertyValue.
+    def exitDefaultPropertyValue(self, ctx:SqlBaseParser.DefaultPropertyValueContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#nonDefaultPropertyValue.
+    def enterNonDefaultPropertyValue(self, ctx:SqlBaseParser.NonDefaultPropertyValueContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#nonDefaultPropertyValue.
+    def exitNonDefaultPropertyValue(self, ctx:SqlBaseParser.NonDefaultPropertyValueContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#queryNoWith.
     def enterQueryNoWith(self, ctx:SqlBaseParser.QueryNoWithContext):
         pass
@@ -1016,6 +1044,15 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#trimsSpecification.
+    def enterTrimsSpecification(self, ctx:SqlBaseParser.TrimsSpecificationContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#trimsSpecification.
+    def exitTrimsSpecification(self, ctx:SqlBaseParser.TrimsSpecificationContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#listAggOverflowBehavior.
     def enterListAggOverflowBehavior(self, ctx:SqlBaseParser.ListAggOverflowBehaviorContext):
         pass
@@ -1151,12 +1188,93 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#tableFunctionInvocation.
+    def enterTableFunctionInvocation(self, ctx:SqlBaseParser.TableFunctionInvocationContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#tableFunctionInvocation.
+    def exitTableFunctionInvocation(self, ctx:SqlBaseParser.TableFunctionInvocationContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#parenthesizedRelation.
     def enterParenthesizedRelation(self, ctx:SqlBaseParser.ParenthesizedRelationContext):
         pass
 
     # Exit a parse tree produced by SqlBaseParser#parenthesizedRelation.
     def exitParenthesizedRelation(self, ctx:SqlBaseParser.ParenthesizedRelationContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#tableFunctionCall.
+    def enterTableFunctionCall(self, ctx:SqlBaseParser.TableFunctionCallContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#tableFunctionCall.
+    def exitTableFunctionCall(self, ctx:SqlBaseParser.TableFunctionCallContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#tableFunctionArgument.
+    def enterTableFunctionArgument(self, ctx:SqlBaseParser.TableFunctionArgumentContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#tableFunctionArgument.
+    def exitTableFunctionArgument(self, ctx:SqlBaseParser.TableFunctionArgumentContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#tableArgument.
+    def enterTableArgument(self, ctx:SqlBaseParser.TableArgumentContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#tableArgument.
+    def exitTableArgument(self, ctx:SqlBaseParser.TableArgumentContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#tableArgumentTable.
+    def enterTableArgumentTable(self, ctx:SqlBaseParser.TableArgumentTableContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#tableArgumentTable.
+    def exitTableArgumentTable(self, ctx:SqlBaseParser.TableArgumentTableContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#tableArgumentQuery.
+    def enterTableArgumentQuery(self, ctx:SqlBaseParser.TableArgumentQueryContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#tableArgumentQuery.
+    def exitTableArgumentQuery(self, ctx:SqlBaseParser.TableArgumentQueryContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#descriptorArgument.
+    def enterDescriptorArgument(self, ctx:SqlBaseParser.DescriptorArgumentContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#descriptorArgument.
+    def exitDescriptorArgument(self, ctx:SqlBaseParser.DescriptorArgumentContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#descriptorField.
+    def enterDescriptorField(self, ctx:SqlBaseParser.DescriptorFieldContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#descriptorField.
+    def exitDescriptorField(self, ctx:SqlBaseParser.DescriptorFieldContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#copartitionTables.
+    def enterCopartitionTables(self, ctx:SqlBaseParser.CopartitionTablesContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#copartitionTables.
+    def exitCopartitionTables(self, ctx:SqlBaseParser.CopartitionTablesContext):
         pass
 
 
@@ -1340,6 +1458,15 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#jsonValue.
+    def enterJsonValue(self, ctx:SqlBaseParser.JsonValueContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonValue.
+    def exitJsonValue(self, ctx:SqlBaseParser.JsonValueContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#specialDateTimeFunction.
     def enterSpecialDateTimeFunction(self, ctx:SqlBaseParser.SpecialDateTimeFunctionContext):
         pass
@@ -1376,6 +1503,15 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#trim.
+    def enterTrim(self, ctx:SqlBaseParser.TrimContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#trim.
+    def exitTrim(self, ctx:SqlBaseParser.TrimContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#parameter.
     def enterParameter(self, ctx:SqlBaseParser.ParameterContext):
         pass
@@ -1391,6 +1527,15 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#normalize.
     def exitNormalize(self, ctx:SqlBaseParser.NormalizeContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonObject.
+    def enterJsonObject(self, ctx:SqlBaseParser.JsonObjectContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonObject.
+    def exitJsonObject(self, ctx:SqlBaseParser.JsonObjectContext):
         pass
 
 
@@ -1418,6 +1563,15 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#booleanLiteral.
     def exitBooleanLiteral(self, ctx:SqlBaseParser.BooleanLiteralContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonArray.
+    def enterJsonArray(self, ctx:SqlBaseParser.JsonArrayContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonArray.
+    def exitJsonArray(self, ctx:SqlBaseParser.JsonArrayContext):
         pass
 
 
@@ -1466,6 +1620,15 @@ class SqlBaseListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SqlBaseParser#jsonExists.
+    def enterJsonExists(self, ctx:SqlBaseParser.JsonExistsContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonExists.
+    def exitJsonExists(self, ctx:SqlBaseParser.JsonExistsContext):
+        pass
+
+
     # Enter a parse tree produced by SqlBaseParser#currentPath.
     def enterCurrentPath(self, ctx:SqlBaseParser.CurrentPathContext):
         pass
@@ -1508,6 +1671,15 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#currentUser.
     def exitCurrentUser(self, ctx:SqlBaseParser.CurrentUserContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonQuery.
+    def enterJsonQuery(self, ctx:SqlBaseParser.JsonQueryContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonQuery.
+    def exitJsonQuery(self, ctx:SqlBaseParser.JsonQueryContext):
         pass
 
 
@@ -1616,6 +1788,87 @@ class SqlBaseListener(ParseTreeListener):
 
     # Exit a parse tree produced by SqlBaseParser#groupingOperation.
     def exitGroupingOperation(self, ctx:SqlBaseParser.GroupingOperationContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonPathInvocation.
+    def enterJsonPathInvocation(self, ctx:SqlBaseParser.JsonPathInvocationContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonPathInvocation.
+    def exitJsonPathInvocation(self, ctx:SqlBaseParser.JsonPathInvocationContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonValueExpression.
+    def enterJsonValueExpression(self, ctx:SqlBaseParser.JsonValueExpressionContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonValueExpression.
+    def exitJsonValueExpression(self, ctx:SqlBaseParser.JsonValueExpressionContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonRepresentation.
+    def enterJsonRepresentation(self, ctx:SqlBaseParser.JsonRepresentationContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonRepresentation.
+    def exitJsonRepresentation(self, ctx:SqlBaseParser.JsonRepresentationContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonArgument.
+    def enterJsonArgument(self, ctx:SqlBaseParser.JsonArgumentContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonArgument.
+    def exitJsonArgument(self, ctx:SqlBaseParser.JsonArgumentContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonExistsErrorBehavior.
+    def enterJsonExistsErrorBehavior(self, ctx:SqlBaseParser.JsonExistsErrorBehaviorContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonExistsErrorBehavior.
+    def exitJsonExistsErrorBehavior(self, ctx:SqlBaseParser.JsonExistsErrorBehaviorContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonValueBehavior.
+    def enterJsonValueBehavior(self, ctx:SqlBaseParser.JsonValueBehaviorContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonValueBehavior.
+    def exitJsonValueBehavior(self, ctx:SqlBaseParser.JsonValueBehaviorContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonQueryWrapperBehavior.
+    def enterJsonQueryWrapperBehavior(self, ctx:SqlBaseParser.JsonQueryWrapperBehaviorContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonQueryWrapperBehavior.
+    def exitJsonQueryWrapperBehavior(self, ctx:SqlBaseParser.JsonQueryWrapperBehaviorContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonQueryBehavior.
+    def enterJsonQueryBehavior(self, ctx:SqlBaseParser.JsonQueryBehaviorContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonQueryBehavior.
+    def exitJsonQueryBehavior(self, ctx:SqlBaseParser.JsonQueryBehaviorContext):
+        pass
+
+
+    # Enter a parse tree produced by SqlBaseParser#jsonObjectMember.
+    def enterJsonObjectMember(self, ctx:SqlBaseParser.JsonObjectMemberContext):
+        pass
+
+    # Exit a parse tree produced by SqlBaseParser#jsonObjectMember.
+    def exitJsonObjectMember(self, ctx:SqlBaseParser.JsonObjectMemberContext):
         pass
 
 

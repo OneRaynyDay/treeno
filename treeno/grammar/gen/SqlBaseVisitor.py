@@ -1,5 +1,6 @@
 # Generated from SqlBase.g4 by ANTLR 4.9.2
 from antlr4 import *
+
 if __name__ is not None and "." in __name__:
     from .SqlBaseParser import SqlBaseParser
 else:
@@ -166,6 +167,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#renameMaterializedView.
     def visitRenameMaterializedView(self, ctx:SqlBaseParser.RenameMaterializedViewContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#setMaterializedViewProperties.
+    def visitSetMaterializedViewProperties(self, ctx:SqlBaseParser.SetMaterializedViewPropertiesContext):
         return self.visitChildren(ctx)
 
 
@@ -424,6 +430,16 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#defaultPropertyValue.
+    def visitDefaultPropertyValue(self, ctx:SqlBaseParser.DefaultPropertyValueContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#nonDefaultPropertyValue.
+    def visitNonDefaultPropertyValue(self, ctx:SqlBaseParser.NonDefaultPropertyValueContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#queryNoWith.
     def visitQueryNoWith(self, ctx:SqlBaseParser.QueryNoWithContext):
         return self.visitChildren(ctx)
@@ -569,6 +585,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#trimsSpecification.
+    def visitTrimsSpecification(self, ctx:SqlBaseParser.TrimsSpecificationContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#listAggOverflowBehavior.
     def visitListAggOverflowBehavior(self, ctx:SqlBaseParser.ListAggOverflowBehaviorContext):
         return self.visitChildren(ctx)
@@ -644,8 +665,53 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#tableFunctionInvocation.
+    def visitTableFunctionInvocation(self, ctx:SqlBaseParser.TableFunctionInvocationContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#parenthesizedRelation.
     def visitParenthesizedRelation(self, ctx:SqlBaseParser.ParenthesizedRelationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#tableFunctionCall.
+    def visitTableFunctionCall(self, ctx:SqlBaseParser.TableFunctionCallContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#tableFunctionArgument.
+    def visitTableFunctionArgument(self, ctx:SqlBaseParser.TableFunctionArgumentContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#tableArgument.
+    def visitTableArgument(self, ctx:SqlBaseParser.TableArgumentContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#tableArgumentTable.
+    def visitTableArgumentTable(self, ctx:SqlBaseParser.TableArgumentTableContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#tableArgumentQuery.
+    def visitTableArgumentQuery(self, ctx:SqlBaseParser.TableArgumentQueryContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#descriptorArgument.
+    def visitDescriptorArgument(self, ctx:SqlBaseParser.DescriptorArgumentContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#descriptorField.
+    def visitDescriptorField(self, ctx:SqlBaseParser.DescriptorFieldContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#copartitionTables.
+    def visitCopartitionTables(self, ctx:SqlBaseParser.CopartitionTablesContext):
         return self.visitChildren(ctx)
 
 
@@ -749,6 +815,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#jsonValue.
+    def visitJsonValue(self, ctx:SqlBaseParser.JsonValueContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#specialDateTimeFunction.
     def visitSpecialDateTimeFunction(self, ctx:SqlBaseParser.SpecialDateTimeFunctionContext):
         return self.visitChildren(ctx)
@@ -769,6 +840,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#trim.
+    def visitTrim(self, ctx:SqlBaseParser.TrimContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#parameter.
     def visitParameter(self, ctx:SqlBaseParser.ParameterContext):
         return self.visitChildren(ctx)
@@ -776,6 +852,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#normalize.
     def visitNormalize(self, ctx:SqlBaseParser.NormalizeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonObject.
+    def visitJsonObject(self, ctx:SqlBaseParser.JsonObjectContext):
         return self.visitChildren(ctx)
 
 
@@ -791,6 +872,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#booleanLiteral.
     def visitBooleanLiteral(self, ctx:SqlBaseParser.BooleanLiteralContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonArray.
+    def visitJsonArray(self, ctx:SqlBaseParser.JsonArrayContext):
         return self.visitChildren(ctx)
 
 
@@ -819,6 +905,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SqlBaseParser#jsonExists.
+    def visitJsonExists(self, ctx:SqlBaseParser.JsonExistsContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SqlBaseParser#currentPath.
     def visitCurrentPath(self, ctx:SqlBaseParser.CurrentPathContext):
         return self.visitChildren(ctx)
@@ -841,6 +932,11 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#currentUser.
     def visitCurrentUser(self, ctx:SqlBaseParser.CurrentUserContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonQuery.
+    def visitJsonQuery(self, ctx:SqlBaseParser.JsonQueryContext):
         return self.visitChildren(ctx)
 
 
@@ -901,6 +997,51 @@ class SqlBaseVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SqlBaseParser#groupingOperation.
     def visitGroupingOperation(self, ctx:SqlBaseParser.GroupingOperationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonPathInvocation.
+    def visitJsonPathInvocation(self, ctx:SqlBaseParser.JsonPathInvocationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonValueExpression.
+    def visitJsonValueExpression(self, ctx:SqlBaseParser.JsonValueExpressionContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonRepresentation.
+    def visitJsonRepresentation(self, ctx:SqlBaseParser.JsonRepresentationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonArgument.
+    def visitJsonArgument(self, ctx:SqlBaseParser.JsonArgumentContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonExistsErrorBehavior.
+    def visitJsonExistsErrorBehavior(self, ctx:SqlBaseParser.JsonExistsErrorBehaviorContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonValueBehavior.
+    def visitJsonValueBehavior(self, ctx:SqlBaseParser.JsonValueBehaviorContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonQueryWrapperBehavior.
+    def visitJsonQueryWrapperBehavior(self, ctx:SqlBaseParser.JsonQueryWrapperBehaviorContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonQueryBehavior.
+    def visitJsonQueryBehavior(self, ctx:SqlBaseParser.JsonQueryBehaviorContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SqlBaseParser#jsonObjectMember.
+    def visitJsonObjectMember(self, ctx:SqlBaseParser.JsonObjectMemberContext):
         return self.visitChildren(ctx)
 
 
